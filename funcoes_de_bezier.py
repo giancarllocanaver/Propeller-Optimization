@@ -338,4 +338,3 @@ def bezier_mudar_A(pontos,tamanho,a):
     else:
         linhas = escala(linhas)
         return linhas,B_out,novos_pontos
-
