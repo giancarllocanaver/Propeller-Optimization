@@ -1,15 +1,9 @@
-#%%
 import numpy as np
-from scipy.interpolate import interp2d
-from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
-import funcoes_tcc.funcoes_de_bezier as bezier
-import funcoes_tcc.xfoil_funcao as xfoil
-import time
+import xfoil_funcao as xfoil
 import os
 
 class helice():
-    def __init__(self, Aerofolios,Velocidade_da_aeronave,Viscosidade_dinamica,Temperatura,Densidade_do_ar,Diametro_helice,Numero_de_pas,Array_raio_da_secao,Array_tamanho_de_corda_da_secao,Array_angulo_beta_da_secao,Rotacao_motor):
+    def __init__(self, Aerofolios,Velocidade_da_aeronave,Viscosidade_dinamica,Temperatura,Densidade_do_ar,Diametro_helice,Numero_de_pas,Array_raio_da_secao,Array_tamanho_de_corda_da_secao,Array_angulo_beta_da_secao,Rotacao_motor, ler_coord_arq_ext=False):
         self.aerof = Aerofolios
         self.v = Velocidade_da_aeronave 
         self.mi = Viscosidade_dinamica 
@@ -20,7 +14,8 @@ class helice():
         self.r = Array_raio_da_secao 
         self.c = Array_tamanho_de_corda_da_secao
         self.beta = Array_angulo_beta_da_secao 
-        self.rpm = Rotacao_motor 
+        self.rpm = Rotacao_motor
+        self.ler = ler_coord_arq_ext 
 
 
     def rodar_helice(self):        
