@@ -1,6 +1,10 @@
 import numpy as np
 import os
+import signal
 import subprocess
+import sys
+import psutil
+import time
 
 
 def rodar_xfoil(
@@ -97,9 +101,6 @@ def rodar_xfoil(
     if solucao_viscosa == True:
         arquivo_de_input.write("visc " + Reynolds + "\n")
 
-    if solucao_viscosa == False:
-        arquivo_de_input.write("re " + Reynolds + "\n")
-
     if compressibilidade == True and solucao_viscosa == False:
         arquivo_de_input.write("mach" + Mach + "\n")
 
@@ -122,7 +123,20 @@ def rodar_xfoil(
     arquivo_de_input.write("quit")
     arquivo_de_input.close()
 
-    subprocess.run(["xfoil.exe", "<", nome_do_arquivo_de_input_do_xfoil], shell=True)
+    def kill(proc_pid):
+        process = psutil.Process(proc_pid)
+        for proc in process.children(recursive=True):
+            proc.kill()
+        process.kill()
+
+    try:
+        p = subprocess.Popen(
+            "xfoil.exe < " + nome_do_arquivo_de_input_do_xfoil, shell=True
+        )
+        p.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        kill(p.pid)
+        time.sleep(1)
 
     os.remove(nome_do_arquivo_de_input_do_xfoil)
     os.remove("Arquivo_coordenadas.txt")
