@@ -1,6 +1,6 @@
 import numpy as np
-from funcoes_helice_2 import helice
-from funcoes_de_bezier_2 import Bezier
+from funcao_helice import helice
+from funcoes_de_bezier import Bezier
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -17,8 +17,10 @@ raio = np.array([10, 12, 18, 24, 30, 36, 42, 48]) * 0.0254
 beta = np.array([46.3, 43.25, 38.1, 31.65, 26.3, 22.4, 19.5, 0]) * np.pi / 180.0
 c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0]) * 0.0254
 
-v_list = [i for i in range(50, 210, 10)]
-rpm_list = [i for i in range(500, 10000, 100)]
+# v_list = [i for i in range(50, 210, 10)]
+# rpm_list = [i for i in range(500, 10000, 100)]
+v_list = [50, 100]
+rpm_list = [1000, 2000]
 eficiencia_list = []
 
 df_resultados_helice = pd.DataFrame({"Velocidade": [], "RPM": [], "Eficiencia": []})
@@ -28,7 +30,7 @@ df_resultados_aerof = pd.DataFrame(
 
 for v in v_list:
     for rpm in rpm_list:
-        eta, df_resultados_aerof = helice(
+        eta, df_aerof = helice(
             aerofolios,
             v,
             1.789e-5,
@@ -40,8 +42,7 @@ for v in v_list:
             c,
             beta,
             rpm,
-            solucao_viscosa=False,
-            validacao=df_resultados_aerof,
+            validacao=True,
         ).rodar_helice()
 
         df_resultados_helice = df_resultados_helice.append(
@@ -49,11 +50,10 @@ for v in v_list:
             ignore_index=True,
         )
 
+        df_resultados_aerof = pd.concat([df_resultados_aerof,df_aerof], axis=0, ignore_index=True)
+
 
 with pd.ExcelWriter("Resultados-validacao.xlsx") as writer:
     df_resultados_helice.to_excel(writer, sheet_name="Resultados Helice")
     df_resultados_aerof.to_excel(writer, sheet_name="Resultados Aerofolio")
     writer.save()
-
-df_resultados_helice.to_csv("Resultados_helice.csv")
-df_resultados_aerof.to_csv("Resultados_aerof.csv")

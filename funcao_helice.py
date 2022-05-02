@@ -1,6 +1,7 @@
 import numpy as np
 import xfoil_funcao as xfoil
 import os
+import pandas as pd
 
 
 class helice:
@@ -18,7 +19,7 @@ class helice:
         Array_angulo_beta_da_secao,
         Rotacao_motor,
         ler_coord_arq_ext=False,
-        validacao=None,
+        validacao=False,
     ):
 
         self.aerof = Aerofolios
@@ -33,7 +34,13 @@ class helice:
         self.beta = Array_angulo_beta_da_secao
         self.rpm = Rotacao_motor
         self.ler = ler_coord_arq_ext
-        self.df_val = validacao
+        self.bool_val = False
+        
+        if validacao == True:
+            self.df_val = pd.DataFrame(
+                {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": []}
+            )
+            self.bool_val = True
 
     def integracao(self, f, x):
 
@@ -44,7 +51,7 @@ class helice:
 
         return I
 
-    def rodar_xfoil(aerofolio, re, alpha, Ma):
+    def rodar_xfoil(self, aerofolio, re, alpha, Ma):
         if (Ma < 1) and (alpha <= 20 and alpha >= -20):
             xfoil.rodar_xfoil(
                 aerofolio,
@@ -73,7 +80,7 @@ class helice:
                 cl = cl / (np.sqrt(1 - Ma**2))
                 cd = cd / (np.sqrt(1 - Ma**2))
 
-                if self.df_val != None:
+                if self.bool_val == True:
                     self.df_val = self.df_val.append(
                         pd.DataFrame(
                             {
@@ -117,7 +124,7 @@ class helice:
                     cl = cl / (np.sqrt(1 - Ma**2))
                     cd = cd / (np.sqrt(1 - Ma**2))
 
-                    if self.df_val != None:
+                    if self.bool_val == True:
                         self.df_val = self.df_val.append(
                             pd.DataFrame(
                                 {
@@ -136,7 +143,7 @@ class helice:
                     cl = 0
                     cd = 1
 
-                    if self.df_val != None:
+                    if self.bool_val == True:
                         self.df_val = self.df_val.append(
                             pd.DataFrame(
                                 {
@@ -155,7 +162,7 @@ class helice:
             cl = 0
             cd = 1
 
-            if self.df_val != None:
+            if self.bool_val == True:
                 self.df_val = self.df_val.append(
                     pd.DataFrame(
                         {
@@ -173,7 +180,7 @@ class helice:
 
         return cl, cd
 
-    def rodar_helice(self, integracao, rodar_xfoil):
+    def rodar_helice(self):
         q = 0.5 * self.rho * self.v**2  # Pressão Dinâmica
 
         vt = 2.0 * np.pi / 60.0 * self.rpm * self.r  # Velocidade Tangencial
@@ -196,7 +203,7 @@ class helice:
             reynolds = self.rho * vr[i] * self.c[i] / self.mi
             Ma = vr[i] / (np.sqrt(1.4 * 287 * self.T))
 
-            coef_l, coef_d = rodar_xfoil(
+            coef_l, coef_d = self.rodar_xfoil(
                 self.aerof[i], round(reynolds, 0), alpha[i], Ma
             )
 
@@ -231,8 +238,8 @@ class helice:
 
         r_new.append(self.r[-1])
 
-        coef_T = integracao(np.array(dCT), r_new) * self.n
-        coef_Q = integracao(np.array(dCQ), r_new) * self.n
+        coef_T = self.integracao(np.array(dCT), r_new) * self.n
+        coef_Q = self.integracao(np.array(dCQ), r_new) * self.n
 
         if coef_T > 0 and coef_Q > 0:
             coef_P = 2 * np.pi * coef_Q
@@ -241,7 +248,7 @@ class helice:
         else:
             eta = 0.1
 
-        if self.df_val != None:
+        if self.bool_val == True:
             return eta, self.df_val
         else:
             return eta
