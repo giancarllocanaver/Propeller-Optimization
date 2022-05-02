@@ -2,6 +2,13 @@ import numpy as np
 
 
 class Bezier:
+    """
+    -----------------
+    FUNCOES DE BEZIER
+    -----------------
+
+    Classe com objetivo de execultar diversas funcionalidades de Bezier
+    """
     def __init__(self, aerofolio_base=True, arquivo_base=""):
         if aerofolio_base == True:
             x = np.array([1, 0.32957, 0, 0.32957, 1])

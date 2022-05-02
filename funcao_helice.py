@@ -3,25 +3,50 @@ import xfoil_funcao as xfoil
 import os
 import pandas as pd
 
-
 class helice:
+    """
+    -------------------
+    FUNÇÃO HELICE
+    -------------------
+
+    Objetivo: Calcular a eficiência de uma determinada hélice como um todo.
+
+    Parâmetros de input:
+        Aerofolios: Lista das coordenadas do aerofólio ou nome do arquivo a ser lido (especificação dada pelo parâmetro 'ler_coord_arq_ext'); a lista deve ter tamanho igual a quantidade de seções
+        Velocidade_da_aeronave:Velocidade da aeronave em m/s
+        Viscosidade_dinamica: Viscodiade dinâmica do ar em 1/ms
+        Temperatura: Temperatura do ar em K
+        Densidade_do_ar: Densidade do ar em kg/m3
+        Diametro_helice: Diâmetro da hélice em m
+        Numero_de_pas: Quantidade de pás
+        Array_raio_da_secao: Lista com as coordenadas do raio das seções em m
+        Array_tamanho_de_corda_da_secao: Lista com o tamanho da corda de cada seção em m
+        Array_angulo_beta_da_secao: Ângulo de cada seção em rad
+        Rotacao_motor: Rotação do motor em rpm
+        ler_coord_arq_ext=False: Leitura das coordenadas do aerofólio em um arquivo (por definição é falso)
+        validacao=False: Geração de um arquivo externo para possível vizualização dos resultados do xfoil (por definição é falso)
+    
+    Parâmetros de output:
+        eta: Eficiência da hélice
+        self.df_val: DataFrame contendo os resultados do xfoil (somente será gerado caso 'validacao' for verdadeiro)
+    """
     def __init__(
         self,
         Aerofolios,
-        Velocidade_da_aeronave,
-        Viscosidade_dinamica,
-        Temperatura,
-        Densidade_do_ar,
-        Diametro_helice,
-        Numero_de_pas,
-        Array_raio_da_secao,
-        Array_tamanho_de_corda_da_secao,
-        Array_angulo_beta_da_secao,
-        Rotacao_motor,
+        Velocidade_da_aeronave: float,
+        Viscosidade_dinamica: float,
+        Temperatura: float,
+        Densidade_do_ar: float,
+        Diametro_helice: float,
+        Numero_de_pas: int,
+        Array_raio_da_secao: list,
+        Array_tamanho_de_corda_da_secao: list,
+        Array_angulo_beta_da_secao: list,
+        Rotacao_motor: float,
         ler_coord_arq_ext=False,
         validacao=False,
     ):
-
+        # Inicialização dos parâmetros de input
         self.aerof = Aerofolios
         self.v = Velocidade_da_aeronave
         self.mi = Viscosidade_dinamica
@@ -36,6 +61,7 @@ class helice:
         self.ler = ler_coord_arq_ext
         self.bool_val = False
         
+        # Caso o usuário queira ver validação, gera-se um DataFrame vazio
         if validacao == True:
             self.df_val = pd.DataFrame(
                 {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": []}
@@ -43,7 +69,9 @@ class helice:
             self.bool_val = True
 
     def integracao(self, f, x):
-
+        """
+        Função com objetivo de realizar a integração numérica dos dados inputados
+        """
         I = 0.0
 
         for i in range(1, len(x)):
@@ -52,7 +80,15 @@ class helice:
         return I
 
     def rodar_xfoil(self, aerofolio, re, alpha, Ma):
+        """
+        Função com objetivo de rodar os dados no xfoil, chamando uma função externa.
+
+        Pode=se utilizar duas análises para as rodagens: análise com viscosidade, sem viscosidade; prioridade será viscosa
+
+        Caso Mach maior que 1 ou não convergência dos dados, será utililzado como padrão: CL=0 e CD=1
+        """
         if (Ma < 1) and (alpha <= 20 and alpha >= -20):
+            # Tentativa de rodar solução viscosa
             xfoil.rodar_xfoil(
                 aerofolio,
                 str(alpha),
@@ -73,6 +109,7 @@ class helice:
             dados_v = np.loadtxt("arquivo_dados_v.txt", skiprows=12)
             os.remove("arquivo_dados_v.txt")
 
+            # Sucesso na solução viscosa
             if dados_v.size != 0:
                 cl = dados_v[1]
                 cd = abs(dados_v[2])
@@ -96,6 +133,7 @@ class helice:
                         ignore_index=True,
                     )
 
+            # Fracasso na solução viscosa:
             if dados_v.size == 0:
                 xfoil.rodar_xfoil(
                     aerofolio,
@@ -181,24 +219,29 @@ class helice:
         return cl, cd
 
     def rodar_helice(self):
-        q = 0.5 * self.rho * self.v**2  # Pressão Dinâmica
+        # Pressão Dinâmica
+        q = 0.5 * self.rho * self.v**2
 
-        vt = 2.0 * np.pi / 60.0 * self.rpm * self.r  # Velocidade Tangencial
+        # Velocidade Tangencial
+        vt = 2.0 * np.pi / 60.0 * self.rpm * self.r
 
+        # Ângulo phi de cada seção
         phi = np.arctan(self.v / vt)
         phi[-1] = 0.0
 
-        vr = vt / np.cos(phi)  # Velocidade Resultante
+        # Velocidade resultante
+        vr = vt / np.cos(phi)
 
+        # Ângulo de ataque de cada seção
         alpha_np = (self.beta - phi) * 180 / np.pi
         alpha = [round(i, 2) for i in alpha_np]
-
         alpha[-1] = 0.0
 
         dCT = []
         dCQ = []
         r_new = []
 
+        # Cálculo para cada seção
         for i in range(len(self.aerof) - 1):
             reynolds = self.rho * vr[i] * self.c[i] / self.mi
             Ma = vr[i] / (np.sqrt(1.4 * 287 * self.T))
