@@ -3,7 +3,22 @@ import xfoil_funcao as xfoil
 import os
 
 class helice():
-    def __init__(self, Aerofolios,Velocidade_da_aeronave,Viscosidade_dinamica,Temperatura,Densidade_do_ar,Diametro_helice,Numero_de_pas,Array_raio_da_secao,Array_tamanho_de_corda_da_secao,Array_angulo_beta_da_secao,Rotacao_motor, ler_coord_arq_ext=False):
+    def __init__(self, 
+        Aerofolios,
+        Velocidade_da_aeronave,
+        Viscosidade_dinamica,
+        Temperatura,
+        Densidade_do_ar,
+        Diametro_helice,
+        Numero_de_pas,
+        Array_raio_da_secao,
+        Array_tamanho_de_corda_da_secao,
+        Array_angulo_beta_da_secao,
+        Rotacao_motor,
+        ler_coord_arq_ext=False,
+        validacao=None
+        ):
+
         self.aerof = Aerofolios
         self.v = Velocidade_da_aeronave 
         self.mi = Viscosidade_dinamica 
@@ -15,55 +30,10 @@ class helice():
         self.c = Array_tamanho_de_corda_da_secao
         self.beta = Array_angulo_beta_da_secao 
         self.rpm = Rotacao_motor
-        self.ler = ler_coord_arq_ext 
-
-
-    def rodar_helice(self):        
-        def rodar_xfoil(aerofolio, re, alpha, Ma):
-            if Ma < 1:
-                xfoil.rodar_xfoil(aerofolio, str(alpha), str(alpha), "0", str(re), str(Ma), "9", "100", "arquivo_dados_v.txt",mudar_paineis=True,
-                    mostrar_grafico=False, ler_arquivo_coord=True, compressibilidade=False, solucao_viscosa=True)
-                
-                # xfoil.rodar_xfoil(aerofolio, str(alpha), str(alpha), "0", str(re), str(Ma), "9", "100", "arquivo_dados_c.txt",mudar_paineis=True,
-                #     mostrar_grafico=False, ler_arquivo_coord=True, compressibilidade=True, solucao_viscosa=False)
-
-                dados_v = np.loadtxt("arquivo_dados_v.txt", skiprows=12)
-                # dados_c = np.loadtxt("arquivo_dados_c.txt", skiprows=12)
-
-                os.remove("arquivo_dados_v.txt")
-                # os.remove("arquivo_dados_c.txt")
-
-                # if dados_v.size != 0 and dados_c.size != 0:
-                #     cdp = dados_c[3]
-                #     cd0 = dados_v[2] - dados_v[3]
-
-                #     cd = cdp + cd0
-                #     cl = min(dados_c[1], dados_v[1])                
-                
-                if dados_v.size != 0: #and dados_c.size == 0:
-                    cl = dados_v[1]
-                    cd = dados_v[2]
-                    
-                    cl = cl/(np.sqrt(1 - Ma**2))
-                    cd = cd/(np.sqrt(1 - Ma**2))
-                
-                # if dados_v.size == 0 and dados_c.size != 0:
-                #     cl = dados_c[1]
-                #     cd = dados_c[3]           
-                
-                if dados_v.size == 0: #and dados_c.size == 0:
-                    cl = 0
-                    cd = 0
-            else:
-                cl = 0
-                cd = 0
-
-            # print(dados_c.size, '\t', dados_v.size, '\t', cl, '\t',cd)
-
-            return cl, cd
-
-        
-        def integracao(f,x):
+        self.ler = ler_coord_arq_ext
+        self.df_val = validacao
+    
+    def integracao(self, f, x):
             
             I = 0.
             
@@ -71,8 +41,57 @@ class helice():
                 I += (x[i]-x[i-1])*(f[i]+f[i-1])/2.
             
             return I
+    
+    def rodar_xfoil(aerofolio, re, alpha, Ma):
+        if (Ma < 1) and (alpha <= 20 and alpha >= -20):
+            xfoil.rodar_xfoil(aerofolio, str(alpha), str(alpha), "0", str(re), str(Ma), "9", "100", "arquivo_dados_v.txt",mudar_paineis=True,
+                mostrar_grafico=False, ler_arquivo_coord=self.ler, compressibilidade=False, solucao_viscosa=True)
 
+            dados_v = np.loadtxt("arquivo_dados_v.txt", skiprows=12)
+            os.remove("arquivo_dados_v.txt")
+            
+            if dados_v.size != 0:
+                cl = dados_v[1]
+                cd = abs(dados_v[2])
+                
+                cl = cl/(np.sqrt(1 - Ma**2))
+                cd = cd/(np.sqrt(1 - Ma**2))
 
+                if self.df_val != None:
+                    self.df_val = self.df_val.append(pd.DataFrame({'Velocidade': [self.v], 'RPM': [self.rpm], 'Alpha': [alpha], 'Re': [re], 'Cl': [cl], 'Cd': [cd], 'Tipo': ['Solucao viscosa']}), ignore_index=True)
+            
+            if dados_v.size == 0:
+                xfoil.rodar_xfoil(aerofolio, str(alpha), str(alpha), "0", str(re), str(Ma), "9", "100", "arquivo_dados_i.txt",mudar_paineis=True,
+                mostrar_grafico=False, ler_arquivo_coord=self.ler, compressibilidade=False, solucao_viscosa=False)                    
+                
+                dados_i = np.loadtxt("arquivo_dados_i.txt", skiprows=12)
+                os.remove("arquivo_dados_i.txt")
+
+                cl = dados_i[1]
+                cd = abs(dados_i[3])
+
+                if dados_i.size != 0:
+                    cl = cl/(np.sqrt(1 - Ma**2))
+                    cd = cd/(np.sqrt(1 - Ma**2))
+
+                    if self.df_val != None:
+                        self.df_val = self.df_val.append(pd.DataFrame({'Velocidade': [self.v], 'RPM': [self.rpm], 'Alpha': [alpha], 'Re': [re], 'Cl': [cl], 'Cd': [cd], 'Tipo': ['Solucao inviscida']}), ignore_index=True)
+                else:
+                    cl = 0
+                    cd = 1
+
+                    if self.df_val != None:
+                        self.df_val = self.df_val.append(pd.DataFrame({'Velocidade': [self.v], 'RPM': [self.rpm], 'Alpha': [alpha], 'Re': [re], 'Cl': [cl], 'Cd': [cd], 'Tipo': ['Solucao não encontrada - tipo 1']}), ignore_index=True)
+        else:
+            cl = 0
+            cd = 1
+
+            if self.df_val != None:
+                self.df_val = self.df_val.append(pd.DataFrame({'Velocidade': [self.v], 'RPM': [self.rpm], 'Alpha': [alpha], 'Re': [re], 'Cl': [0], 'Cd': [1], 'Tipo': ['Solucao não encontrada - tipo 2']}), ignore_index=True)
+
+        return cl, cd
+
+    def rodar_helice(self, integracao, rodar_xfoil):
         q = 0.5*self.rho*self.v**2 # Pressão Dinâmica
 
         vt = 2.*np.pi/60.*self.rpm*self.r # Velocidade Tangencial
@@ -82,57 +101,49 @@ class helice():
 
         vr = vt/np.cos(phi) # Velocidade Resultante
 
-        alpha = (self.beta - phi)*180/np.pi 
+        alpha_np = (self.beta - phi)*180/np.pi
+        alpha = [round(i,2) for i in alpha_np]
+
         alpha[-1] = 0.
         
-        dT = []
-        dQ = []
+        dCT = []
+        dCQ = []
         r_new = []
 
         for i in range(len(self.aerof) - 1):
             reynolds = self.rho*vr[i]*self.c[i]/self.mi
             Ma = vr[i]/(np.sqrt(1.4*287*self.T))
             
-            if vr[i] != 0: 
-                coef_l, coef_d = rodar_xfoil(self.aerof[i], round(reynolds, 0), alpha[i], Ma)
+            coef_l, coef_d = rodar_xfoil(self.aerof[i], round(reynolds, 0), alpha[i], Ma)
 
-            if coef_l != 0 and coef_d !=0:
-                gamma = np.arctan(coef_d/coef_l)
+            sigma_R = self.n*self.c[i]/(np.pi*self.r[i])
+            J = 60*self.v/(self.rpm*self.D)
+            coef_T = np.pi/8*sigma_R*J**2*(coef_l*np.cos(phi[i]) - coef_d*np.sin(phi[i]))/(np.sin(phi[i])**2)
+            x = self.r[i]/(self.D/2)
+            coef_Q = np.pi/16*sigma_R*J**2*x*(coef_l*np.sin(phi[i]) + coef_d*np.cos(phi[i]))/(np.sin(phi[i])**2)
 
-                dt = q*coef_l*self.c[i]*(np.cos(phi[i] + gamma))/(np.cos(gamma)*np.sin(phi[i])**2)
-                dq = q*coef_l*self.c[i]*self.r[i]*(np.sin(phi[i] + gamma))/(np.cos(gamma)*np.sin(phi[i])**2)
-                
-                dT.append(dt)
-                dQ.append(dq)
-
-                r_new.append(self.r[i])
             
-        dT.append(0)
-        dQ.append(0)
+            dCT.append(coef_T)
+            dCQ.append(coef_Q)
+
+            r_new.append(self.r[i])
+            
+        dCT.append(0)
+        dCQ.append(0)
 
         r_new.append(self.r[-1])
 
-        dT = np.array(dT)
-        dQ = np.array(dQ)
+        coef_T = integracao(np.array(dCT),r_new)*self.n
+        coef_Q = integracao(np.array(dCQ),r_new)*self.n  
 
-        T = integracao(dT,r_new)*self.n
-        Q = integracao(dQ,r_new)*self.n    
+        if coef_T > 0 and coef_Q > 0:
+            coef_P = 2*np.pi*coef_Q
+            
+            eta = J*coef_T/coef_P
+        else:
+            eta = 0.1
 
-        eta = T*self.v/(Q*2*np.pi*self.rpm/60) # Eficiência da hélice
-
-        vel_rot = self.rpm/60
-
-        Ct = T/(self.rho*vel_rot**2*self.D**4)
-        Cq = Q/(self.rho*vel_rot**2*self.D**5)
-        Cp = 2*np.pi*Cq
-
-        J = self.v/(vel_rot*self.D)
-        Cs = J/(Cp**(1/5))
-
-        eta_2 = J*Ct/Cp
-
-        saida = [T,Q,dT,dQ,eta,vr,r_new,Ct,Cq,Cp,J,Cs,eta_2]
-
-        return saida
-
-
+        if self.df_val != None:
+            return eta, self.df_val
+        else:
+            return eta
