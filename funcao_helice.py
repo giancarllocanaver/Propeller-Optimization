@@ -117,22 +117,6 @@ class helice:
 
                 cl = cl / (np.sqrt(1 - Ma**2))
                 cd = cd / (np.sqrt(1 - Ma**2))
-
-                if self.bool_val == True:
-                    self.df_val = self.df_val.append(
-                        pd.DataFrame(
-                            {
-                                "Velocidade": [self.v],
-                                "RPM": [self.rpm],
-                                "Alpha": [alpha],
-                                "Re": [re],
-                                "Cl": [cl],
-                                "Cd": [cd],
-                                "Tipo": ["Solucao viscosa sem interpolação"],
-                            }
-                        ),
-                        ignore_index=True,
-                    )
                 
                 return cl, cd
             else:
@@ -140,52 +124,46 @@ class helice:
         
         def solucao_2():
             #TODO: verificar se se o delta alpha está muito pequeno
-                xfoil.rodar_xfoil(
-                    aerofolio,
-                    str(alpha - 25),
-                    str(alpha + 25),
-                    "0.5",
-                    str(re),
-                    str(Ma),
-                    "9",
-                    "100",
-                    "arquivo_dados_s2.txt",
-                    mudar_paineis=True,
-                    mostrar_grafico=False,
-                    ler_arquivo_coord=self.ler,
-                    compressibilidade=False,
-                    solucao_viscosa=True,
-                )
+            xfoil.rodar_xfoil(
+                aerofolio,
+                str(alpha - 5),
+                str(alpha + 5),
+                "0.25",
+                str(re),
+                str(Ma),
+                "9",
+                "100",
+                "arquivo_dados_s2.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=self.ler,
+                compressibilidade=False,
+                solucao_viscosa=True,
+            )
 
-                dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
-                os.remove("arquivo_dados_s2.txt")
+            dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
+            os.remove("arquivo_dados_s2.txt")
 
-                if dados.size >= 2:
+            try:
+                dados.shape[1]
+                if (dados.shape[0] >= 2) and (dados.size != 0):
                     cl = 0
-                    cd = interp1d(dados[0], dados[2], kind='cubic')
+                    
+                    if (dados.shape[0] == 2):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='linear', fill_value='extrapolate')
+                    elif (dados.shape[0] == 3):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='quadratic', fill_value='extrapolate')
+                    else:
+                        cd = interp1d(dados[:,0], dados[:,2], kind='cubic', fill_value='extrapolate')
 
                     cl = cl / (np.sqrt(1 - Ma**2))
                     cd = cd(alpha) / (np.sqrt(1 - Ma**2))
-
-                    if self.bool_val == True:
-                        self.df_val = self.df_val.append(
-                            pd.DataFrame(
-                                {
-                                    "Velocidade": [self.v],
-                                    "RPM": [self.rpm],
-                                    "Alpha": [alpha],
-                                    "Re": [re],
-                                    "Cl": [cl],
-                                    "Cd": [cd],
-                                    "Tipo": ["Solucao viscosa com interpolação"],
-                                }
-                            ),
-                            ignore_index=True,
-                        )
                 
                     return cl, cd
                 else:
                     return 0, 0
+            except IndexError:
+                return 0, 0
 
         def solucao_3():
             #TODO: verificar se se o delta alpha está muito pequeno
@@ -193,7 +171,7 @@ class helice:
                     aerofolio,
                     str(alpha),
                     str(alpha),
-                    "0.05",
+                    "0",
                     str(re),
                     str(Ma),
                     "9",
@@ -209,42 +187,49 @@ class helice:
             dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
             os.remove("arquivo_dados_s3.txt")
 
-            cl = 0
+            cl = dados[1]
+            if (cl > 2.5):
+                cl = 0
+
             cd = abs(dados[3])
 
-            cd = cd / (np.sqrt(1 - Ma**2))            
-
-            if self.bool_val == True:
-                    self.df_val = self.df_val.append(
-                        pd.DataFrame(
-                            {
-                                "Velocidade": [self.v],
-                                "RPM": [self.rpm],
-                                "Alpha": [alpha],
-                                "Re": [re],
-                                "Cl": [cl],
-                                "Cd": [cd],
-                                "Tipo": ["Solucao inviscida"],
-                            }
-                        ),
-                        ignore_index=True,
-                    )
+            cl = cl / (np.sqrt(1 - Ma**2))
+            cd = cd / (np.sqrt(1 - Ma**2))
 
             return cl, cd
 
         
         if (Ma < 1):
             cl, cd = solucao_1()
+            tipo_solucao = "Solucao viscosa sem interpolação"
 
             if (cl == 0 and cd == 0):
                 cl, cd = solucao_2()
+                tipo_solucao = "Solucao viscosa com interpolação"
 
                 if (cl == 0 and cd == 0):
                     cl, cd = solucao_3()
+                    tipo_solucao = "Solucao inviscida"
         else:
             cl = 0
-            cd = 1 
+            cd = 1
+            tipo_solucao = "Ma > 1"
 
+        if self.bool_val == True:
+            self.df_val = self.df_val.append(
+                pd.DataFrame(
+                    {
+                        "Velocidade": [self.v],
+                        "RPM": [self.rpm],
+                        "Alpha": [alpha],
+                        "Re": [re],
+                        "Cl": [cl],
+                        "Cd": [cd],
+                        "Tipo": [tipo_solucao],
+                    }
+                ),
+                ignore_index=True,
+            )
 
         return cl, cd
 
@@ -314,13 +299,10 @@ class helice:
         coef_T = self.integracao(np.array(dCT), r_new) * self.n
         coef_Q = self.integracao(np.array(dCQ), r_new) * self.n
 
-        if coef_T > 0 and coef_Q > 0:
-            coef_P = 2 * np.pi * coef_Q
+        coef_P = 2 * np.pi * coef_Q
 
-            eta = J * coef_T / coef_P
-        else:
-            eta = 0.1
-
+        eta = J * coef_T / coef_P
+        
         if self.bool_val == True:
             return eta, self.df_val
         else:
