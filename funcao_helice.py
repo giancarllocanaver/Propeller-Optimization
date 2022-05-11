@@ -2,6 +2,7 @@ import numpy as np
 import xfoil_funcao as xfoil
 import os
 import pandas as pd
+from scipy.interpolate import interp1d
 
 class helice:
     """
@@ -87,7 +88,8 @@ class helice:
 
         Caso Mach maior que 1 ou não convergência dos dados, será utililzado como padrão: CL=0 e CD=1
         """
-        if (Ma < 1) and (alpha <= 20 and alpha >= -20):
+
+        def solucao_1():
             # Tentativa de rodar solução viscosa
             xfoil.rodar_xfoil(
                 aerofolio,
@@ -98,7 +100,7 @@ class helice:
                 str(Ma),
                 "9",
                 "100",
-                "arquivo_dados_v.txt",
+                "arquivo_dados_s1.txt",
                 mudar_paineis=True,
                 mostrar_grafico=False,
                 ler_arquivo_coord=self.ler,
@@ -106,13 +108,12 @@ class helice:
                 solucao_viscosa=True,
             )
 
-            dados_v = np.loadtxt("arquivo_dados_v.txt", skiprows=12)
-            os.remove("arquivo_dados_v.txt")
+            dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+            os.remove("arquivo_dados_s1.txt")
 
-            # Sucesso na solução viscosa
-            if dados_v.size != 0:
-                cl = dados_v[1]
-                cd = abs(dados_v[2])
+            if dados.size != 0:
+                cl = dados[1]
+                cd = abs(dados[2])
 
                 cl = cl / (np.sqrt(1 - Ma**2))
                 cd = cd / (np.sqrt(1 - Ma**2))
@@ -127,24 +128,77 @@ class helice:
                                 "Re": [re],
                                 "Cl": [cl],
                                 "Cd": [cd],
-                                "Tipo": ["Solucao viscosa"],
+                                "Tipo": ["Solucao viscosa sem interpolação"],
                             }
                         ),
                         ignore_index=True,
                     )
-
-            # Fracasso na solução viscosa:
-            if dados_v.size == 0:
+                
+                return cl, cd
+            else:
+                return 0, 0
+        
+        def solucao_2():
+            #TODO: verificar se se o delta alpha está muito pequeno
                 xfoil.rodar_xfoil(
                     aerofolio,
-                    str(alpha),
-                    str(alpha),
-                    "0",
+                    str(alpha - 25),
+                    str(alpha + 25),
+                    "0.5",
                     str(re),
                     str(Ma),
                     "9",
                     "100",
-                    "arquivo_dados_i.txt",
+                    "arquivo_dados_s2.txt",
+                    mudar_paineis=True,
+                    mostrar_grafico=False,
+                    ler_arquivo_coord=self.ler,
+                    compressibilidade=False,
+                    solucao_viscosa=True,
+                )
+
+                dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
+                os.remove("arquivo_dados_s2.txt")
+
+                if dados.size >= 2:
+                    cl = 0
+                    cd = interp1d(dados[0], dados[2], kind='cubic')
+
+                    cl = cl / (np.sqrt(1 - Ma**2))
+                    cd = cd(alpha) / (np.sqrt(1 - Ma**2))
+
+                    if self.bool_val == True:
+                        self.df_val = self.df_val.append(
+                            pd.DataFrame(
+                                {
+                                    "Velocidade": [self.v],
+                                    "RPM": [self.rpm],
+                                    "Alpha": [alpha],
+                                    "Re": [re],
+                                    "Cl": [cl],
+                                    "Cd": [cd],
+                                    "Tipo": ["Solucao viscosa com interpolação"],
+                                }
+                            ),
+                            ignore_index=True,
+                        )
+                
+                    return cl, cd
+                else:
+                    return 0, 0
+
+        def solucao_3():
+            #TODO: verificar se se o delta alpha está muito pequeno
+            xfoil.rodar_xfoil(
+                    aerofolio,
+                    str(alpha),
+                    str(alpha),
+                    "0.05",
+                    str(re),
+                    str(Ma),
+                    "9",
+                    "100",
+                    "arquivo_dados_s3.txt",
                     mudar_paineis=True,
                     mostrar_grafico=False,
                     ler_arquivo_coord=self.ler,
@@ -152,69 +206,45 @@ class helice:
                     solucao_viscosa=False,
                 )
 
-                dados_i = np.loadtxt("arquivo_dados_i.txt", skiprows=12)
-                os.remove("arquivo_dados_i.txt")
+            dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
+            os.remove("arquivo_dados_s3.txt")
 
-                cl = dados_i[1]
-                cd = abs(dados_i[3])
-
-                if dados_i.size != 0:
-                    cl = cl / (np.sqrt(1 - Ma**2))
-                    cd = cd / (np.sqrt(1 - Ma**2))
-
-                    if self.bool_val == True:
-                        self.df_val = self.df_val.append(
-                            pd.DataFrame(
-                                {
-                                    "Velocidade": [self.v],
-                                    "RPM": [self.rpm],
-                                    "Alpha": [alpha],
-                                    "Re": [re],
-                                    "Cl": [cl],
-                                    "Cd": [cd],
-                                    "Tipo": ["Solucao inviscida"],
-                                }
-                            ),
-                            ignore_index=True,
-                        )
-                else:
-                    cl = 0
-                    cd = 1
-
-                    if self.bool_val == True:
-                        self.df_val = self.df_val.append(
-                            pd.DataFrame(
-                                {
-                                    "Velocidade": [self.v],
-                                    "RPM": [self.rpm],
-                                    "Alpha": [alpha],
-                                    "Re": [re],
-                                    "Cl": [cl],
-                                    "Cd": [cd],
-                                    "Tipo": ["Solucao não encontrada - tipo 1"],
-                                }
-                            ),
-                            ignore_index=True,
-                        )
-        else:
             cl = 0
-            cd = 1
+            cd = abs(dados[3])
+
+            cd = cd / (np.sqrt(1 - Ma**2))            
 
             if self.bool_val == True:
-                self.df_val = self.df_val.append(
-                    pd.DataFrame(
-                        {
-                            "Velocidade": [self.v],
-                            "RPM": [self.rpm],
-                            "Alpha": [alpha],
-                            "Re": [re],
-                            "Cl": [0],
-                            "Cd": [1],
-                            "Tipo": ["Solucao não encontrada - tipo 2"],
-                        }
-                    ),
-                    ignore_index=True,
-                )
+                    self.df_val = self.df_val.append(
+                        pd.DataFrame(
+                            {
+                                "Velocidade": [self.v],
+                                "RPM": [self.rpm],
+                                "Alpha": [alpha],
+                                "Re": [re],
+                                "Cl": [cl],
+                                "Cd": [cd],
+                                "Tipo": ["Solucao inviscida"],
+                            }
+                        ),
+                        ignore_index=True,
+                    )
+
+            return cl, cd
+
+        
+        if (Ma < 1):
+            cl, cd = solucao_1()
+
+            if (cl == 0 and cd == 0):
+                cl, cd = solucao_2()
+
+                if (cl == 0 and cd == 0):
+                    cl, cd = solucao_3()
+        else:
+            cl = 0
+            cd = 1 
+
 
         return cl, cd
 
