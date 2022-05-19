@@ -22,6 +22,7 @@ def rodar_xfoil(
     ler_arquivo_coord=False,
     compressibilidade=False,
     solucao_viscosa=False,
+    solucao_com_interpolacao=False
 ):
     """ "
     Com esta função, é possível de se obter os resultados do XFOIL para dado aerofólio.
@@ -92,7 +93,7 @@ def rodar_xfoil(
     if mudar_paineis == True:
         arquivo_de_input.write("PPAR" + "\n")
         arquivo_de_input.write("N" + "\n")
-        arquivo_de_input.write("200" + "\n")
+        arquivo_de_input.write("160" + "\n")
         arquivo_de_input.write("\n")
         arquivo_de_input.write("\n")
 
@@ -133,7 +134,11 @@ def rodar_xfoil(
         p = subprocess.Popen(
             "xfoil.exe < " + nome_do_arquivo_de_input_do_xfoil, shell=True
         )
-        p.wait(timeout=3)
+
+        if not solucao_com_interpolacao:
+            p.wait(timeout=5)
+        else:
+            p.wait(timeout=60)
     except subprocess.TimeoutExpired:
         kill(p.pid)
         time.sleep(1)

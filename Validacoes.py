@@ -29,7 +29,7 @@ beta = np.array([46.3, 43.25, 38.1, 31.65, 26.3, 22.4, 19.5, 0]) * np.pi / 180.0
 c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0]) * 0.0254
 
 # Inputs da simulação
-v_list = [50, 100]
+v_list = [vel for vel in range(5,50, 1)]
 rpm_list = [1000, 2000]
 
 # Geração de um DataFrame para validação
@@ -40,7 +40,7 @@ df_resultados_aerof = pd.DataFrame(
 
 for v in v_list:
     for rpm in rpm_list:
-        eta, df_aerof = helice(
+        eta, df_aerof, df_resultados_helice = helice(
             aerofolios,
             v,
             1.789e-5,
@@ -52,15 +52,13 @@ for v in v_list:
             c,
             beta,
             rpm,
+            Solucoes_ligadas=['solucao_3'],
             validacao=True,
+            condicao_cl_grande=False
         ).rodar_helice()
 
-        df_resultados_helice = df_resultados_helice.append(
-            pd.DataFrame({"Velocidade": [v], "RPM": [rpm], "Eficiencia": [eta]}),
-            ignore_index=True,
-        )
-
-        df_resultados_aerof = pd.concat([df_resultados_aerof,df_aerof], axis=0, ignore_index=True)
+        df_resultados_helice = df_resultados_helice.append(df_resultados_helice, ignore_index=True)
+        df_aerof = df_aerof.append(df_aerof, ignore_index=True)
 
 # Geração do arquivo em Excel
 now = datetime.now()
