@@ -49,7 +49,8 @@ class helice:
         ler_coord_arq_ext: bool=False,
         validacao: bool=False,
         condicao_cl_grande: bool=False,
-        ligar_interpolacao_2a_ordem: bool=False
+        ligar_interpolacao_2a_ordem: bool=False,
+        ligar_solucao_aerof_naca: bool=False
     ):
         # Inicialização dos parâmetros de input
         self.aerof = Aerofolios
@@ -68,6 +69,7 @@ class helice:
         self.bool_val = False
         self.condicao_cl = condicao_cl_grande
         self.condicao_2a_ordem = ligar_interpolacao_2a_ordem
+        self.solucao_naca = ligar_solucao_aerof_naca
         
         # Caso o usuário queira ver validação, gera-se um DataFrame vazio
         if validacao == True:
@@ -118,6 +120,7 @@ class helice:
                 ler_arquivo_coord=self.ler,
                 compressibilidade=False,
                 solucao_viscosa=True,
+                solucoes_NACA=self.solucao_naca
             )
 
             dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
@@ -211,6 +214,7 @@ class helice:
                     ler_arquivo_coord=self.ler,
                     compressibilidade=False,
                     solucao_viscosa=False,
+                    solucoes_NACA=self.solucao_naca
                 )
 
             dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
@@ -320,20 +324,25 @@ class helice:
         T = self.integracao(np.array(dT), r_new) * self.n
         Q = self.integracao(np.array(dQ), r_new) * self.n
 
-        P = 2 * np.pi * Q
+        n = self.rpm / 60
 
-        eta = J * T / P
+        Ct = T/(self.rho * n**2 * self.D**4)
+        Cq = Q/(self.rho * n**2 * self.D**5)
+
+        Cp = 2 * np.pi * Cq
+
+        eta = J * Ct / Cp
         
         if (self.bool_val == True) and (T >= 0) and (Q > 0):
             self.df_val_helice = self.df_val_helice.append(
-                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q]}),
+                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
                 ignore_index=True
             )
             
             return eta, self.df_val_aerof, self.df_val_helice
         elif ((T <= 0) or (Q <= 0)) and (self.bool_val == True):
             self.df_val_helice = self.df_val_helice.append(
-                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q]}),
+                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
                 ignore_index=True
             )
             
