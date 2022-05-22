@@ -21,7 +21,7 @@ bezier.mudar_A(ponto=2, mudanca_x=0, mudanca_y=0, mudanca_adicional=True)
 
 linhas, _, _, _ = bezier.bezier_mudar_A(tamanho=10)
 
-aerofolios = [linhas for _ in range(8)]
+aerofolios = ["NACA 4412" for _ in range(8)]
 
 # Inputs da hélice
 raio = np.array([10, 12, 18, 24, 30, 36, 42, 48]) * 0.0254
@@ -29,36 +29,43 @@ beta = np.array([46.3, 43.25, 38.1, 31.65, 26.3, 22.4, 19.5, 0]) * np.pi / 180.0
 c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0]) * 0.0254
 
 # Inputs da simulação
-v_list = [vel for vel in range(5,50, 1)]
-rpm_list = [1000, 2000]
+# v_list = [vel for vel in np.arange()]
+v_list = np.arange(0.5, 51, 2.5)
+rpm_list = [1000]
+solutions = ['solucao_1', 'solucao_3']
 
 # Geração de um DataFrame para validação
-df_resultados_helice = pd.DataFrame({"Velocidade": [], "RPM": [], "Eficiencia": []})
-df_resultados_aerof = pd.DataFrame(
-    {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": []}
+df_resultados_helice = pd.DataFrame(
+    {"Velocidade": [], "RPM": [], "J": [], "Eficiencia": [], "Tração": [], "Torque": [], "Solucao": []}
 )
+df_resultados_aerof = pd.DataFrame(
+    {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": [], "Solucao": []}
+)   
 
 for v in v_list:
     for rpm in rpm_list:
-        eta, df_aerof, df_resultados_helice = helice(
-            aerofolios,
-            v,
-            1.789e-5,
-            288.2,
-            1.225,
-            96 * 0.0254,
-            2,
-            raio,
-            c,
-            beta,
-            rpm,
-            Solucoes_ligadas=['solucao_3'],
-            validacao=True,
-            condicao_cl_grande=False
-        ).rodar_helice()
+        for sol in solutions:
+            if (v != v_list[0]):
+                df_resultados_helice = df_resultados_helice.append(result_helice, ignore_index=True)
+                df_resultados_aerof = df_resultados_aerof.append(result_aerof, ignore_index=True)
 
-        df_resultados_helice = df_resultados_helice.append(df_resultados_helice, ignore_index=True)
-        df_aerof = df_aerof.append(df_aerof, ignore_index=True)
+            eta, result_aerof, result_helice = helice(
+                aerofolios,
+                v,
+                1.789e-5,
+                288.2,
+                1.225,
+                96 * 0.0254,
+                2,
+                raio,
+                c,
+                beta,
+                rpm,
+                Solucoes_ligadas=[sol],
+                validacao=True,
+                condicao_cl_grande=False,
+                ligar_solucao_aerof_naca=True
+            ).rodar_helice()
 
 # Geração do arquivo em Excel
 now = datetime.now()
@@ -66,3 +73,19 @@ with pd.ExcelWriter("Resultados-validacao-" + now.strftime("%d-%m-%Y %H-%M") +".
     df_resultados_helice.to_excel(writer, sheet_name="Resultados Helice")
     df_resultados_aerof.to_excel(writer, sheet_name="Resultados Aerofolio")
     writer.save()
+
+# Plots
+selecao = df_resultados_helice["Solucao"] == "solucao_3"
+raz_avanco_inv = df_resultados_helice[selecao]["J"].to_numpy()
+eficiencia_inv = df_resultados_helice[selecao]["Eficiencia"].to_numpy()
+
+selecao = df_resultados_helice["Solucao"] == "solucao_1"
+raz_avanco_visc = df_resultados_helice[selecao]["J"].to_numpy()
+eficiencia_visc = df_resultados_helice[selecao]["Eficiencia"].to_numpy()
+
+plt.plot(raz_avanco_inv, eficiencia_inv, 'x', color='blue')
+plt.plot(raz_avanco_visc, eficiencia_visc, 'x', color='red')
+plt.xlabel(xlabel="J")
+plt.ylabel(ylabel="Eficiencia")
+plt.legend(["Solucao Inviscida", "Solucao Viscosa"])
+plt.savefig("NACA 4412_J_x_eta_sol_1_e_3.jpg")

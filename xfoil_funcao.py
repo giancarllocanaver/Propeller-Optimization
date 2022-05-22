@@ -22,7 +22,8 @@ def rodar_xfoil(
     ler_arquivo_coord=False,
     compressibilidade=False,
     solucao_viscosa=False,
-    solucao_com_interpolacao=False
+    solucao_com_interpolacao=False,
+    solucoes_NACA=False
 ):
     """ "
     Com esta função, é possível de se obter os resultados do XFOIL para dado aerofólio.
@@ -45,32 +46,33 @@ def rodar_xfoil(
     if os.path.exists("Arquivo_coordenadas.txt"):
         os.remove("Arquivo_coordenadas.txt")
 
-    arquivo = open("Arquivo_coordenadas.txt", "w")
+    if not solucoes_NACA:
+        arquivo = open("Arquivo_coordenadas.txt", "w")
 
-    if ler_arquivo_coord == True:
-        for i in range(15):
-            try:
-                np.loadtxt(curvas_aerofolio, skiprows=i)
-            except:
-                continue
-            else:
-                arquivo_2 = np.loadtxt(curvas_aerofolio, skiprows=i)
-                x = arquivo_2[:, 0]
-                y = arquivo_2[:, 1]
+        if ler_arquivo_coord == True:
+            for i in range(15):
+                try:
+                    np.loadtxt(curvas_aerofolio, skiprows=i)
+                except:
+                    continue
+                else:
+                    arquivo_2 = np.loadtxt(curvas_aerofolio, skiprows=i)
+                    x = arquivo_2[:, 0]
+                    y = arquivo_2[:, 1]
 
-                y[0] = 0
-                y[-1] = 0
+                    y[0] = 0
+                    y[-1] = 0
 
-                curvas_aerofolio = np.array((x, y))
+                    curvas_aerofolio = np.array((x, y))
 
-                break
+                    break
 
-    for i in range(len(curvas_aerofolio[0])):
-        a = str(round(float(curvas_aerofolio[0, i]), 5))
-        b = str(round(float(curvas_aerofolio[1, i]), 5))
-        arquivo.write(" " + a + "     " + b + "\n")
+        for i in range(len(curvas_aerofolio[0])):
+            a = str(round(float(curvas_aerofolio[0, i]), 5))
+            b = str(round(float(curvas_aerofolio[1, i]), 5))
+            arquivo.write(" " + a + "     " + b + "\n")
 
-    arquivo.close()
+        arquivo.close()
 
     nome_do_arquivo_de_input_do_xfoil = "arquivo_de_input.txt"
 
@@ -87,8 +89,11 @@ def rodar_xfoil(
         arquivo_de_input.write("G" + "\n")
         arquivo_de_input.write("\n")
 
-    arquivo_de_input.write("LOAD" + "\n")
-    arquivo_de_input.write("Arquivo_coordenadas.txt" + "\n")
+    if not solucoes_NACA:
+        arquivo_de_input.write("LOAD" + "\n")
+        arquivo_de_input.write("Arquivo_coordenadas.txt" + "\n")
+    else:
+        arquivo_de_input.write(curvas_aerofolio + "\n")
 
     if mudar_paineis == True:
         arquivo_de_input.write("PPAR" + "\n")
@@ -136,7 +141,7 @@ def rodar_xfoil(
         )
 
         if not solucao_com_interpolacao:
-            p.wait(timeout=5)
+            p.wait(timeout=1)
         else:
             p.wait(timeout=60)
     except subprocess.TimeoutExpired:
@@ -144,4 +149,6 @@ def rodar_xfoil(
         time.sleep(1)
 
     os.remove(nome_do_arquivo_de_input_do_xfoil)
-    os.remove("Arquivo_coordenadas.txt")
+    
+    if not solucoes_NACA:
+        os.remove("Arquivo_coordenadas.txt")
