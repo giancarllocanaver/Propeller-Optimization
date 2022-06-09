@@ -18,7 +18,7 @@ class Bezier:
 
         if aerofolio_base == False:
             self.arquivo_coord_aerof = np.loadtxt(
-                abrir_arquivo_aeerof, skiprows=linhas_a_pular
+                arquivo_base, skiprows=linhas_a_pular
             )
 
             x = arquivo[:, 0]

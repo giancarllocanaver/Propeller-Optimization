@@ -200,22 +200,22 @@ class helice:
 
         def solucao_3():
             xfoil.rodar_xfoil(
-                    aerofolio,
-                    str(alpha),
-                    str(alpha),
-                    "0",
-                    str(re),
-                    str(Ma),
-                    "9",
-                    "100",
-                    "arquivo_dados_s3.txt",
-                    mudar_paineis=True,
-                    mostrar_grafico=False,
-                    ler_arquivo_coord=self.ler,
-                    compressibilidade=False,
-                    solucao_viscosa=False,
-                    solucoes_NACA=self.solucao_naca
-                )
+                aerofolio,
+                str(alpha),
+                str(alpha),
+                "0",
+                str(re),
+                str(Ma),
+                "9",
+                "100",
+                "arquivo_dados_s3.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=self.ler,
+                compressibilidade=False,
+                solucao_viscosa=False,
+                solucoes_NACA=self.solucao_naca
+            )
 
             dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
             os.remove("arquivo_dados_s3.txt")
