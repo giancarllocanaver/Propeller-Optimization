@@ -143,7 +143,7 @@ def rodar_xfoil(
         if not solucao_com_interpolacao:
             p.wait(timeout=1)
         else:
-            p.wait(timeout=60)
+            p.wait(timeout=5)
     except subprocess.TimeoutExpired:
         kill(p.pid)
         time.sleep(1)

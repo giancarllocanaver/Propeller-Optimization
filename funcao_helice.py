@@ -157,7 +157,8 @@ class helice:
                     ler_arquivo_coord=self.ler,
                     compressibilidade=False,
                     solucao_viscosa=True,
-                    solucao_com_interpolacao=True
+                    solucao_com_interpolacao=True,
+                    solucoes_NACA=self.solucao_naca
                 )
 
                 dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
@@ -331,21 +332,24 @@ class helice:
 
         Cp = 2 * np.pi * Cq
 
-        eta = J * Ct / Cp
-        
-        if (self.bool_val == True) and (T >= 0) and (Q > 0):
-            self.df_val_helice = self.df_val_helice.append(
+        if Cp != 0:
+            eta = J * Ct / Cp
+
+        if (T >=0) and (Q > 0):
+            if not self.bool_val:
+                return eta
+            else:
+                self.df_val_helice = self.df_val_helice.append(
                 pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
                 ignore_index=True
             )
-            
-            return eta, self.df_val_aerof, self.df_val_helice
-        elif ((T <= 0) or (Q <= 0)) and (self.bool_val == True):
-            self.df_val_helice = self.df_val_helice.append(
-                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
-                ignore_index=True
-            )
-            
-            return eta, self.df_val_aerof, self.df_val_helice
+                return eta, self.df_val_aerof, self.df_val_helice
         else:
-            return np.NaN
+            if not self.bool_val:
+                return np.NaN
+            else:
+                self.df_val_helice = self.df_val_helice.append(
+                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
+                ignore_index=True
+            )
+                return np.NaN, self.df_val_aerof, self.df_val_helice

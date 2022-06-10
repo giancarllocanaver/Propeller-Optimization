@@ -3,13 +3,17 @@ from funcoes_de_bezier import Bezier
 from funcao_helice import helice
 
 class FuncaoObjetivo:
-    def __init__(self, x, aerof_inicial, otimizar):
-        self.x = x
+    def __init__(self, matriz, aerof_inicial, otimizar):
+        self.matriz = matriz
         self.aerof_inicial = aerof_inicial
         self.otimizar = otimizar
         
         if not 'bezier' in otimizar:
-            rodar_helice(aerofolios=aerof_inicial, beta=True)
+            resultados = self.rodar_helice(aerofolios=aerof_inicial, beta=True)
+            mean = np.nanmean(resultados)
+            resultados[np.isnan(resultados)] = mean
+
+            self.resultados = resultados
     
     def rodar_bezier(self, aerof_base):
         bezier = Bezier()
@@ -34,12 +38,12 @@ class FuncaoObjetivo:
 
         result_gerais = []
 
-        for pos in self.x:
+        for pos in self.matriz:
             beta = np.append(pos, 0)*np.pi/180.
 
-            result_indv, _, _ = helice(
+            result_indv = helice(
                 Aerofolios=aerofolios,
-                Velocidade_da_aeronave=50,
+                Velocidade_da_aeronave=3,
                 Viscosidade_dinamica=1.789e-5,
                 Temperatura=288.2,
                 Densidade_do_ar=1.225,
@@ -48,12 +52,16 @@ class FuncaoObjetivo:
                 Array_raio_da_secao=raio,
                 Array_tamanho_de_corda_da_secao=c,
                 Array_angulo_beta_da_secao=beta,
-                Rotacao_motor=3600.,
-                Solucoes_ligadas=['solucao_3'],
-                ligar_solucao_aerof_naca=True
+                Rotacao_motor=1000.,
+                Solucoes_ligadas=['solucao_1'],
+                ligar_solucao_aerof_naca=True,
+                ligar_interpolacao_2a_ordem=True
             ).rodar_helice()
             result_gerais.append(1/result_indv)
         
         return np.array(result_gerais)
+    
+    def retornar_resultados(self):
+        return self.resultados
         
 
