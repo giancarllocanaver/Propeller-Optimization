@@ -9,7 +9,7 @@ class Bezier:
 
     Classe com objetivo de execultar diversas funcionalidades de Bezier
     """
-    def __init__(self, aerofolio_base=True, arquivo_base=""):
+    def __init__(self, aerofolio_base=True, arquivo_base="", linhas_a_pular=None, arquivo=None):
         if aerofolio_base == True:
             x = np.array([1, 0.32957, 0, 0.32957, 1])
             y = np.array([0, 0.04497, 0, -0.04497, 0])
