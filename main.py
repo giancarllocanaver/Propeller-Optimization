@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from pso import OtimizacaoHelice
+from PSO import OtimizacaoHelice
 
 if __name__ == '__main__':
     qde_iteracoes = 5
