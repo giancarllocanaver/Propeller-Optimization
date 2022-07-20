@@ -10,13 +10,17 @@ class Bezier:
     Classe com objetivo de execultar diversas funcionalidades de Bezier
     """
     def __init__(self, aerofolio_base=True, arquivo_base="", linhas_a_pular=None, arquivo=None):
-        if aerofolio_base == True:
+        self.linhas = None
+        self.A_out = None
+        self.B_out = None
+                
+        if aerofolio_base:
             x = np.array([1, 0.32957, 0, 0.32957, 1])
             y = np.array([0, 0.04497, 0, -0.04497, 0])
 
             self.arquivo_coord_aerof = np.array((x, y))
 
-        if aerofolio_base == False:
+        if not aerofolio_base:
             self.arquivo_coord_aerof = np.loadtxt(
                 arquivo_base, skiprows=linhas_a_pular
             )
@@ -56,7 +60,7 @@ class Bezier:
                 - Linha 1: ponstos y
         """
 
-        pontos_p = self.arquivo_coord_aerof
+        pontos_p = self.arquivo_coord_aerof.copy()
 
         def interseccao(curvas):
             def intersection(x1, x2, x3, x4, y1, y2, y3, y4):
@@ -166,17 +170,18 @@ class Bezier:
             curvas = []
             curva_de_bezier = []
 
-        self.linhas = np.array((linhas_1, linhas_2))
-        self.A_out = np.array((A_out_1, A_out_2))
-        self.B_out = np.array((B_out_1, B_out_2))
+        linhas = np.array((linhas_1, linhas_2))
+        A_out = np.array((A_out_1, A_out_2))
+        B_out = np.array((B_out_1, B_out_2))
 
         self.linhas = np.reshape(
-            self.linhas, (self.linhas.shape[0], self.linhas.shape[1])
+            linhas, (linhas.shape[0], linhas.shape[1])
         )
-        self.A_out = np.reshape(self.A_out, (self.A_out.shape[0], self.A_out.shape[1]))
+        self.A_out = np.reshape(A_out, (A_out.shape[0], A_out.shape[1]))
+        self.B_out = B_out.copy()
 
         if retornar == True:
-            return self.linhas, self.A_out, self.B_out
+            return linhas, A_out, B_out
 
     def mudar_A(
         self, ponto, mudanca_x, mudanca_y, mudanca_adicional=True, retornar=False
@@ -195,15 +200,18 @@ class Bezier:
 
             retornar: retorna os novos valores de A
         """
+        a = self.A_out.copy()
         if mudanca_adicional == True:
-            self.A_out[0, (ponto - 1)] += mudanca_x
-            self.A_out[1, (ponto - 1)] += mudanca_y
+            a[0, (ponto - 1)] += mudanca_x
+            a[1, (ponto - 1)] += mudanca_y
         else:
-            self.A_out[0, (ponto - 1)] = mudanca_x
-            self.A_out[1, (ponto - 1)] = mudanca_y
+            a[0, (ponto - 1)] = mudanca_x
+            a[1, (ponto - 1)] = mudanca_y
+
+        self.A_out = a.copy()
 
         if retornar == True:
-            return self.A_out
+            return a
 
     def bezier_mudar_A(self, tamanho):
         """
@@ -235,8 +243,8 @@ class Bezier:
                 - Linha 1: pontos y
         """
 
-        pontos = self.arquivo_coord_aerof
-        a = self.A_out
+        pontos = self.arquivo_coord_aerof.copy()
+        a = self.A_out.copy()
 
         def escala(novas_curvas):
             theta_1 = np.min(novas_curvas[0])
@@ -400,6 +408,10 @@ class Bezier:
         array_final_dois = np.append(array_final_dois, 0)
 
         linhas = np.array((array_final_um, array_final_dois))
+
+        self.linhas = linhas.copy()
+        self.A_out = a.copy()
+        self.B_out = B_out.copy()
 
         if interseccao(linhas) == 1:
             return np.array([[0], [0]]), 0, 0, 0
