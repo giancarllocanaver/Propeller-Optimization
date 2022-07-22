@@ -1,5 +1,5 @@
 import numpy as np
-
+from gerenciador_aerofolios import GerenciaAerofolios
 
 class Bezier:
     """
@@ -9,19 +9,19 @@ class Bezier:
 
     Classe com objetivo de execultar diversas funcionalidades de Bezier
     """
-    def __init__(self, tamanho_entre_pontos_p: int=20, aerofolio_base=True, x=None, y=None):
+    def __init__(self, tamanho_entre_pontos_p: int=20):
         self.tamanho_entre_p = tamanho_entre_pontos_p
-        self.pontos_aerofolio = None
+        self.pontos_p = None
         self.pontos_a = None
         self.pontos_b = None
-                
-        if not aerofolio_base:
-            self.gerar_aerofolio(
-                x=x,
-                y=y
-            )
-        else:
-            self.gerar_aerofolio_base()
+
+    def gerar_aerofolio_aleatorio(self):
+        controle_aerof = GerenciaAerofolios()
+        pontos_p = controle_aerof.gerar_pontos_P()
+
+        self.pontos_p = pontos_p
+
+        return pontos_p
 
     def gerar_aerofolio_base(self):
         x = np.array([1, 0.32957, 0, 0.32957, 1])
@@ -255,7 +255,7 @@ class Bezier:
         if retornar:
             return linhas, A_out, B_out, pontos_p
 
-    def mudar_pontos_de_bezier(self):
+    def mudar_pontos_de_bezier(self, pontos_p, a):
         """
         Esta definição consegue gerar novas curvas a partir da mudança dos pontos A de Bezier
 
@@ -285,8 +285,7 @@ class Bezier:
                 - Linha 1: pontos y
         """
 
-        pontos = self.pontos_p.copy()
-        a = self.pontos_a.copy()
+        pontos = pontos_p
 
         def novos_pontos_p(a, pontos, n):
             p_1 = (2 * a[0] + a[1] - pontos[0]) / 2
@@ -385,11 +384,12 @@ class Bezier:
             linhas = self.escalar(linhas)
             return linhas, a, B_out, novos_pontos
 
-    def atualizar_aerofolio(self, pontos_x, pontos_y):
+    def atualizar_aerofolio(self, pontos_x, pontos_y, pontos_p):
         pontos = []
         for i in range(4):
             pontos.append([pontos_x[i][0], pontos_y[i][0]])
 
+        self.pontos_a = np.array([pontos_x, pontos_y])
         ponto = 0
         for ponto_x, ponto_y in pontos:
             ponto = ponto + 1
@@ -400,10 +400,12 @@ class Bezier:
                 mudanca_adicional=False
             )
 
-        curvas_aerofolio, a, b, pontos_p = self.mudar_pontos_de_bezier()
+        curvas_aerofolio, a, b, pontos_p = self.mudar_pontos_de_bezier(
+            pontos_p=pontos_p,
+            a=self.pontos_a
+        )
         
         self.pontos_a = a.copy()
         self.pontos_b = b.copy()
-        self.pontos_p = pontos_p.copy()
 
         return curvas_aerofolio, a, b, pontos_p

@@ -3,25 +3,49 @@ from funcoes_de_bezier import Bezier
 from funcao_helice import helice
 
 class FuncaoObjetivo:
-    def __init__(self, matriz, aerof_inicial, otimizar):
+    def __init__(self, matriz, otimizar, pontos_p=None, inicial=False):
         self.matriz = matriz
-        self.aerof_inicial = aerof_inicial
         self.otimizar = otimizar
+        self.inicial = inicial
         
         if not 'bezier' in otimizar:
-            resultados = self.rodar_helice(aerofolios=aerof_inicial, beta=True)
+            resultados = self.rodar_helice(aerofolios="NACA 4412", beta=True)
             mean = np.nanmean(resultados)
             resultados[np.isnan(resultados)] = mean
 
             self.resultados = resultados
+        else:
+            self.rodar_bezier(pontos_p=pontos_p)
+        
     
-    def rodar_bezier(self, aerof_base):
-        bezier = Bezier()
-        self.linhas,_,_ = bezier.gerar_bezier(tamanho_entre_pontos=10, retornar=True)
+    def rodar_bezier(self, pontos_p):
+        particulas = self.matriz
+        self.contorno_aerofolio = []
+        self.novos_p = []
 
-        bezier.mudar_A(ponto=2, mudanca_x=0, mudanca_y=0, mudanca_adicional=True)
+        for particula in particulas:
+            ax = particula[8:12]
+            ay = particula[12:15]           
+            a = np.array([ax, ay])
 
-        self.linhas,_,_,_ = bezier.bezier_mudar_A(tamanho=10)
+            bezier_controller = Bezier()
+
+            if self.inicial:
+                linhas, _, _, _ = bezier_controller.mudar_pontos_de_bezier(
+                    pontos_p=pontos_p,
+                    a=a
+                )
+
+                self.contorno_aerofolio.append(linhas)
+            else:
+                linhas, a, _, pontos_p = bezier_controller.atualizar_aerofolio(
+                    pontos_x=a[0],
+                    pontos_y=a[1],
+                    pontos_p=pontos_p
+                )
+
+                self.contorno_aerofolio.append(linhas)
+                self.novos_p.append(pontos_p)       
 
     def rodar_helice(self, aerofolios=None, beta=None):
         raio = np.array([10,12,18,24,30,36,42,48])*0.0254

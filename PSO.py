@@ -3,9 +3,10 @@ from funcao_objetivo import FuncaoObjetivo
 from matplotlib import pyplot as plt
 import os
 import pandas as pd
+from funcoes_de_bezier import Bezier
 
 class OtimizacaoHelice:
-    def __init__(self, qde_iteracoes, qde_de_particulas, aerofolio_inicial=['NACA 4412'], otimizar=['bezier', 'beta']):
+    def __init__(self, qde_iteracoes, qde_de_particulas, otimizar=['bezier', 'beta']):
         self.qde_particulas = qde_de_particulas
         self.v = np.array([])
         self.objetivo = np.array([])
@@ -19,33 +20,51 @@ class OtimizacaoHelice:
         self.t = 0
         self.convergencia = []
         self.t_list = []
-        self.aerof_inicial = aerofolio_inicial
         self.var = otimizar
+        self.pontos_p = []
+
+        self.start()
 
     def criar_aleatorios(self, limite_inferior, limite_superior, quantidade):
         aleatorios = [round(np.random.uniform(limite_inferior, limite_superior), 2) for _ in range(quantidade)]
 
         return aleatorios
     
-    def rodar_fo(self, matriz_valores, aerof_inicial, otimizar):
+    def rodar_fo(self, matriz_valores, otimizar, pontos_p):
         resultados = FuncaoObjetivo(
             matriz=matriz_valores,
-            aerof_inicial=aerof_inicial,
-            otimizar=otimizar
+            otimizar=otimizar,
+            pontos_p=pontos_p
         )
         
         return resultados.retornar_resultados()
 
+    def criar_matriz_inicial(self):
+        matriz = self.criar_aleatorios(limite_inferior=19.5, limite_superior=46.3, quantidade=7)
+        
+        bezier_controller = Bezier()
+        pontos_p = bezier_controller.gerar_aerofolio_aleatorio()
+        _, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
+
+        self.pontos_p.append(pontos_p)
+        
+        for ax in a0[0]:
+            matriz.append(ax[0])
+
+        for ay in a0[1]:
+            matriz.append(ay[0])
+
+        return matriz
+
     def start(self):
         # Matriz PSO:
-        self.matriz = np.array([self.criar_aleatorios(limite_inferior=19.5, limite_superior=46.3, quantidade=7) for _ in range(self.qde_particulas)])
-        # self.matriz = np.random.randint(low=4, high=8, size=(self.qde_part, 7))
-        self.v = np.zeros((self.qde_particulas, 7), dtype=float)
+        self.matriz = np.array([self.criar_matriz_inicial() for _ in range(self.qde_particulas)])
+        self.v = np.zeros((self.qde_particulas, self.matriz.shape[1]), dtype=float)
 
         self.objetivo = self.rodar_fo(
             matriz_valores=self.matriz,
-            aerof_inicial=self.aerof_inicial,
-            otimizar=self.var
+            otimizar=self.var,
+            pontos_p=self.pontos_p,
         )
 
         self.p_best = self.matriz
