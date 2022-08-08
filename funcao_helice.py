@@ -334,22 +334,19 @@ class helice:
 
         if Cp != 0:
             eta = J * Ct / Cp
-
-        if (T >=0) and (Q > 0):
-            if not self.bool_val:
-                return eta
-            else:
-                self.df_val_helice = self.df_val_helice.append(
-                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
-                ignore_index=True
-            )
-                return eta, self.df_val_aerof, self.df_val_helice
         else:
-            if not self.bool_val:
-                return np.NaN
-            else:
-                self.df_val_helice = self.df_val_helice.append(
-                pd.DataFrame({"Velocidade": [self.v], "RPM": [self.rpm], "J": [J], "Eficiencia": [eta], "Tração": [T], "Torque": [Q], "Solucao": [self.solucoes[0]]}),
-                ignore_index=True
-            )
-                return np.NaN, self.df_val_aerof, self.df_val_helice
+            eta = np.NaN
+
+        resultados = {
+            "velocidade": self.v,
+            "rpm": self.rpm,
+            "J": J,
+            "eta": eta,
+            "T": T,
+            "Q": Q,
+            "Cp": Cp,
+            "Ct": Ct,
+            "Cq": Cq
+        }
+
+        return resultados

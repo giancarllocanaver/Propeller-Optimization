@@ -6,74 +6,33 @@ import pandas as pd
 from funcoes_de_bezier import Bezier
 
 class OtimizacaoHelice:
-    def __init__(self, qde_iteracoes, qde_de_particulas, otimizar=['bezier', 'beta']):
+    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo):
         self.qde_particulas = qde_de_particulas
-        self.v = np.array([])
-        self.objetivo = np.array([])
-        self.p_best = np.array([])
-        self.g_best = np.array([])
-        self.c1 = 0
-        self.c2 = 0
-        self.w = 0
-        self.r = 0
-        self.N = qde_iteracoes
-        self.t = 0
-        self.convergencia = []
-        self.t_list = []
-        self.var = otimizar
-        self.pontos_p = []
-
-        self.start()
-
-    def criar_aleatorios(self, limite_inferior, limite_superior, quantidade):
-        aleatorios = [round(np.random.uniform(limite_inferior, limite_superior), 2) for _ in range(quantidade)]
-
-        return aleatorios
-    
-    def rodar_fo(self, matriz_valores, otimizar, pontos_p):
-        resultados = FuncaoObjetivo(
-            matriz=matriz_valores,
-            otimizar=otimizar,
-            pontos_p=pontos_p
-        )
-        
-        return resultados.retornar_resultados()
-
-    def criar_matriz_inicial(self):
-        matriz = self.criar_aleatorios(limite_inferior=19.5, limite_superior=46.3, quantidade=7)
-        
-        bezier_controller = Bezier()
-        pontos_p = bezier_controller.gerar_aerofolio_aleatorio()
-        _, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
-
-        self.pontos_p.append(pontos_p)
-        
-        for ax in a0[0]:
-            matriz.append(ax[0])
-
-        for ay in a0[1]:
-            matriz.append(ay[0])
-
-        return matriz
-
-    def start(self):
-        # Matriz PSO:
-        self.matriz = np.array([self.criar_matriz_inicial() for _ in range(self.qde_particulas)])
-        self.v = np.zeros((self.qde_particulas, self.matriz.shape[1]), dtype=float)
-
-        self.objetivo = self.rodar_fo(
-            matriz_valores=self.matriz,
-            otimizar=self.var,
-            pontos_p=self.pontos_p,
-        )
-
-        self.p_best = self.matriz
-        self.g_best = self.p_best[self.objetivo.argmin(), :]
-
+        self.N              = qde_iteracoes
+        self.condicao_voo   = condicao_de_voo
         self.c1 = 2.05
         self.c2 = 2.05
-        self.w = 0.72984  
+        self.w = 0.72984
         self.r = np.random.rand(2)
+
+        self.iterar_zero()
+
+    
+    def iterar_zero(self):
+        fo_controller = FuncaoObjetivo(
+            condicoes_de_voo=self.condicao_voo,
+            inicial=True
+        )
+        eficiencia_invertida_inicial = fo_controller.retornar_eficiencia()
+        matriz = fo_controller.retornar_matriz()
+        
+        p_best = matriz
+        g_best = p_best[eficiencia_invertida_inicial.argmin(), :]
+
+
+        self.v = np.zeros((self.qde_particulas, matriz.shape[1]), dtype=float)
+        self.p_best = p_best.copy()
+        self.g_best = g_best.copy()
 
     def next(self):
         self.v = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.matriz) + self.c2*self.r[1]*(self.g_best - self.matriz)
