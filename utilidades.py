@@ -1,5 +1,6 @@
 import numpy as np
 from funcao_helice import helice
+import shutil
 
 def rodar_helice_inidividual(
     condicoes_voo: dict,
@@ -22,7 +23,7 @@ def rodar_helice_inidividual(
             Rotacao_motor=condicoes_voo["Rotacao do Motor"],
             Solucoes_ligadas=['solucao_1'],
             ler_coord_arq_ext=True,
-            ligar_solucao_aerof_naca=True,
+            ligar_solucao_aerof_naca=False,
             ligar_interpolacao_2a_ordem=True
         ).rodar_helice()
 
@@ -32,6 +33,7 @@ def rodar_helice_inidividual(
 def criar_txt_pontos_aerofolio_para_rodar_xfoil(
     pontos: np.ndarray
 ):
+    pontos = pontos.reshape((pontos.shape[0], pontos.shape[1]))
     pontos_x = pontos[0]
     pontos_y = pontos[1]
 
@@ -40,12 +42,19 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
         high=1000,
         dtype=int
     )
-    nome_arquivo = "aerofolio" + str(id) + ".txt"
+    nome_arquivo = "aerofolio" + str(id) + ".dat"
     
     with open(nome_arquivo, "w") as writer:
         for ponto in range(len(pontos_x)):
             writer.write(
-                f"{pontos_x[ponto]}\t{pontos_y[ponto]}\n"
+                f"{round(pontos_x[ponto], 4)}    {round(pontos_y[ponto], 4)}\n"
             )
+        writer.close()
 
     return nome_arquivo
+
+
+def mover_arquivos_coordenadas(
+    nome_arquivo
+):
+    shutil.move(nome_arquivo, f"coordenadas_aerofolios/{nome_arquivo}")

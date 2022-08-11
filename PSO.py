@@ -10,10 +10,10 @@ class OtimizacaoHelice:
         self.qde_particulas = qde_de_particulas
         self.N              = qde_iteracoes
         self.condicao_voo   = condicao_de_voo
-        self.c1 = 2.05
-        self.c2 = 2.05
-        self.w = 0.72984
-        self.r = np.random.rand(2)
+        self.r              = np.random.rand(2)
+        self.t              = 0
+        self.convergencia   = []
+        self.t_list         = []
 
         self.iterar_zero()
 
@@ -21,39 +21,59 @@ class OtimizacaoHelice:
     def iterar_zero(self):
         fo_controller = FuncaoObjetivo(
             condicoes_de_voo=self.condicao_voo,
+            qde_particulas=self.qde_particulas,
             inicial=True
         )
         eficiencia_invertida_inicial = fo_controller.retornar_eficiencia()
         matriz = fo_controller.retornar_matriz()
+        pontos_p = fo_controller.retornar_pontos_p()
         
-        p_best = matriz
+        p_best = matriz.copy()
         g_best = p_best[eficiencia_invertida_inicial.argmin(), :]
 
-
+        self.matriz = matriz
         self.v = np.zeros((self.qde_particulas, matriz.shape[1]), dtype=float)
         self.p_best = p_best.copy()
         self.g_best = g_best.copy()
+        self.pontos_p = pontos_p
+        self.eficiencia_antiga = eficiencia_invertida_inicial.copy()
 
-    def next(self):
-        self.v = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.matriz) + self.c2*self.r[1]*(self.g_best - self.matriz)
+    def iterar(self):
+        eficiencia_antiga = self.eficiencia_antiga
+        eficiencia_nova   = None
+        c1                = 2.05
+        c2                = 2.05
+        w                 = 0.72984
+
+        self.v      = w * self.v + c1*self.r[0]*(self.p_best - self.matriz) + c2*self.r[1]*(self.g_best - self.matriz)
         self.matriz = self.matriz + self.v
 
-        objetivo_2 = self.rodar_fo(
-            matriz_valores=self.matriz,
-            aerof_inicial=self.aerof_inicial,
-            otimizar=['beta']
+        fo_controller = FuncaoObjetivo(
+            qde_particulas=self.qde_particulas,
+            condicoes_de_voo=self.condicao_voo,
+            inicial=False
+        )
+        fo_controller.inserir_parametros(
+            matriz=self.matriz,
+            pontos_p=self.pontos_p
         )
 
-        self.p_best[(objetivo_2 <= self.objetivo), :] = self.matriz[(objetivo_2 <= self.objetivo), :]
+        eficiencia_nova = fo_controller.retornar_eficiencia()
+        self.pontos_p = fo_controller.retornar_pontos_p().copy()
 
-        argumento_min = np.array([self.objetivo, objetivo_2]).min(axis=0).argmin()
+
+        objetivo_inicial = eficiencia_antiga.copy()
+        objetivo_novo    = eficiencia_nova.copy()
+
+        self.p_best[(objetivo_novo <= objetivo_inicial), :] = self.matriz[(objetivo_novo <= objetivo_inicial), :]
+        argumento_min = np.array([eficiencia_antiga, eficiencia_nova]).min(axis=0).argmin()
         self.g_best = self.p_best[argumento_min, :]
 
-        self.objetivo = objetivo_2
+        self.eficiencia_antiga = eficiencia_nova.copy()
 
         self.t += 1
 
-        self.convergencia.append(self.objetivo.min())
+        self.convergencia.append(objetivo_novo.min())
         self.t_list.append(self.t)
 
     def gerar_grafico(self):

@@ -4,7 +4,8 @@ from funcoes_de_bezier import Bezier
 from funcao_helice import helice
 from utilidades import (
     rodar_helice_inidividual,
-    criar_txt_pontos_aerofolio_para_rodar_xfoil
+    criar_txt_pontos_aerofolio_para_rodar_xfoil,
+    mover_arquivos_coordenadas
 )
 
 class FuncaoObjetivo:
@@ -21,10 +22,8 @@ class FuncaoObjetivo:
             self.criar_matriz_inicial()
             self.rodar_helice_total()
             self.computar_eficiencia()
-        else:
-            self.rodar_bezier()
-            self.rodar_helice_total()
-            self.computar_eficiencia()
+            self.tratar_eficiencia()
+            
 
     def criar_parametros_iniciais(self):
         matriz = [round(np.random.uniform(19.5, 46.3), 2) for _ in range(7)]
@@ -42,30 +41,50 @@ class FuncaoObjetivo:
         self.pontos_p.append(pontos_p)
         self.curvas_aerofolios.append(linhas)
 
+        return matriz
+
     def criar_matriz_inicial(self):
-        self.matriz = np.array([self.criar_parametros_iniciais() for _ in range(self.qde_particulas)])        
+        particulas = [self.criar_parametros_iniciais() for _ in range(self.qde_particulas)]
+        self.matriz = np.array(particulas)
     
+    def inserir_parametros(
+        self,
+        matriz: np.ndarray,
+        pontos_p: np.ndarray
+    ):
+        self.matriz = matriz
+        self.pontos_p = pontos_p
+
+        self.rodar_bezier()
+        self.rodar_helice_total()
+        self.computar_eficiencia()
+        self.tratar_eficiencia()
+
     def rodar_bezier(self):
         particulas             = self.matriz.copy()
-        pontos_p               = self.pontos_p.copy()
+        pontos_p_totais        = self.pontos_p.copy()
         self.curvas_aerofolios = []
+        self.novos_p           = []
 
         ponto_p_escolhido = 0
         for particula in particulas:
-            ponto_p = pontos_p[ponto_p_escolhido]
+            ponto_p = pontos_p_totais[ponto_p_escolhido]
             ponto_p_escolhido = ponto_p_escolhido + 1
             
-            ax = particula[8:12]
-            ay = particula[12:]
+            ax = particula[7:11]
+            ay = particula[11:]
 
             bezier_controller = Bezier()
-            linhas, _, _, pontos_p = bezier_controller.atualizar_aerofolio(
+            linhas, _, _, pontos_p_saida = bezier_controller.atualizar_aerofolio(
                 pontos_x=ax,
                 pontos_y=ay,
                 pontos_p=ponto_p
             )
 
             self.curvas_aerofolios.append(linhas)
+            self.novos_p.append(pontos_p_saida)
+
+        self.pontos_p = self.novos_p.copy()
     
     def rodar_helice_total(self):
         matriz            = self.matriz.copy()
@@ -76,7 +95,7 @@ class FuncaoObjetivo:
         c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0])*0.0254
 
         for particula in range(len(matriz)):
-            beta = matriz[particula][:8]
+            beta = matriz[particula][:7]
             beta = np.append(beta, 0) * np.pi/180.
 
             nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
@@ -93,7 +112,7 @@ class FuncaoObjetivo:
             )
             
             self.resultados.append(resultados_individuais)
-            os.remove(nome_arq_aerofolio)
+            mover_arquivos_coordenadas(nome_arq_aerofolio)
     
     def computar_eficiencia(self):
         resultados = self.resultados.copy()
@@ -110,13 +129,13 @@ class FuncaoObjetivo:
         )
 
         mean = np.random.randint(
-            low=2,
+            low=5,
             high=10,
             dtype=int
         )
         eficiencias[np.isnan(eficiencias)] = mean
 
-        self.self.eficiencia_invertida_helice_total = eficiencias.copy()
+        self.eficiencia_invertida_helice_total = eficiencias.copy()
 
     def retornar_eficiencia(self):
         return self.eficiencia_invertida_helice_total

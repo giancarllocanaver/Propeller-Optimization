@@ -387,7 +387,7 @@ class Bezier:
     def atualizar_aerofolio(self, pontos_x, pontos_y, pontos_p):
         pontos = []
         for i in range(4):
-            pontos.append([pontos_x[i][0], pontos_y[i][0]])
+            pontos.append([pontos_x[i], pontos_y[i]])
 
         self.pontos_a = np.array([pontos_x, pontos_y])
         ponto = 0

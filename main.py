@@ -4,16 +4,24 @@ from PSO import OtimizacaoHelice
 
 if __name__ == '__main__':
     qde_iteracoes = 5
-    qde_particulas = 10
+    qde_particulas = 20
 
-    teste = OtimizacaoHelice(
+    condicao_de_voo = {
+        "Velocidade": 3,
+        "Viscosidade": 1.789e-5,
+        "Temperatura": 288.2,
+        "Densidade do Ar": 1.225,
+        "Diametro da Helice": 96*0.0254,
+        "Numero de pas": 2,
+        "Rotacao do Motor": 1000.
+    }
+
+
+    otimization_controller = OtimizacaoHelice(
         qde_iteracoes=qde_iteracoes,
         qde_de_particulas=qde_particulas,
-        otimizar=['beta']
+        condicao_de_voo=condicao_de_voo
     )
-    teste.start()
 
     for _ in range(qde_iteracoes):
-        teste.next()
-
-    teste.gerar_grafico()
+        otimization_controller.iterar()
