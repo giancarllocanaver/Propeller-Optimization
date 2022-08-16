@@ -338,15 +338,15 @@ class helice:
             eta = np.NaN
 
         resultados = {
-            "velocidade": self.v,
-            "rpm": self.rpm,
-            "J": J,
-            "eta": eta,
-            "T": T,
-            "Q": Q,
-            "Cp": Cp,
-            "Ct": Ct,
-            "Cq": Cq
+            "velocidade": [self.v],
+            "rpm": [self.rpm],
+            "J": [J],
+            "eta": [eta],
+            "T": [T],
+            "Q": [Q],
+            "Cp": [Cp],
+            "Ct": [Ct],
+            "Cq": [Cq]
         }
 
         return resultados

@@ -16,12 +16,17 @@ if __name__ == '__main__':
         "Rotacao do Motor": 1000.
     }
 
+    id = np.random.randint(
+        low=0,
+        high=1000
+    )
 
     otimization_controller = OtimizacaoHelice(
         qde_iteracoes=qde_iteracoes,
         qde_de_particulas=qde_particulas,
-        condicao_de_voo=condicao_de_voo
+        condicao_de_voo=condicao_de_voo,
+        id=id
     )
 
-    for _ in range(qde_iteracoes):
-        otimization_controller.iterar()
+    # for _ in range(qde_iteracoes):
+    #     otimization_controller.iterar()

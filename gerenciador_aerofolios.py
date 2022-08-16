@@ -34,6 +34,9 @@ class GerenciaAerofolios:
             self.nome_aerof_arq = f"naca_{primeiros_2_digitos}{terceiro_digito}{ultimos_2_digitos}.txt"
 
     def checar_existencia_aerofolios(self):
+        if not os.path.isdir(f"base_aerofolios"):
+            os.mkdir(f"base_aerofolios")
+
         if os.path.isfile(f"base_aerofolios/{self.nome_aerof_arq}"):
             self.existencia = True
 
@@ -59,7 +62,8 @@ class GerenciaAerofolios:
                 "xfoil.exe < " + "arquivo_input_geracao_aerofolio.txt", shell=True
             )
 
-            time.sleep(0.5)            
+            time.sleep(0.5)
+            print(f"{self.nome_aerof_arq}")
             shutil.move(self.nome_aerof_arq, f"base_aerofolios/{self.nome_aerof_arq}")
             os.remove("arquivo_input_geracao_aerofolio.txt")
 

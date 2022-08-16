@@ -118,7 +118,7 @@ class FuncaoObjetivo:
         resultados = self.resultados.copy()
 
         for resultado in resultados:
-            eficiencia_particula = resultado["eta"]
+            eficiencia_particula = resultado["eta"][0]
             eficiencia_invertida = 1 / eficiencia_particula
 
             self.eficiencia_invertida_helice_total.append(eficiencia_invertida)
@@ -148,3 +148,6 @@ class FuncaoObjetivo:
 
     def retornar_matriz(self):
         return self.matriz
+
+    def retornar_resultados(self):
+        return self.resultados
