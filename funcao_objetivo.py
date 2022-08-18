@@ -81,6 +81,19 @@ class FuncaoObjetivo:
                 pontos_p=ponto_p
             )
 
+            if type(linhas) == int:
+                pontos_p_saida = bezier_controller.gerar_aerofolio_aleatorio()
+                linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
+
+                ax = a0[0]
+                ay = a0[1]
+
+                for xi in range(len(ax)):
+                    self.matriz[ponto_p_escolhido][(xi+7)] = ax[xi]
+
+                for yi in range(len(ay)):
+                    self.matriz[ponto_p_escolhido][(yi+11)] = ay[yi]
+
             self.curvas_aerofolios.append(linhas)
             self.novos_p.append(pontos_p_saida)
 

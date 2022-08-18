@@ -34,7 +34,10 @@ class OtimizacaoHelice:
         resultados = fo_controller.retornar_resultados()
         
         p_best = matriz.copy()
-        g_best = p_best[eficiencia_invertida_inicial.argmin(), :]
+
+        selecao = eficiencia_invertida_inicial >= 0
+        argumento_g_best = eficiencia_invertida_inicial[selecao].argmin()
+        g_best = p_best[argumento_g_best, :]
 
         self.matriz = matriz
         self.v = np.zeros((self.qde_particulas, matriz.shape[1]), dtype=float)
@@ -79,13 +82,19 @@ class OtimizacaoHelice:
         eficiencia_nova = fo_controller.retornar_eficiencia()
         self.pontos_p = fo_controller.retornar_pontos_p().copy()
         resultados = fo_controller.retornar_resultados()
+        self.matriz = fo_controller.retornar_matriz()
 
         objetivo_inicial = eficiencia_antiga.copy()
         objetivo_novo    = eficiencia_nova.copy()
 
-        self.p_best[(objetivo_novo <= objetivo_inicial), :] = self.matriz[(objetivo_novo <= objetivo_inicial), :]
-        argumento_min = np.array([eficiencia_antiga, eficiencia_nova]).min(axis=0).argmin()
-        self.g_best = self.p_best[argumento_min, :]
+        argumento_p_best = (objetivo_novo <= objetivo_inicial) & (objetivo_novo >= 0)
+        
+        array_comparacao = np.array([objetivo_inicial, objetivo_novo])
+        selecao = array_comparacao >= 0
+        argumento_g_best = array_comparacao[selecao].min(axis=0).argmin()
+
+        self.p_best[argumento_p_best, :] = self.matriz[argumento_p_best, :]
+        self.g_best = self.p_best[argumento_g_best, :]
 
         self.eficiencia_antiga = eficiencia_nova.copy()
 

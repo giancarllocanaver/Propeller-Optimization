@@ -379,7 +379,7 @@ class Bezier:
         self.pontos_b = B_out.copy()
 
         if self.verificar_interseccao(linhas):
-            return np.array([[0], [0]]), 0, 0, 0
+            return 0, 0, 0, 0
         else:
             linhas = self.escalar(linhas)
             return linhas, a, B_out, novos_pontos
@@ -405,7 +405,8 @@ class Bezier:
             a=self.pontos_a
         )
         
-        self.pontos_a = a.copy()
-        self.pontos_b = b.copy()
+        if type(a) == np.ndarray:
+            self.pontos_a = a.copy()
+            self.pontos_b = b.copy()
 
         return curvas_aerofolio, a, b, pontos_p

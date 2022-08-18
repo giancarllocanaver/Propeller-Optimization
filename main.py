@@ -3,8 +3,8 @@ import numpy as np
 from PSO import OtimizacaoHelice
 
 if __name__ == '__main__':
-    qde_iteracoes = 5
-    qde_particulas = 20
+    qde_iteracoes = 20
+    qde_particulas = 40
 
     condicao_de_voo = {
         "Velocidade": 3,
@@ -28,5 +28,7 @@ if __name__ == '__main__':
         id=id
     )
 
-    # for _ in range(qde_iteracoes):
-    #     otimization_controller.iterar()
+    for _ in range(qde_iteracoes):
+        otimization_controller.iterar()
+
+    otimization_controller.gerar_grafico()

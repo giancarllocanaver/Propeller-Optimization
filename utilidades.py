@@ -79,6 +79,8 @@ def gravar_resultados_aerodinamicos(
     nome_arq_output = f"resultados_aerodinamicos_helice_id_{id}.csv"
     path_output_aerodinamico = f"resultados/resultados_id_{id}/{nome_arq_output}"
 
+    existe_output = 0
+
     if os.path.isfile(path_output_aerodinamico):
         df_resultados = pd.read_csv(path_output_aerodinamico, sep=';')
         existe_output = 1
@@ -88,14 +90,14 @@ def gravar_resultados_aerodinamicos(
         resultado["Particula"] = particula
         resultado["Iteracao"] = iteracao
         
-        df_resultado = pd.DataFrame(resultado, index=particula)
+        df_resultado = pd.DataFrame(resultado)
 
         if (particula == 0) and not (existe_output):
             df_resultados = df_resultado.copy()
         else:
             df_resultados = pd.concat([df_resultados, df_resultado], axis=0)
 
-    df_resultados.to_csv(path_output_aerodinamico, sep=';')
+    df_resultados.to_csv(path_output_aerodinamico, sep=';', index=False)
 
 
 def gravar_resultados_matriz_pso(
@@ -109,31 +111,49 @@ def gravar_resultados_matriz_pso(
     if not os.path.isdir(f"resultados/resultados_id_{id}"):
         os.mkdir(f"resultados/resultados_id_{id}")
 
-    nome_arq_output = f"resultados_matriz_pso_{id}.csv"
+    nome_arq_output = f"resultados_matriz_pso_id_{id}.csv"
     path_output_matriz_pso = f"resultados/resultados_id_{id}/{nome_arq_output}"
+
+    existe_output = 0
 
     if os.path.isfile(path_output_matriz_pso):
         df_resultados = pd.read_csv(path_output_matriz_pso, sep=';')
         existe_output = 1
 
-    colunas = ["beta 1","beta 2","beta 3","beta 4","beta 5","beta 6","beta 7"]
-    colunas.append(["Ax 1","Ax 2","Ax 3","Ax 4","Ay 1","Ay 2","Ay 3","Ay 4"])
-    colunas.append(["Particula"])
-    colunas.append(["Iteracao"])
+    colunas = [
+        "beta 1",
+        "beta 2",
+        "beta 3",
+        "beta 4",
+        "beta 5",
+        "beta 6",
+        "beta 7",
+        "Ax 1",
+        "Ax 2",
+        "Ax 3",
+        "Ax 4",
+        "Ay 1",
+        "Ay 2",
+        "Ay 3",
+        "Ay 4",
+        "Particula",
+        "Iteracao"
+    ]
 
     for particula in range(len(resultados)):
-        resultado = resultados[particula]
+        resultado = resultados[particula].tolist()
+        resultado.append(particula)
+        resultado.append(iteracao)
+
         df_resultado = pd.DataFrame(
-            resultado,
-            columns=colunas,
-            index=particula
-        )
-        df_resultado["Particula"] = particula
-        df_resultado["Iteracao"] = iteracao
+            resultado
+        ).transpose()
+
+        df_resultado.columns = colunas
 
         if (particula == 0) and not (existe_output):
             df_resultados = df_resultado.copy()
         else:
             df_resultados = pd.concat([df_resultados, df_resultado], axis=0)
 
-    df_resultados.to_csv(path_output_matriz_pso, sep=';')
+    df_resultados.to_csv(path_output_matriz_pso, sep=';', index=False)
