@@ -5,7 +5,8 @@ import os
 import pandas as pd
 from utilidades import (
     gravar_resultados_aerodinamicos,
-    gravar_resultados_matriz_pso
+    gravar_resultados_matriz_pso,
+    salvar_resultados_json
 )
 
 class OtimizacaoHelice:
@@ -69,6 +70,16 @@ class OtimizacaoHelice:
         self.v      = w * self.v + c1*self.r[0]*(self.p_best - self.matriz) + c2*self.r[1]*(self.g_best - self.matriz)
         self.matriz = self.matriz + self.v
 
+        salvar_resultados_json(
+            eficiencia=eficiencia_antiga,
+            matriz_v=self.v,
+            matriz_pso=self.matriz,
+            p_best=self.p_best,
+            g_best=self.g_best,
+            r=self.r,
+            id=self.id
+        )        
+        
         fo_controller = FuncaoObjetivo(
             qde_particulas=self.qde_particulas,
             condicoes_de_voo=self.condicao_voo,
@@ -88,10 +99,10 @@ class OtimizacaoHelice:
         objetivo_novo    = eficiencia_nova.copy()
 
         argumento_p_best = (objetivo_novo <= objetivo_inicial) & (objetivo_novo >= 0)
-        
-        array_comparacao = np.array([objetivo_inicial, objetivo_novo])
-        selecao = array_comparacao >= 0
-        argumento_g_best = array_comparacao[selecao].min(axis=0).argmin()
+        argumento_g_best = self.descobrir_argumento_minimo(
+            obj_inicial=objetivo_inicial,
+            obj_novo=objetivo_novo
+        )
 
         self.p_best[argumento_p_best, :] = self.matriz[argumento_p_best, :]
         self.g_best = self.p_best[argumento_g_best, :]
@@ -115,18 +126,45 @@ class OtimizacaoHelice:
         self.convergencia.append(objetivo_novo.min())
         self.t_list.append(self.t)
 
+    def descobrir_argumento_minimo(self, obj_inicial, obj_novo):
+        novo_obj_1 = []
+        novo_obj_2 = []
+        obj_join = []
+
+        for particula in range(len(obj_inicial)):
+            obj_part = [obj_inicial[particula], particula]
+            novo_obj_1.append(obj_part)
+
+        for particula in range(len(obj_novo)):
+            obj_part = [obj_novo[particula], particula]
+            novo_obj_2.append(obj_part)
+
+        for obj in novo_obj_1:
+            obj_join.append(obj)
+
+        for obj in novo_obj_2:
+            obj_join.append(obj)
+
+        array = np.array(obj_join)
+        selecao = array[:,0].argmin(axis=0)
+        array_selecao = array[selecao]
+
+        argumento = int(array_selecao[1])
+
+        return argumento
+
     def gerar_grafico(self):
         df = pd.DataFrame({'t': [], 'Objetivo min': []})
 
         for i in range(len(self.convergencia)):
             df = df.append({'t': [self.t_list[i]], 'Objetivo min': [self.convergencia[i]]}, ignore_index=True)
         
-        with pd.ExcelWriter('Resultados-convergencia-otimizacao.xlsx') as writer:
+        with pd.ExcelWriter(f'resultados/resultados_id_{self.id}/Resultados-convergencia-otimizacao.xlsx') as writer:
             df.to_excel(writer, sheet_name='Convergencia')
             writer.save()
 
         plt.plot(self.t_list, self.convergencia, 'x')
         plt.xlabel('iteração')
         plt.ylabel('objetivo')
-        plt.savefig('Grafico-convergencia-otimizacao.jpg', dpi=300)
+        plt.savefig(f'resultados/resultados_id_{self.id}/Grafico-convergencia-otimizacao.jpg', dpi=300)
         plt.show()

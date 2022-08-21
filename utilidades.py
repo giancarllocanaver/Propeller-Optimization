@@ -3,6 +3,7 @@ from funcao_helice import helice
 import shutil
 import os
 import pandas as pd
+import json
 
 def rodar_helice_inidividual(
     condicoes_voo: dict,
@@ -157,3 +158,32 @@ def gravar_resultados_matriz_pso(
             df_resultados = pd.concat([df_resultados, df_resultado], axis=0)
 
     df_resultados.to_csv(path_output_matriz_pso, sep=';', index=False)
+
+
+def salvar_resultados_json(
+    eficiencia,
+    matriz_v,
+    matriz_pso,
+    p_best,
+    g_best,
+    r,
+    id
+):
+    if not os.path.isdir("resultados"):
+        os.mkdir("resultados")
+    
+    if not os.path.isdir(f"resultados/resultados_id_{id}"):
+        os.mkdir(f"resultados/resultados_id_{id}")
+
+    arquivo = {
+        "eficiencia": eficiencia.tolist(),
+        "matriz_v": matriz_v.tolist(),
+        "matriz_pso": matriz_pso.tolist(),
+        "p_best": p_best.tolist(),
+        "g_best": g_best.tolist(),
+        "r": r.tolist()
+    }
+
+    nome_arq = f"resultados/resultados_id_{id}/parametros_PSO_id_{id}.json"
+    with open(nome_arq, 'w') as file:
+        json.dump(arquivo,file)
