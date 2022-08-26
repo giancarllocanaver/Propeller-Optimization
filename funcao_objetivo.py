@@ -39,10 +39,10 @@ class FuncaoObjetivo:
         linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
         
         a = a0.copy()
-        self.logger.info(f"\t\t\tParticula {self.particula_escolhida}: Pontos A de Bezier com a seguinte configuração")
+        self.logger.info(f"Particula {self.particula_escolhida}: Pontos A de Bezier com a seguinte configuração")
         self.logger.info(f"\n\n{a}\n\n")
 
-        self.logger.info(f"\t\t\tParticula {self.particula_escolhida}: Pontos P de Bezier com a seguinte configuração")
+        self.logger.info(f"Particula {self.particula_escolhida}: Pontos P de Bezier com a seguinte configuração")
         self.logger.info(f"\n\n{pontos_p}\n\n")
 
         verificacao = False
@@ -70,25 +70,25 @@ class FuncaoObjetivo:
 
 
     def criar_matriz_inicial(self):
-        self.logger.info("\t\tInício da criação da matriz inicial")
+        self.logger.info("Início da criação da matriz inicial")
 
         particulas = [self.criar_parametros_iniciais() for self.particula_escolhida in range(self.qde_particulas)]
         self.matriz = np.array(particulas)
         self.curvas_aerofolios_atual = self.curvas_aerofolios_inicial.copy()
 
-        self.logger.info("\t\t\tMatriz formada com a seguinte configuração:")
+        self.logger.info("Matriz formada com a seguinte configuração:")
         self.logger.info(f"\n\n{self.matriz}\n\n")
-        self.logger.info("\t\tFim da criação da matriz inicial")
+        self.logger.info("Fim da criação da matriz inicial")
 
 
     def validar_variaveis(self):
-        self.logger.info("\t\tInício da validação das variáveis")
+        self.logger.info("Início da validação das variáveis")
         
         if len(self.pontos_p) != len(self.pontos_A):
             erro = (
-                f"\t\t\tTamanho dos pontos P diferente dos pontos A:\n",
-                f"\t\t\tPontos P: {len(self.pontos_p)}\n",
-                f"\t\t\tPontos A: {len(self.pontos_A)}"
+                f"Tamanho dos pontos P diferente dos pontos A:\n",
+                f"Pontos P: {len(self.pontos_p)}\n",
+                f"Pontos A: {len(self.pontos_A)}"
             )
             self.logger.error(erro)
             raise ValueError(
@@ -97,9 +97,9 @@ class FuncaoObjetivo:
 
         if len(self.pontos_p) != len(self.matriz):
             erro = (
-                f"\t\t\tTamanho dos pontos P diferente dos da Matriz:\n",
-                f"\t\t\tPontos P: {len(self.pontos_p)}\n",
-                f"\t\t\tMatriz: {len(self.matriz)}"
+                f"Tamanho dos pontos P diferente dos da Matriz:\n",
+                f"Pontos P: {len(self.pontos_p)}\n",
+                f"Matriz: {len(self.matriz)}"
             )
             self.logger.error(erro)
             raise ValueError(
@@ -108,16 +108,16 @@ class FuncaoObjetivo:
 
         if len(self.pontos_p) != len(self.curvas_aerofolios_atual):
             erro = (
-                f"\t\t\tTamanho dos pontos P diferente dos pontos dos aerofólios:\n",
-                f"\t\t\tPontos P: {len(self.pontos_p)}\n",
-                f"\t\t\tMatriz: {len(self.curvas_aerofolios_atual)}"
+                f"Tamanho dos pontos P diferente dos pontos dos aerofólios:\n",
+                f"Pontos P: {len(self.pontos_p)}\n",
+                f"Matriz: {len(self.curvas_aerofolios_atual)}"
             )
             self.logger.error(erro)
             raise ValueError(
                 erro
             )
 
-        self.logger.info("\t\tFim da validação das variáveis")
+        self.logger.info("Fim da validação das variáveis")
 
 
     def inserir_parametros(
@@ -138,22 +138,22 @@ class FuncaoObjetivo:
 
 
     def rodar_bezier(self):
-        self.logger.info("\t\tInício das rodagens por Bezier")
+        self.logger.info("Início das rodagens por Bezier")
 
         particulas                   = self.matriz.copy()
         pontos_p                     = self.pontos_p.copy()
         pontos_A                     = self.pontos_A.copy()
         self.curvas_aerofolios_atual = []
         
-        self.logger.info("\t\t\tMatriz com a seguinte configuração:")
+        self.logger.info("Matriz com a seguinte configuração:")
         self.logger.info(f"\n\n{particulas}\n\n")
-        self.logger.info("\t\t\tPontos P com a seguinte configuração:")
+        self.logger.info("Pontos P com a seguinte configuração:")
         self.logger.info(f"\n\n{pontos_p}\n\n")
-        self.logger.info("\t\t\tPontos A com a seguinte configuração:")
+        self.logger.info("Pontos A com a seguinte configuração:")
         self.logger.info(f"\n\n{pontos_A}\n\n")
 
         for particula in range(len(particulas)):
-            self.logger.info(f"\t\t\tInício bezier para partícula {particula}:")          
+            self.logger.info(f"Início bezier para partícula {particula}:")          
             
             escalar = particulas[particula][-1]
             pontos_A_particula = pontos_A[particula].copy()
@@ -163,16 +163,16 @@ class FuncaoObjetivo:
 
             ay[3][0] = escalar * ay[3][0]
 
-            self.logger.info(f"\t\t\t\tEscalar:")
+            self.logger.info(f"Escalar:")
             self.logger.info(f"\n\n{escalar}\n\n")
-            self.logger.info(f"\t\t\t\tPonto AX:")
+            self.logger.info(f"Ponto AX:")
             self.logger.info(f"\n\n{ax}\n\n")
-            self.logger.info(f"\t\t\t\tPonto AY:")
+            self.logger.info(f"Ponto AY:")
             self.logger.info(f"\n\n{ay}\n\n")
 
             pontos_p_ecolhido = pontos_p[particula]
 
-            self.logger.info(f"\t\t\t\tPontos P da partícula:")
+            self.logger.info(f"Pontos P da partícula:")
             self.logger.info(f"\n\n{pontos_p_ecolhido}\n\n")
 
             bezier_controller = Bezier()
@@ -187,9 +187,9 @@ class FuncaoObjetivo:
                 while verificacao == False:
                     escalar = np.random.uniform(low=-5, high=5)
                     
-                    self.logger.info(f"\t\t\t\tNovo escalar escolhido:")
+                    self.logger.info(f"Novo escalar escolhido:")
                     self.logger.info(f"\n\n{escalar}\n\n")
-                    self.logger.info(f"\t\t\t\tPontos ay de mudança:")
+                    self.logger.info(f"Pontos ay de mudança:")
                     self.logger.info(f"\n\n{ay}\n\n")
 
                     ay[3][0] = pontos_A_particula[1][3][0] * escalar
@@ -207,11 +207,11 @@ class FuncaoObjetivo:
             self.matriz[particula][-1] = escalar
             self.curvas_aerofolios_atual.append(linhas)
 
-        self.logger.info("\t\tFim das rodagens por Bezier")
+        self.logger.info("Fim das rodagens por Bezier")
 
 
     def rodar_helice_total(self):
-        self.logger.info("\t\tInício das rodagens das Hélices")
+        self.logger.info("Início das rodagens das Hélices")
 
         matriz            = self.matriz.copy()
         curvas_aerofolios = self.curvas_aerofolios_atual.copy()
@@ -240,7 +240,7 @@ class FuncaoObjetivo:
             self.resultados.append(resultados_individuais)
             mover_arquivos_coordenadas(nome_arq_aerofolio)
 
-        self.logger.info("\t\tFim das rodagens por Bezier")
+        self.logger.info("Fim das rodagens por Bezier")
 
 
     def computar_eficiencia(self):

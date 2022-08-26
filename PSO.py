@@ -28,13 +28,13 @@ class OtimizacaoHelice:
 
     
     def iterar_zero(self):
-        self.logger.info("\t- Início da computação da função objetivo")
+        self.logger.info("- Início da computação da função objetivo")
         fo_controller = FuncaoObjetivo(
             condicoes_de_voo=self.condicao_voo,
             qde_particulas=self.qde_particulas,
             inicial=True
         )
-        self.logger.info("\t- Fim da computação da função objetivo")
+        self.logger.info("- Fim da computação da função objetivo")
 
         eficiencia_invertida_inicial = fo_controller.retornar_eficiencia()
         matriz = fo_controller.retornar_matriz()
@@ -57,7 +57,7 @@ class OtimizacaoHelice:
         self.eficiencia_antiga = eficiencia_invertida_inicial.copy()
         self.resultados = resultados.copy()
 
-        self.logger.info("\t- Início da gravação dos resultados")
+        self.logger.info("- Início da gravação dos resultados")
         gravar_resultados_aerodinamicos(
             resultados=resultados,
             id=self.id,
@@ -92,9 +92,9 @@ class OtimizacaoHelice:
             id=self.id
         )
 
-        self.logger.info("\t- Fim da gravação dos resultados\n\n")
+        self.logger.info("- Fim da gravação dos resultados\n\n")
         self.logger.info(f"//Início da iteração {self.t}//\n")
-        self.logger.info("\t- Início da computação da função objetivo")
+        self.logger.info("- Início da computação da função objetivo")
 
         fo_controller = FuncaoObjetivo(
             qde_particulas=self.qde_particulas,
@@ -106,7 +106,7 @@ class OtimizacaoHelice:
             pontos_p=self.pontos_p,
             pontos_A=self.pontos_A
         )
-        self.logger.info("\t- Fim da computação da função objetivo")
+        self.logger.info("- Fim da computação da função objetivo")
 
         eficiencia_nova = fo_controller.retornar_eficiencia()
         resultados = fo_controller.retornar_resultados()
