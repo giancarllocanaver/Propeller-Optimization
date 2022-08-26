@@ -1,9 +1,12 @@
+from datetime import datetime
+from operator import mod
 import numpy as np
 from funcao_helice import helice
 import shutil
 import os
 import pandas as pd
 import json
+import logging
 
 def rodar_helice_inidividual(
     condicoes_voo: dict,
@@ -129,16 +132,9 @@ def gravar_resultados_matriz_pso(
         "beta 5",
         "beta 6",
         "beta 7",
-        "Ax 1",
-        "Ax 2",
-        "Ax 3",
-        "Ax 4",
-        "Ay 1",
-        "Ay 2",
-        "Ay 3",
-        "Ay 4",
-        "Particula",
-        "Iteracao"
+        "escalar Ay3",
+        "particula",
+        "iteracao"
     ]
 
     for particula in range(len(resultados)):
@@ -187,3 +183,26 @@ def salvar_resultados_json(
     nome_arq = f"resultados/resultados_id_{id}/parametros_PSO_id_{id}.json"
     with open(nome_arq, 'w') as file:
         json.dump(arquivo,file)
+
+
+def criar_pastas(id):
+    if not os.path.isdir("resultados"):
+        os.mkdir("resultados")
+    
+    if not os.path.isdir(f"resultados/resultados_id_{id}"):
+        os.mkdir(f"resultados/resultados_id_{id}")
+
+
+def gerar_time_stamp():
+    stamp = datetime.now().isoformat(timespec='minutes')
+    stamp = stamp.replace(":","h")
+
+    return stamp
+
+
+def criar_logger(id):
+    logger = logging.getLogger("logger_main")
+    logger.setLevel(logging.DEBUG)
+    
+    handler = logging.FileHandler(f"resultados/resultados_id_{id}/logger_id_{id}.txt", mode='a')
+    logger.addHandler(handler)

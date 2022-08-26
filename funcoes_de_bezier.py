@@ -19,7 +19,7 @@ class Bezier:
         controle_aerof = GerenciaAerofolios()
         pontos_p = controle_aerof.gerar_pontos_P()
 
-        self.pontos_p = pontos_p
+        self.pontos_p = pontos_p.copy()
 
         return pontos_p
 
@@ -285,7 +285,7 @@ class Bezier:
                 - Linha 1: pontos y
         """
 
-        pontos = pontos_p
+        pontos = pontos_p.copy()
 
         def novos_pontos_p(a, pontos, n):
             p_1 = (2 * a[0] + a[1] - pontos[0]) / 2
@@ -390,15 +390,15 @@ class Bezier:
             pontos.append([pontos_x[i], pontos_y[i]])
 
         self.pontos_a = np.array([pontos_x, pontos_y])
-        ponto = 0
-        for ponto_x, ponto_y in pontos:
-            ponto = ponto + 1
-            self.mudar_ponto_A(
-                ponto=ponto,
-                mudanca_x=ponto_x,
-                mudanca_y=ponto_y,
-                mudanca_adicional=False
-            )
+        # ponto = 0
+        # for ponto_x, ponto_y in pontos:
+        #     ponto = ponto + 1
+        #     self.mudar_ponto_A(
+        #         ponto=ponto,
+        #         mudanca_x=ponto_x,
+        #         mudanca_y=ponto_y,
+        #         mudanca_adicional=False
+        #     )
 
         curvas_aerofolio, a, b, pontos_p = self.mudar_pontos_de_bezier(
             pontos_p=pontos_p,

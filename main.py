@@ -4,10 +4,16 @@ from PSO import OtimizacaoHelice
 from tqdm import tqdm
 from datetime import datetime
 import time
+import logging
+from utilidades import (
+    gerar_time_stamp,
+    criar_logger,
+    criar_pastas
+)
 
 if __name__ == '__main__':
-    qde_iteracoes = 20
-    qde_particulas = 20
+    qde_iteracoes = 100
+    qde_particulas = 100
 
     condicao_de_voo = {
         "Velocidade": 3,
@@ -19,9 +25,13 @@ if __name__ == '__main__':
         "Rotacao do Motor": 1000.
     }
 
-    id = datetime.now().isoformat(timespec='minutes')
-    id = id.replace(":","h")
+    id = gerar_time_stamp()
+    criar_pastas(id)
+    criar_logger(id)
+    
+    logger = logging.getLogger("logger_main")
 
+    logger.info("\n---Processamento Iniciado---\n")
     otimization_controller = OtimizacaoHelice(
         qde_iteracoes=qde_iteracoes,
         qde_de_particulas=qde_particulas,
@@ -30,7 +40,7 @@ if __name__ == '__main__':
     )
 
     for _ in tqdm(range(qde_iteracoes)):
-        time.sleep(3)
+        time.sleep(2)
         otimization_controller.iterar()
 
     otimization_controller.gerar_grafico()

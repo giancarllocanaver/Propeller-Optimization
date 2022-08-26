@@ -3,6 +3,7 @@ import xfoil_funcao as xfoil
 import os
 import pandas as pd
 from scipy.interpolate import interp1d
+import time
 
 class helice:
     """
@@ -335,7 +336,7 @@ class helice:
         if Cp != 0:
             eta = J * Ct / Cp
         else:
-            eta = np.NaN
+            eta = 0
 
         resultados = {
             "velocidade": [self.v],
