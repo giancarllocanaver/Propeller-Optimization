@@ -13,7 +13,8 @@ def rodar_helice_inidividual(
     aerofolios: list,
     raio: np.ndarray,
     c: np.ndarray,
-    beta: np.ndarray
+    beta: np.ndarray,
+    particula_com_interseccao: bool
 ):
     resultados = helice(
             Aerofolios=aerofolios,
@@ -28,6 +29,7 @@ def rodar_helice_inidividual(
             Array_angulo_beta_da_secao=beta,
             Rotacao_motor=condicoes_voo["Rotacao do Motor"],
             Solucoes_ligadas=['solucao_1'],
+            particula_com_interseccao=particula_com_interseccao,
             ler_coord_arq_ext=True,
             ligar_solucao_aerof_naca=False,
             ligar_interpolacao_2a_ordem=True

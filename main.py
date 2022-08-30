@@ -12,8 +12,8 @@ from utilidades import (
 )
 
 if __name__ == '__main__':
-    qde_iteracoes = 100
-    qde_particulas = 100
+    qde_iteracoes = 5
+    qde_particulas = 50
 
     condicao_de_voo = {
         "Velocidade": 3,
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     
     logger = logging.getLogger("logger_main")
 
-    logger.info("\n---Processamento Iniciado---\n")
+    logger.info("\n----------Processamento Iniciado----------\n")
     otimization_controller = OtimizacaoHelice(
         qde_iteracoes=qde_iteracoes,
         qde_de_particulas=qde_particulas,
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     )
 
     for _ in tqdm(range(qde_iteracoes)):
-        time.sleep(2)
+        time.sleep(5)
         otimization_controller.iterar()
 
     otimization_controller.gerar_grafico()

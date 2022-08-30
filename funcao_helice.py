@@ -51,7 +51,8 @@ class helice:
         validacao: bool=False,
         condicao_cl_grande: bool=False,
         ligar_interpolacao_2a_ordem: bool=False,
-        ligar_solucao_aerof_naca: bool=False
+        ligar_solucao_aerof_naca: bool=False,
+        particula_com_interseccao: bool=False
     ):
         # Inicialização dos parâmetros de input
         self.aerof = Aerofolios
@@ -71,6 +72,7 @@ class helice:
         self.condicao_cl = condicao_cl_grande
         self.condicao_2a_ordem = ligar_interpolacao_2a_ordem
         self.solucao_naca = ligar_solucao_aerof_naca
+        self.solucao_interseccao = particula_com_interseccao
         
         # Caso o usuário queira ver validação, gera-se um DataFrame vazio
         if validacao == True:
@@ -274,6 +276,23 @@ class helice:
         return cl, cd
 
     def rodar_helice(self):
+        J = 60 * self.v / (self.rpm * self.D)
+
+        if self.solucao_interseccao:
+            resultados = {
+                "velocidade": [self.v],
+                "rpm": [self.rpm],
+                "J": [J],
+                "eta": [0],
+                "T": [0],
+                "Q": [0],
+                "Cp": [0],
+                "Ct": [0],
+                "Cq": [0]
+            }
+
+            return resultados
+        
         # Pressão Dinâmica
         q = 0.5 * self.rho * self.v**2
 
@@ -316,8 +335,6 @@ class helice:
 
                 r_new.append(self.r[i])
 
-        J = 60 * self.v / (self.rpm * self.D)
-
         dT.append(0)
         dQ.append(0)
 
@@ -349,5 +366,11 @@ class helice:
             "Ct": [Ct],
             "Cq": [Cq]
         }
+
+        for al in range(len(alpha)):
+            resultados[f"Alpha {al}"] = alpha[al]
+
+        for bet in range(len(self.beta)):
+            resultados[f"Beta {bet}"] = self.beta[bet]
 
         return resultados

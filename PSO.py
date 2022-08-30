@@ -23,7 +23,7 @@ class OtimizacaoHelice:
         self.convergencia   = []
         self.t_list         = []
 
-        self.logger.info("//Início da Iteração 0//\n")
+        self.logger.info("//Início da Iteração 0//--------------------\n")
         self.iterar_zero()
 
     
@@ -93,7 +93,7 @@ class OtimizacaoHelice:
         )
 
         self.logger.info("- Fim da gravação dos resultados\n\n")
-        self.logger.info(f"//Início da iteração {self.t}//\n")
+        self.logger.info(f"//Início da iteração {self.t}//--------------------\n")
         self.logger.info("- Início da computação da função objetivo")
 
         fo_controller = FuncaoObjetivo(

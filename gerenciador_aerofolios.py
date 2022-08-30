@@ -5,12 +5,16 @@ import subprocess
 import time
 
 class GerenciaAerofolios:
-    def __init__(self):
+    def __init__(self, aerofolio):
         self.existencia = False
 
-        self.gerar_nome_aerofolio()
-        self.checar_existencia_aerofolios()
-        self.gerar_aerofolio()
+        if aerofolio is not None:
+            self.nome_aerof_arq = aerofolio
+            self.checar_existencia_aerofolios()
+        else:
+            self.gerar_nome_aerofolio()
+            self.checar_existencia_aerofolios()
+            self.gerar_aerofolio()
     
     def gerar_nome_aerofolio(self):
         serie = 4

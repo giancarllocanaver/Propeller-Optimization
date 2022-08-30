@@ -2,9 +2,8 @@ from funcoes_de_bezier import Bezier
 from matplotlib import pyplot as plt
 import numpy as np
 
-bezier_controler = Bezier(
-    aerofolio_base=True
-)
+bezier_controler = Bezier()
+pontos_p = bezier_controler.gerar_aerofolio_base()
 linhas, a0, b0, pontos_p = bezier_controler.gerar_pontos_de_bezier(retornar=True)
 
 novos_A = a0.copy()
@@ -20,7 +19,8 @@ novos_A[1,3] = novos_A[1,3] + 0.005
 
 novas_linhas, a1, b1, novos_pontos_p = bezier_controler.atualizar_aerofolio(
     pontos_x=novos_A[0],
-    pontos_y=novos_A[1]
+    pontos_y=novos_A[1],
+    pontos_p=pontos_p
 )
 
 
