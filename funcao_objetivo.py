@@ -28,10 +28,9 @@ class FuncaoObjetivo:
         if inicial:
             self.criar_pontos_de_bezier_inicial()
             self.criar_matriz_inicial()
-            # self.validar_variaveis()
             self.rodar_helice_total()
             self.computar_eficiencia()
-            # self.tratar_eficiencia()
+            
 
     def criar_pontos_de_bezier_inicial(self):
         bezier_controller = Bezier()
@@ -43,7 +42,7 @@ class FuncaoObjetivo:
             
 
     def criar_parametros_iniciais(self):
-        matriz = [round(np.random.uniform(19.5, 46.3), 2) for _ in range(7)]
+        matriz = [round(np.random.uniform(-20, 20), 2) for _ in range(7)]
                 
         a        = self.pontos_A.copy()
         pontos_p = self.pontos_p.copy()
@@ -88,45 +87,6 @@ class FuncaoObjetivo:
         self.logger.info("Fim da criação da matriz inicial")
 
 
-    def validar_variaveis(self):
-        self.logger.info("Início da validação das variáveis")
-        
-        if len(self.pontos_p) != len(self.pontos_A):
-            erro = (
-                f"Tamanho dos pontos P diferente dos pontos A:\n",
-                f"Pontos P: {len(self.pontos_p)}\n",
-                f"Pontos A: {len(self.pontos_A)}"
-            )
-            self.logger.error(erro)
-            raise ValueError(
-                erro    
-            )
-
-        if len(self.pontos_p) != len(self.matriz):
-            erro = (
-                f"Tamanho dos pontos P diferente dos da Matriz:\n",
-                f"Pontos P: {len(self.pontos_p)}\n",
-                f"Matriz: {len(self.matriz)}"
-            )
-            self.logger.error(erro)
-            raise ValueError(
-                erro    
-            )
-
-        if len(self.pontos_p) != len(self.curvas_aerofolios_atual):
-            erro = (
-                f"Tamanho dos pontos P diferente dos pontos dos aerofólios:\n",
-                f"Pontos P: {len(self.pontos_p)}\n",
-                f"Matriz: {len(self.curvas_aerofolios_atual)}"
-            )
-            self.logger.error(erro)
-            raise ValueError(
-                erro
-            )
-
-        self.logger.info("Fim da validação das variáveis")
-
-
     def inserir_parametros(
         self,
         matriz: np.ndarray,
@@ -138,10 +98,8 @@ class FuncaoObjetivo:
         self.pontos_A = pontos_A
 
         self.rodar_bezier()
-        # self.validar_variaveis()
         self.rodar_helice_total()
         self.computar_eficiencia()
-        # self.tratar_eficiencia()
 
 
     def rodar_bezier(self):
@@ -210,8 +168,8 @@ class FuncaoObjetivo:
                 particula_com_interseccao = True
                 aerofolios = ["" for _ in range(8)]
 
-            beta = matriz[particula][:7]
-            beta = np.append(beta, 0) * np.pi/180.
+            alpha = matriz[particula][:7]
+            alpha = np.append(alpha, 0) * np.pi/180.
 
             if particula not in self.particulas_com_interseccao:
                 nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
@@ -224,7 +182,7 @@ class FuncaoObjetivo:
                 aerofolios=aerofolios,
                 raio=raio,
                 c=c,
-                beta=beta,
+                alpha=alpha,
                 particula_com_interseccao=particula_com_interseccao
             )
             

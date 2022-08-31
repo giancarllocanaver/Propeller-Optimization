@@ -44,7 +44,7 @@ class helice:
         Numero_de_pas: int,
         Array_raio_da_secao: list,
         Array_tamanho_de_corda_da_secao: list,
-        Array_angulo_beta_da_secao: list,
+        Array_angulo_alpha_da_secao: list,
         Rotacao_motor: float,
         Solucoes_ligadas: list=['solucao_1', 'solucao_2', 'solucao_3'],
         ler_coord_arq_ext: bool=False,
@@ -64,7 +64,7 @@ class helice:
         self.n = Numero_de_pas
         self.r = Array_raio_da_secao
         self.c = Array_tamanho_de_corda_da_secao
-        self.beta = Array_angulo_beta_da_secao
+        self.alpha = Array_angulo_alpha_da_secao
         self.rpm = Rotacao_motor
         self.solucoes = Solucoes_ligadas
         self.ler = ler_coord_arq_ext
@@ -307,9 +307,9 @@ class helice:
         vr = vt / np.cos(phi)
 
         # Ângulo de ataque de cada seção
-        alpha_np = (self.beta - phi) * 180 / np.pi
-        alpha = [round(i, 2) for i in alpha_np]
-        alpha[-1] = 0.0
+        alpha = self.alpha.copy()
+        alpha_rad = self.alpha * np.pi / 180
+        beta = alpha_rad + phi
 
         dT = []
         dQ = []
@@ -370,7 +370,7 @@ class helice:
         for al in range(len(alpha)):
             resultados[f"Alpha {al}"] = alpha[al]
 
-        for bet in range(len(self.beta)):
-            resultados[f"Beta {bet}"] = self.beta[bet]
+        for bet in range(len(beta)):
+            resultados[f"Beta {bet}"] = beta[bet]
 
         return resultados

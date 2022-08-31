@@ -115,7 +115,9 @@ class OtimizacaoHelice:
         objetivo_inicial = eficiencia_antiga.copy()
         objetivo_novo    = eficiencia_nova.copy()
 
-        argumento_p_best = (objetivo_novo >= objetivo_inicial) & (objetivo_novo >= 0)
+        argumento_alpha = self.capturar_alpha_limites()
+
+        argumento_p_best = (objetivo_novo >= objetivo_inicial) & (objetivo_novo > 0) & (argumento_alpha)
         argumento_g_best = self.descobrir_argumento_maximo(
             obj_inicial=objetivo_inicial,
             obj_novo=objetivo_novo
@@ -145,6 +147,16 @@ class OtimizacaoHelice:
 
         self.convergencia.append(objetivo_novo.max())
         self.t_list.append(self.t)
+
+    def capturar_alpha_limites(self):
+        matriz = self.matriz.copy()
+
+        argumentos = []
+        for particula in range(len(matriz)):
+            condicao = (matriz[particula][:-1] > -20).all() & (matriz[particula][:-1] < 20).all()
+            argumentos.append(condicao)
+
+        return np.array(argumentos)
 
     def descobrir_argumento_maximo(self, obj_inicial, obj_novo):
         novo_obj_1 = []
