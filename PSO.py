@@ -141,9 +141,9 @@ class OtimizacaoHelice:
         )
 
         self.t += 1
-        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        self.c1 = -3*self.t/self.N + 3.5
-        self.c2 = 3*self.t/self.N + 0.5
+        # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        # self.c1 = -3*self.t/self.N + 3.5
+        # self.c2 = 3*self.t/self.N + 0.5
 
         self.convergencia.append(objetivo_novo.max())
         self.t_list.append(self.t)

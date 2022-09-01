@@ -15,8 +15,8 @@ class Bezier:
         self.pontos_a = None
         self.pontos_b = None
 
-    def gerar_aerofolio(self, aerofolio=None):
-        controle_aerof = GerenciaAerofolios(aerofolio=aerofolio)
+    def gerar_aerofolio(self, aerofolio=None, naca=False):
+        controle_aerof = GerenciaAerofolios(aerofolio=aerofolio, naca=naca)
         pontos_p = controle_aerof.gerar_pontos_P()
 
         pontos_p[1][0]  = 0

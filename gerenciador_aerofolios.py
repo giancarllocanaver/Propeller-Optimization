@@ -5,12 +5,18 @@ import subprocess
 import time
 
 class GerenciaAerofolios:
-    def __init__(self, aerofolio):
+    def __init__(self, aerofolio: str=None, naca: bool=False):
         self.existencia = False
 
         if aerofolio is not None:
-            self.nome_aerof_arq = aerofolio
-            self.checar_existencia_aerofolios()
+            if naca:
+                self.nome_aerof = aerofolio
+                self.nome_aerof_arq = f"{aerofolio}.txt".replace(" ", "_")
+                self.checar_existencia_aerofolios()
+                self.gerar_aerofolio()
+            else:
+                self.nome_aerof_arq = aerofolio
+                self.checar_existencia_aerofolios()
         else:
             self.gerar_nome_aerofolio()
             self.checar_existencia_aerofolios()

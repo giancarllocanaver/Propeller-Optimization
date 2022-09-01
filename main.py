@@ -12,7 +12,7 @@ from utilidades import (
 )
 
 if __name__ == '__main__':
-    qde_iteracoes = 20
+    qde_iteracoes = 100
     qde_particulas = 20
 
     condicao_de_voo = {
