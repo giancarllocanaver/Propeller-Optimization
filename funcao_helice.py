@@ -277,21 +277,6 @@ class helice:
 
     def rodar_helice(self):
         J = 60 * self.v / (self.rpm * self.D)
-
-        if self.solucao_interseccao:
-            resultados = {
-                "velocidade": [self.v],
-                "rpm": [self.rpm],
-                "J": [J],
-                "eta": [0],
-                "T": [0],
-                "Q": [0],
-                "Cp": [0],
-                "Ct": [0],
-                "Cq": [0]
-            }
-
-            return resultados
         
         # Pressão Dinâmica
         q = 0.5 * self.rho * self.v**2
@@ -310,6 +295,26 @@ class helice:
         alpha = self.alpha.copy()
         alpha_rad = self.alpha * np.pi / 180
         beta = alpha_rad + phi
+
+        if self.solucao_interseccao:
+            resultados = {
+                "velocidade": [self.v],
+                "rpm": [self.rpm],
+                "J": [J],
+                "eta": [0],
+                "T": [0],
+                "Q": [0],
+                "Cp": [0],
+                "Ct": [0],
+                "Cq": [0]
+            }
+            
+            for al in range(len(self.alpha)):
+                resultados[f"Alpha {al}"] = self.alpha[al]
+
+            for bet in range(len(beta)):
+                resultados[f"Beta {bet}"] = beta[bet] * 180 / np.pi
+            return resultados
 
         dT = []
         dQ = []
@@ -371,6 +376,6 @@ class helice:
             resultados[f"Alpha {al}"] = alpha[al]
 
         for bet in range(len(beta)):
-            resultados[f"Beta {bet}"] = beta[bet]
+            resultados[f"Beta {bet}"] = beta[bet] * 180 / np.pi
 
         return resultados

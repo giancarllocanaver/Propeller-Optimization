@@ -3,19 +3,15 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 bezier_controler = Bezier()
-pontos_p = bezier_controler.gerar_aerofolio_base()
+pontos_p = bezier_controler.gerar_aerofolio(aerofolio='clarky_p.txt')
 linhas, a0, b0, pontos_p = bezier_controler.gerar_pontos_de_bezier(retornar=True)
 
 novos_A = a0.copy()
-novos_A[0,0] = novos_A[0,0] - 0.05
-novos_A[0,1] = novos_A[0,1] - 0.05
-novos_A[0,2] = novos_A[0,2] + 0.05
-novos_A[0,3] = novos_A[0,3] - 0.05
 
-novos_A[1,0] = novos_A[1,0] - 0.005
-novos_A[1,1] = novos_A[1,1] + 0.005
-novos_A[1,2] = novos_A[1,2] - 0.005
-novos_A[1,3] = novos_A[1,3] + 0.005
+novos_A[1,0] = novos_A[1,0] - 0.0
+novos_A[1,1] = novos_A[1,1] - 0.0
+novos_A[1,2] = novos_A[1,2] 
+novos_A[1,3] = novos_A[1,3] + 0.019683433364859813
 
 novas_linhas, a1, b1, novos_pontos_p = bezier_controler.atualizar_aerofolio(
     pontos_x=novos_A[0],

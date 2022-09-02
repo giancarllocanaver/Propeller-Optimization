@@ -34,7 +34,7 @@ class FuncaoObjetivo:
 
     def criar_pontos_de_bezier_inicial(self):
         bezier_controller = Bezier()
-        pontos_p = bezier_controller.gerar_aerofolio("naca 0015", naca=True)
+        pontos_p = bezier_controller.gerar_aerofolio("naca 0020", naca=True)
         linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
 
         self.pontos_p = pontos_p.copy()
@@ -55,7 +55,7 @@ class FuncaoObjetivo:
 
         verificacao = False
         while verificacao == False:
-            escalar = np.random.uniform(low=-0.025, high=0.025)
+            escalar = np.random.uniform(low=-0.05, high=0.05)
             a[1][3][0] = self.pontos_A[1][3][0] + escalar
 
             bezier_controller = Bezier()
@@ -146,7 +146,6 @@ class FuncaoObjetivo:
             if type(linhas) == int:
                 self.particulas_com_interseccao.append(particula)
 
-            self.matriz[particula][-1] = escalar
             self.curvas_aerofolios_atual.append(linhas)
 
         self.logger.info("Fim das rodagens por Bezier")
