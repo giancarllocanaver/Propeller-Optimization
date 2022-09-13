@@ -44,14 +44,14 @@ class OtimizacaoHelice:
         
         p_best = matriz.copy()
 
-        selecao = eficiencia_invertida_inicial >= 0
-        argumento_g_best = eficiencia_invertida_inicial[selecao].argmax()
-        g_best = p_best[argumento_g_best, :]
+        self.atualizar_g_best(
+            fo=eficiencia_invertida_inicial,
+            x=matriz
+        )
 
         self.matriz = matriz
         self.v = np.zeros((self.qde_particulas, matriz.shape[1]), dtype=float)
         self.p_best = p_best.copy()
-        self.g_best = g_best.copy()
         self.pontos_p = pontos_p
         self.pontos_A = pontos_a
         self.eficiencia_antiga = eficiencia_invertida_inicial.copy()
@@ -115,16 +115,13 @@ class OtimizacaoHelice:
         objetivo_inicial = eficiencia_antiga.copy()
         objetivo_novo    = eficiencia_nova.copy()
 
-        argumento_alpha = self.capturar_alpha_limites()
-
-        argumento_p_best = (objetivo_novo >= objetivo_inicial) & (objetivo_novo > 0) & (argumento_alpha)
-        argumento_g_best = self.descobrir_argumento_maximo(
-            obj_inicial=objetivo_inicial,
-            obj_novo=objetivo_novo
+        self.atualizar_p_best_e_g_best(
+            fo_antigo=objetivo_inicial,
+            fo_novo=objetivo_novo,
+            p_best=self.p_best,
+            g_best=self.g_best,
+            x=self.matriz
         )
-
-        self.p_best[argumento_p_best, :] = self.matriz[argumento_p_best, :]
-        self.g_best = self.p_best[argumento_g_best, :]
 
         self.eficiencia_antiga = eficiencia_nova.copy()
 
@@ -148,42 +145,6 @@ class OtimizacaoHelice:
         self.convergencia.append(objetivo_novo.max())
         self.t_list.append(self.t)
 
-    def capturar_alpha_limites(self):
-        matriz = self.matriz.copy()
-
-        argumentos = []
-        for particula in range(len(matriz)):
-            condicao = (matriz[particula][:-1] > -20).all() & (matriz[particula][:-1] < 20).all()
-            argumentos.append(condicao)
-
-        return np.array(argumentos)
-
-    def descobrir_argumento_maximo(self, obj_inicial, obj_novo):
-        novo_obj_1 = []
-        novo_obj_2 = []
-        obj_join = []
-
-        for particula in range(len(obj_inicial)):
-            obj_part = [obj_inicial[particula], particula]
-            novo_obj_1.append(obj_part)
-
-        for particula in range(len(obj_novo)):
-            obj_part = [obj_novo[particula], particula]
-            novo_obj_2.append(obj_part)
-
-        for obj in novo_obj_1:
-            obj_join.append(obj)
-
-        for obj in novo_obj_2:
-            obj_join.append(obj)
-
-        array = np.array(obj_join)
-        selecao = array[:,0].argmax(axis=0)
-        array_selecao = array[selecao]
-
-        argumento = int(array_selecao[1])
-
-        return argumento
 
     def gerar_grafico(self):
         df = pd.DataFrame({'t': [], 'Objetivo min': []})
@@ -200,3 +161,58 @@ class OtimizacaoHelice:
         plt.ylabel('objetivo')
         plt.savefig(f'resultados/resultados_id_{self.id}/Grafico-convergencia-otimizacao.jpg', dpi=300)
         plt.show()
+
+
+    def atualizar_g_best(
+        self,
+        fo: np.ndarray,
+        x: np.ndarray
+    ):
+        selecao = ((fo <= 1) & (fo > 0))
+        fo_maximo = fo[selecao].max()
+
+        for particula in range(self.qde_particulas):
+            fo_particula = fo[particula]
+
+            if fo_particula == fo_maximo:
+                g_best = x[particula]
+
+        self.g_best = g_best.copy()
+
+
+    def atualizar_p_best_e_g_best(
+        self,
+        fo_novo: np.ndarray,
+        fo_antigo: np.ndarray,
+        p_best: np.ndarray,
+        g_best: np.ndarray,
+        x: np.ndarray
+    ):
+        fo_melhor_particula = fo_antigo.max()
+        
+        for particula in range(self.qde_particulas):
+            fo_antigo_particula = fo_antigo[particula]
+            fo_novo_particula = fo_novo[particula]
+            
+            condicao_alpha = (
+                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
+            )
+
+            condicao_fo_nova = (
+                (fo_novo_particula < 1) & (fo_novo_particula > 0)
+            )
+
+            if (
+                (fo_novo_particula > fo_antigo_particula) &
+                (condicao_alpha) &
+                (condicao_fo_nova)
+            ):
+                p_best[particula] = x[particula]
+                if (
+                    fo_novo_particula > fo_melhor_particula
+                ):
+                    g_best = x[particula]
+
+        self.p_best = p_best.copy()
+        self.g_best = g_best.copy()
+        

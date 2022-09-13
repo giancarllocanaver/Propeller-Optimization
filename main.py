@@ -12,8 +12,8 @@ from utilidades import (
 )
 
 if __name__ == '__main__':
-    qde_iteracoes = 100
-    qde_particulas = 20
+    qde_iteracoes = 200
+    qde_particulas = 10
 
     condicao_de_voo = {
         "Velocidade": 3,
