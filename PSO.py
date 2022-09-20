@@ -43,6 +43,7 @@ class OtimizacaoHelice:
         resultados = fo_controller.retornar_resultados()
         
         p_best = matriz.copy()
+        self.p_best_obj = eficiencia_invertida_inicial.copy()
 
         self.atualizar_g_best(
             fo=eficiencia_invertida_inicial,
@@ -69,6 +70,9 @@ class OtimizacaoHelice:
             id=self.id,
             iteracao=self.t
         )
+
+        self.convergencia.append(self.g_best_obj)
+        self.t_list.append(self.t)
 
         self.c1 = 2.05
         self.c2 = 2.05
@@ -116,10 +120,11 @@ class OtimizacaoHelice:
         objetivo_novo    = eficiencia_nova.copy()
 
         self.atualizar_p_best_e_g_best(
-            fo_antigo=objetivo_inicial,
-            fo_novo=objetivo_novo,
+            fo=objetivo_novo,
             p_best=self.p_best,
             g_best=self.g_best,
+            p_best_obj=self.p_best_obj,
+            g_best_obj=self.g_best_obj,
             x=self.matriz
         )
 
@@ -137,13 +142,13 @@ class OtimizacaoHelice:
             iteracao=self.t
         )
 
+        self.convergencia.append(self.g_best_obj)
+        self.t_list.append(self.t)
+        
         self.t += 1
         # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
         # self.c1 = -3*self.t/self.N + 3.5
         # self.c2 = 3*self.t/self.N + 0.5
-
-        self.convergencia.append(objetivo_novo.max())
-        self.t_list.append(self.t)
 
 
     def gerar_grafico(self):
@@ -176,43 +181,53 @@ class OtimizacaoHelice:
 
             if fo_particula == fo_maximo:
                 g_best = x[particula]
+                g_best_obj = fo_particula
 
         self.g_best = g_best.copy()
+        self.g_best_obj = g_best_obj.copy()
 
 
     def atualizar_p_best_e_g_best(
         self,
-        fo_novo: np.ndarray,
-        fo_antigo: np.ndarray,
+        fo: np.ndarray,
         p_best: np.ndarray,
         g_best: np.ndarray,
+        p_best_obj: np.ndarray,
+        g_best_obj: np.ndarray,
         x: np.ndarray
     ):
-        fo_melhor_particula = fo_antigo.max()
-        
         for particula in range(self.qde_particulas):
-            fo_antigo_particula = fo_antigo[particula]
-            fo_novo_particula = fo_novo[particula]
+            p_best_obj_part = p_best_obj[particula]
+            fo_particula = fo[particula]
             
             condicao_alpha = (
                 (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
             )
 
             condicao_fo_nova = (
-                (fo_novo_particula < 1) & (fo_novo_particula > 0)
+                (fo_particula < 1) & (fo_particula > 0)
             )
 
             if (
-                (fo_novo_particula > fo_antigo_particula) &
+                (fo_particula > p_best_obj_part) &
                 (condicao_alpha) &
                 (condicao_fo_nova)
             ):
                 p_best[particula] = x[particula]
-                if (
-                    fo_novo_particula > fo_melhor_particula
-                ):
-                    g_best = x[particula]
+                p_best_obj[particula] = fo_particula
+        
+        p_best_obj_max = p_best_obj.max()
+        
+        for particula in range(self.qde_particulas):
+            p_best_obj_part = p_best_obj[particula]            
+            if (
+                p_best_obj_part == p_best_obj_max # TODO: rever
+            ):
+                g_best = x[particula]
+                g_best_obj = p_best_obj_part
 
         self.p_best = p_best.copy()
         self.g_best = g_best.copy()
-        
+
+        self.p_best_obj = p_best_obj.copy()
+        self.g_best_obj = g_best_obj.copy()        
