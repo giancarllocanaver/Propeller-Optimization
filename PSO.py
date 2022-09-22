@@ -68,7 +68,8 @@ class OtimizacaoHelice:
         gravar_resultados_matriz_pso(
             resultados=matriz,
             id=self.id,
-            iteracao=self.t
+            iteracao=self.t,
+            fo=eficiencia_invertida_inicial
         )
 
         self.convergencia.append(self.g_best_obj)
@@ -139,7 +140,8 @@ class OtimizacaoHelice:
         gravar_resultados_matriz_pso(
             resultados=self.matriz,
             id=self.id,
-            iteracao=self.t
+            iteracao=self.t,
+            fo=objetivo_novo
         )
 
         self.convergencia.append(self.g_best_obj)

@@ -109,7 +109,8 @@ def gravar_resultados_aerodinamicos(
 def gravar_resultados_matriz_pso(
     resultados,
     id,
-    iteracao
+    iteracao,
+    fo
 ):
     if not os.path.isdir("resultados"):
         os.mkdir("resultados")
@@ -136,13 +137,16 @@ def gravar_resultados_matriz_pso(
         "beta 7",
         "escalar Ay3",
         "particula",
-        "iteracao"
+        "iteracao",
+        "fo"
     ]
 
     for particula in range(len(resultados)):
         resultado = resultados[particula].tolist()
+        fo_particula = fo[particula]
         resultado.append(particula)
         resultado.append(iteracao)
+        resultado.append(fo_particula)
 
         df_resultado = pd.DataFrame(
             resultado
