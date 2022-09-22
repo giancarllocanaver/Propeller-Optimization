@@ -116,7 +116,7 @@ class helice:
                 str(re),
                 str(Ma),
                 "9",
-                "100",
+                "500",
                 "arquivo_dados_s1.txt",
                 mudar_paineis=True,
                 mostrar_grafico=False,

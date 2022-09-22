@@ -67,7 +67,7 @@ def rodar_xfoil(
     if mudar_paineis == True:
         arquivo_de_input.write("PPAR" + "\n")
         arquivo_de_input.write("N" + "\n")
-        arquivo_de_input.write("160" + "\n")
+        arquivo_de_input.write("200" + "\n")
         arquivo_de_input.write("\n")
         arquivo_de_input.write("\n")
 

@@ -55,7 +55,7 @@ class OtimizacaoHelice:
         self.p_best = p_best.copy()
         self.pontos_p = pontos_p
         self.pontos_A = pontos_a
-        self.eficiencia_antiga = eficiencia_invertida_inicial.copy()
+        self.fo = eficiencia_invertida_inicial.copy()
         self.resultados = resultados.copy()
 
         self.logger.info("- Início da gravação dos resultados")
@@ -81,14 +81,8 @@ class OtimizacaoHelice:
         self.t  = 1
 
     def iterar(self):
-        eficiencia_antiga = self.eficiencia_antiga
-        eficiencia_nova   = None
-
-        self.v      = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.matriz) + self.c2*self.r[1]*(self.g_best - self.matriz)
-        self.matriz = self.matriz + self.v
-
         salvar_resultados_json(
-            eficiencia=eficiencia_antiga,
+            eficiencia=self.fo,
             matriz_v=self.v,
             matriz_pso=self.matriz,
             p_best=self.p_best,
@@ -96,6 +90,9 @@ class OtimizacaoHelice:
             r=self.r,
             id=self.id
         )
+        
+        self.v      = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.matriz) + self.c2*self.r[1]*(self.g_best - self.matriz)
+        self.matriz = self.matriz + self.v       
 
         self.logger.info("- Fim da gravação dos resultados\n\n")
         self.logger.info(f"//Início da iteração {self.t}//--------------------\n")
@@ -113,23 +110,18 @@ class OtimizacaoHelice:
         )
         self.logger.info("- Fim da computação da função objetivo")
 
-        eficiencia_nova = fo_controller.retornar_eficiencia()
+        self.fo = fo_controller.retornar_eficiencia()
         resultados = fo_controller.retornar_resultados()
         self.matriz = fo_controller.retornar_matriz()
 
-        objetivo_inicial = eficiencia_antiga.copy()
-        objetivo_novo    = eficiencia_nova.copy()
-
         self.atualizar_p_best_e_g_best(
-            fo=objetivo_novo,
+            fo=self.fo,
             p_best=self.p_best,
             g_best=self.g_best,
             p_best_obj=self.p_best_obj,
             g_best_obj=self.g_best_obj,
             x=self.matriz
         )
-
-        self.eficiencia_antiga = eficiencia_nova.copy()
 
         gravar_resultados_aerodinamicos(
             resultados=resultados,
@@ -141,7 +133,7 @@ class OtimizacaoHelice:
             resultados=self.matriz,
             id=self.id,
             iteracao=self.t,
-            fo=objetivo_novo
+            fo=self.fo
         )
 
         self.convergencia.append(self.g_best_obj)
@@ -177,6 +169,12 @@ class OtimizacaoHelice:
     ):
         selecao = ((fo <= 1) & (fo > 0))
         fo_maximo = fo[selecao].max()
+
+        if fo_maximo > 1:
+            raise Exception(
+                "O valor de fo_maximo não pode ser maior do que 1"
+                "Rever seleção"
+            )
 
         for particula in range(self.qde_particulas):
             fo_particula = fo[particula]
@@ -217,6 +215,12 @@ class OtimizacaoHelice:
             ):
                 p_best[particula] = x[particula]
                 p_best_obj[particula] = fo_particula
+
+                if fo_particula > 1:
+                    raise Exception(
+                        "O valor de fo_maximo não pode ser maior do que 1"
+                        "Rever seleção"
+                    )
         
         p_best_obj_max = p_best_obj.max()
         
@@ -227,6 +231,12 @@ class OtimizacaoHelice:
             ):
                 g_best = x[particula]
                 g_best_obj = p_best_obj_part
+
+                if p_best_obj_part > 1:
+                    raise Exception(
+                        "O valor de fo_maximo não pode ser maior do que 1"
+                        "Rever seleção"
+                    )
 
         self.p_best = p_best.copy()
         self.g_best = g_best.copy()
