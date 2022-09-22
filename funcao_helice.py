@@ -85,6 +85,183 @@ class helice:
 
         return I
 
+    def rodar_xfoil(self, aerofolio, re, alpha, Ma):
+        """
+        Função com objetivo de rodar os dados no xfoil, chamando uma função externa.
+
+        Pode=se utilizar duas análises para as rodagens: análise com viscosidade, sem viscosidade; prioridade será viscosa
+
+        Caso Mach maior que 1 ou não convergência dos dados, será utililzado como padrão: CL=0 e CD=1
+        """
+
+        def solucao_1():
+            # Tentativa de rodar solução viscosa
+            xfoil.rodar_xfoil(
+                aerofolio,
+                str(alpha),
+                str(alpha),
+                "0",
+                str(re),
+                str(Ma),
+                "9",
+                "500",
+                "arquivo_dados_s1.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=self.ler,
+                compressibilidade=False,
+                solucao_viscosa=True,
+                solucoes_NACA=self.solucao_naca
+            )
+
+            dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+            os.remove("arquivo_dados_s1.txt")
+
+            if dados.size != 0:
+                cl = dados[1]
+                cd = abs(dados[2])
+
+                cl = cl / (np.sqrt(1 - Ma**2))
+                cd = cd / (np.sqrt(1 - Ma**2))
+                
+                return cl, cd, "Solucao viscosa sem interpolação"
+            else:
+                return 0, 0, "Sem solução"
+        
+        def solucao_2():
+            delta_alpha = 0.25
+            delta_parada = 0.05
+
+            while (delta_alpha >= delta_parada):
+                xfoil.rodar_xfoil(
+                    aerofolio,
+                    str(alpha - 5),
+                    str(alpha + 5),
+                    str(delta_alpha),
+                    str(re),
+                    str(Ma),
+                    "9",
+                    "100",
+                    "arquivo_dados_s2.txt",
+                    mudar_paineis=True,
+                    mostrar_grafico=False,
+                    ler_arquivo_coord=self.ler,
+                    compressibilidade=False,
+                    solucao_viscosa=True,
+                    solucao_com_interpolacao=True,
+                    solucoes_NACA=self.solucao_naca
+                )
+
+                dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
+                os.remove("arquivo_dados_s2.txt")
+
+                try:
+                    dados.shape[1]
+                    delta_alpha = delta_parada
+                except IndexError:
+                    delta_alpha = delta_alpha - 0.05
+
+            try:
+                dados.shape[1]
+                if (dados.shape[0] >= 2) and (dados.size != 0):
+                    if (dados.shape[0] == 2):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='linear', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='linear', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 1ª ordem"
+                    elif (dados.shape[0] == 3) and (self.ligar_interpolacao_2a_ordem):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='quadratic', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='quadratic', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 2ª ordem"
+                    else:
+                        cd = interp1d(dados[:,0], dados[:,2], kind='cubic', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='cubic', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 3ª ordem"
+
+                    cl = cl / (np.sqrt(1 - Ma**2))
+                    cd = cd(alpha) / (np.sqrt(1 - Ma**2))
+
+                    if (self.condicao_cl == True):
+                        if (cl > 2.5):
+                            cl = 0.0
+                
+                    return cl, cd, solucao_type
+                else:
+                    return 0, 0, "Sem solução"
+            except IndexError:
+                return 0, 0, "Sem solução"
+
+        def solucao_3():
+            xfoil.rodar_xfoil(
+                aerofolio,
+                str(alpha),
+                str(alpha),
+                "0",
+                str(re),
+                str(Ma),
+                "9",
+                "100",
+                "arquivo_dados_s3.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=self.ler,
+                compressibilidade=False,
+                solucao_viscosa=False,
+                solucoes_NACA=self.solucao_naca
+            )
+
+            dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
+            os.remove("arquivo_dados_s3.txt")
+
+            cl = dados[1]
+            if (self.condicao_cl == True):
+                if (cl > 2.5):
+                    cl = 0
+
+            cd = abs(dados[3])
+
+            cl = cl / (np.sqrt(1 - Ma**2))
+            cd = cd / (np.sqrt(1 - Ma**2))
+
+            return cl, cd, "Solução invíscida"
+
+        
+        if (Ma < 1):
+            if (len(self.solucoes) == 3):
+                cl, cd, tipo_solucao = solucao_1()
+
+                if (cl == 0 and cd == 0):
+                    cl, cd, tipo_solucao = solucao_2()
+                    
+                    if (cl == 0 and cd == 0):
+                        cl, cd, tipo_solucao = solucao_3()
+            elif (len(self.solucoes) == 1):
+                cl, cd, tipo_solucao = locals()[self.solucoes[0]]()
+        elif (Ma > 0):
+            cl = 0
+            cd = 1
+            tipo_solucao = "Ma > 1"
+        else:
+            cl = 0
+            cd = 1
+            tipo_solucao = "Error sem solução"
+
+        if self.bool_val == True:
+            self.df_val_aerof = self.df_val_aerof.append(
+                pd.DataFrame(
+                    {
+                        "Velocidade": [self.v],
+                        "RPM": [self.rpm],
+                        "Alpha": [alpha],
+                        "Re": [re],
+                        "Cl": [cl],
+                        "Cd": [cd],
+                        "Tipo": [tipo_solucao],
+                    }
+                ),
+                ignore_index=True,
+            )
+
+        return cl, cd
 
     def rodar_helice(self):
         J = 60 * self.v / (self.rpm * self.D)

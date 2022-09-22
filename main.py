@@ -13,10 +13,10 @@ from utilidades import (
 
 if __name__ == '__main__':
     qde_iteracoes = 20
-    qde_particulas = 20
+    qde_particulas = 25
 
     condicao_de_voo = {
-        "Velocidade": 3,
+        "Velocidade": 70,
         "Viscosidade": 1.789e-5,
         "Temperatura": 288.2,
         "Densidade do Ar": 1.225,
