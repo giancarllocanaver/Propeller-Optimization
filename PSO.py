@@ -222,7 +222,8 @@ class OtimizacaoHelice:
                         "Rever seleção"
                     )
         
-        p_best_obj_max = p_best_obj.max()
+        selecao = ((p_best_obj > 0) & (p_best_obj <= 1))
+        p_best_obj_max = p_best_obj[selecao].max()
         
         for particula in range(self.qde_particulas):
             p_best_obj_part = p_best_obj[particula]            
