@@ -48,7 +48,6 @@ class helice:
         Rotacao_motor: float,
         Solucoes_ligadas: list=['solucao_1', 'solucao_2', 'solucao_3'],
         ler_coord_arq_ext: bool=False,
-        validacao: bool=False,
         condicao_cl_grande: bool=False,
         ligar_interpolacao_2a_ordem: bool=False,
         ligar_solucao_aerof_naca: bool=False,
@@ -68,23 +67,12 @@ class helice:
         self.rpm = Rotacao_motor
         self.solucoes = Solucoes_ligadas
         self.ler = ler_coord_arq_ext
-        self.bool_val = False
         self.condicao_cl = condicao_cl_grande
         self.condicao_2a_ordem = ligar_interpolacao_2a_ordem
         self.solucao_naca = ligar_solucao_aerof_naca
         self.solucao_interseccao = particula_com_interseccao
+        self.solucao_aerofolio_unico = True
         
-        # Caso o usuário queira ver validação, gera-se um DataFrame vazio
-        if validacao == True:
-            self.df_val_aerof = pd.DataFrame(
-                {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": []}
-            )
-
-            self.df_val_helice = pd.DataFrame(
-                {"Velocidade": [], "RPM": [], "Eficiencia": []}
-            )
-
-            self.bool_val = True
 
     def integracao(self, f, x):
         """
@@ -97,183 +85,6 @@ class helice:
 
         return I
 
-    def rodar_xfoil(self, aerofolio, re, alpha, Ma):
-        """
-        Função com objetivo de rodar os dados no xfoil, chamando uma função externa.
-
-        Pode=se utilizar duas análises para as rodagens: análise com viscosidade, sem viscosidade; prioridade será viscosa
-
-        Caso Mach maior que 1 ou não convergência dos dados, será utililzado como padrão: CL=0 e CD=1
-        """
-
-        def solucao_1():
-            # Tentativa de rodar solução viscosa
-            xfoil.rodar_xfoil(
-                aerofolio,
-                str(alpha),
-                str(alpha),
-                "0",
-                str(re),
-                str(Ma),
-                "9",
-                "100",
-                "arquivo_dados_s1.txt",
-                mudar_paineis=True,
-                mostrar_grafico=False,
-                ler_arquivo_coord=self.ler,
-                compressibilidade=False,
-                solucao_viscosa=True,
-                solucoes_NACA=self.solucao_naca
-            )
-
-            dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
-            os.remove("arquivo_dados_s1.txt")
-
-            if dados.size != 0:
-                cl = dados[1]
-                cd = abs(dados[2])
-
-                cl = cl / (np.sqrt(1 - Ma**2))
-                cd = cd / (np.sqrt(1 - Ma**2))
-                
-                return cl, cd, "Solucao viscosa sem interpolação"
-            else:
-                return 0, 0, "Sem solução"
-        
-        def solucao_2():
-            delta_alpha = 0.25
-            delta_parada = 0.05
-
-            while (delta_alpha >= delta_parada):
-                xfoil.rodar_xfoil(
-                    aerofolio,
-                    str(alpha - 5),
-                    str(alpha + 5),
-                    str(delta_alpha),
-                    str(re),
-                    str(Ma),
-                    "9",
-                    "100",
-                    "arquivo_dados_s2.txt",
-                    mudar_paineis=True,
-                    mostrar_grafico=False,
-                    ler_arquivo_coord=self.ler,
-                    compressibilidade=False,
-                    solucao_viscosa=True,
-                    solucao_com_interpolacao=True,
-                    solucoes_NACA=self.solucao_naca
-                )
-
-                dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
-                os.remove("arquivo_dados_s2.txt")
-
-                try:
-                    dados.shape[1]
-                    delta_alpha = delta_parada
-                except IndexError:
-                    delta_alpha = delta_alpha - 0.05
-
-            try:
-                dados.shape[1]
-                if (dados.shape[0] >= 2) and (dados.size != 0):
-                    if (dados.shape[0] == 2):
-                        cd = interp1d(dados[:,0], dados[:,2], kind='linear', fill_value='extrapolate')
-                        cl = interp1d(dados[:,0], dados[:,1], kind='linear', fill_value='extrapolate')
-                        solucao_type = "Solução viscosa com interpolação de 1ª ordem"
-                    elif (dados.shape[0] == 3) and (self.ligar_interpolacao_2a_ordem):
-                        cd = interp1d(dados[:,0], dados[:,2], kind='quadratic', fill_value='extrapolate')
-                        cl = interp1d(dados[:,0], dados[:,1], kind='quadratic', fill_value='extrapolate')
-                        solucao_type = "Solução viscosa com interpolação de 2ª ordem"
-                    else:
-                        cd = interp1d(dados[:,0], dados[:,2], kind='cubic', fill_value='extrapolate')
-                        cl = interp1d(dados[:,0], dados[:,1], kind='cubic', fill_value='extrapolate')
-                        solucao_type = "Solução viscosa com interpolação de 3ª ordem"
-
-                    cl = cl / (np.sqrt(1 - Ma**2))
-                    cd = cd(alpha) / (np.sqrt(1 - Ma**2))
-
-                    if (self.condicao_cl == True):
-                        if (cl > 2.5):
-                            cl = 0.0
-                
-                    return cl, cd, solucao_type
-                else:
-                    return 0, 0, "Sem solução"
-            except IndexError:
-                return 0, 0, "Sem solução"
-
-        def solucao_3():
-            xfoil.rodar_xfoil(
-                aerofolio,
-                str(alpha),
-                str(alpha),
-                "0",
-                str(re),
-                str(Ma),
-                "9",
-                "100",
-                "arquivo_dados_s3.txt",
-                mudar_paineis=True,
-                mostrar_grafico=False,
-                ler_arquivo_coord=self.ler,
-                compressibilidade=False,
-                solucao_viscosa=False,
-                solucoes_NACA=self.solucao_naca
-            )
-
-            dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
-            os.remove("arquivo_dados_s3.txt")
-
-            cl = dados[1]
-            if (self.condicao_cl == True):
-                if (cl > 2.5):
-                    cl = 0
-
-            cd = abs(dados[3])
-
-            cl = cl / (np.sqrt(1 - Ma**2))
-            cd = cd / (np.sqrt(1 - Ma**2))
-
-            return cl, cd, "Solução invíscida"
-
-        
-        if (Ma < 1):
-            if (len(self.solucoes) == 3):
-                cl, cd, tipo_solucao = solucao_1()
-
-                if (cl == 0 and cd == 0):
-                    cl, cd, tipo_solucao = solucao_2()
-                    
-                    if (cl == 0 and cd == 0):
-                        cl, cd, tipo_solucao = solucao_3()
-            elif (len(self.solucoes) == 1):
-                cl, cd, tipo_solucao = locals()[self.solucoes[0]]()
-        elif (Ma > 0):
-            cl = 0
-            cd = 1
-            tipo_solucao = "Ma > 1"
-        else:
-            cl = 0
-            cd = 1
-            tipo_solucao = "Error sem solução"
-
-        if self.bool_val == True:
-            self.df_val_aerof = self.df_val_aerof.append(
-                pd.DataFrame(
-                    {
-                        "Velocidade": [self.v],
-                        "RPM": [self.rpm],
-                        "Alpha": [alpha],
-                        "Re": [re],
-                        "Cl": [cl],
-                        "Cd": [cd],
-                        "Tipo": [tipo_solucao],
-                    }
-                ),
-                ignore_index=True,
-            )
-
-        return cl, cd
 
     def rodar_helice(self):
         J = 60 * self.v / (self.rpm * self.D)
@@ -290,11 +101,6 @@ class helice:
 
         # Velocidade resultante
         vr = vt / np.cos(phi)
-
-        # Ângulo de ataque de cada seção
-        alpha = self.alpha.copy()
-        alpha_rad = self.alpha * np.pi / 180
-        beta = alpha_rad + phi
 
         if self.solucao_interseccao:
             resultados = {
@@ -323,10 +129,15 @@ class helice:
         # Cálculo para cada seção
         for i in range(len(self.aerof) - 1):
             reynolds = self.rho * vr[i] * self.c[i] / self.mi
-            Ma = vr[i] / (np.sqrt(1.4 * 287 * self.T))
+            Ma_1 = vr[i] / (np.sqrt(1.4 * 287 * self.T))
+            Ma_2 = self.v / (np.sqrt(1.4 * 287 * self.T))
 
-            coef_l, coef_d = self.rodar_xfoil(
-                self.aerof[i], round(reynolds, 0), alpha[i], Ma
+            Ma_array = np.array([Ma_1, Ma_2])
+
+            coef_l, coef_d = self.descobrir_alpha_mais_eficiente(
+                aerofolio=self.aerof[i],
+                re=reynolds,
+                Ma=Ma_array.max()
             )
 
             if coef_l != 0:
@@ -379,3 +190,49 @@ class helice:
             resultados[f"Beta {bet}"] = beta[bet] * 180 / np.pi
 
         return resultados
+
+
+    def descobrir_alpha_mais_eficiente(self, aerofolio, re, Ma):
+        cl_cd_best = 0
+        if Ma < 1:
+            for alpha in range(0,11):
+                xfoil.rodar_xfoil(
+                    aerofolio,
+                    str(alpha),
+                    str(alpha),
+                    "0",
+                    str(re),
+                    str(Ma),
+                    "9",
+                    "100",
+                    "arquivo_dados_s1.txt",
+                    mudar_paineis=True,
+                    mostrar_grafico=False,
+                    ler_arquivo_coord=self.ler,
+                    compressibilidade=False,
+                    solucao_viscosa=True,
+                    solucoes_NACA=self.solucao_naca
+                )
+
+                dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+                os.remove("arquivo_dados_s1.txt")
+
+                if dados.size != 0:
+                    cl = dados[1]
+                    cd = abs(dados[2])
+
+                    cl = cl / (np.sqrt(1 - Ma**2))
+                    cd = cd / (np.sqrt(1 - Ma**2))
+                    
+                    cl_cd = cl / cd
+
+                    if cl_cd > cl_cd_best:
+                        cl_cd_best = cl_cd                    
+                        melhor_alpha = alpha
+                        cl_best = cl
+                        cd_best = cd
+        
+        if cl_cd_best > 0:
+            return cl_best, cd_best
+        else:
+            return 0, 1
