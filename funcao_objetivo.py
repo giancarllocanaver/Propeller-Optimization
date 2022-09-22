@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from funcoes_de_bezier import Bezier
-from funcao_helice import helice
 from utilidades import (
     rodar_helice_inidividual,
     criar_txt_pontos_aerofolio_para_rodar_xfoil,
@@ -41,9 +40,7 @@ class FuncaoObjetivo:
         self.pontos_A = a0.copy()
             
 
-    def criar_parametros_iniciais(self):
-        matriz = [round(np.random.uniform(0, 10), 2) for _ in range(7)]
-                
+    def criar_parametros_iniciais(self):                
         a        = self.pontos_A.copy()
         pontos_p = self.pontos_p.copy()
 
@@ -68,7 +65,7 @@ class FuncaoObjetivo:
             if type(linhas) != int:
                 verificacao = True
 
-        matriz.append(escalar)
+        matriz = [escalar]
 
         self.curvas_aerofolios_inicial.append(linhas)
 
@@ -158,17 +155,11 @@ class FuncaoObjetivo:
         curvas_aerofolios = self.curvas_aerofolios_atual.copy()
         condicoes_de_voo  = self.condicoes_de_voo
 
-        raio = np.array([10, 12, 18, 24, 30, 36, 42, 48])*0.0254
-        c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0])*0.0254
-
         particula_com_interseccao = False
         for particula in range(len(matriz)):
             if particula in self.particulas_com_interseccao:
                 particula_com_interseccao = True
                 aerofolios = ["" for _ in range(8)]
-
-            alpha = matriz[particula][:7]
-            alpha = np.append(alpha, 0) * np.pi/180.
 
             if particula not in self.particulas_com_interseccao:
                 nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
@@ -179,9 +170,6 @@ class FuncaoObjetivo:
             resultados_individuais = rodar_helice_inidividual(
                 condicoes_voo=condicoes_de_voo,
                 aerofolios=aerofolios,
-                raio=raio,
-                c=c,
-                alpha=alpha,
                 particula_com_interseccao=particula_com_interseccao
             )
             
@@ -197,7 +185,7 @@ class FuncaoObjetivo:
         resultados = self.resultados.copy()
 
         for resultado in resultados:
-            eficiencia_particula = resultado["eta"][0]
+            eficiencia_particula = resultado["eficiencia"][0]
             self.eficiencia_invertida_helice_total.append(eficiencia_particula)
         
         self.eficiencia_invertida_helice_total = np.array(self.eficiencia_invertida_helice_total)

@@ -16,7 +16,7 @@ if __name__ == '__main__':
     qde_particulas = 25
 
     condicao_de_voo = {
-        "Velocidade": 70,
+        "Velocidade": 50,
         "Viscosidade": 1.789e-5,
         "Temperatura": 288.2,
         "Densidade do Ar": 1.225,
