@@ -1,4 +1,5 @@
 import os
+from shutil import ExecError
 import numpy as np
 from funcoes_de_bezier import Bezier
 from funcao_helice import helice
@@ -117,15 +118,16 @@ class FuncaoObjetivo:
         self.logger.info("Pontos A com a seguinte configuração:")
         self.logger.info(f"\n\n{pontos_A}\n\n")
 
+        ax = pontos_A[0].copy()
+        ay = pontos_A[1].copy()
+
         for particula in range(len(particulas)):
             self.logger.info(f"Início bezier para partícula {particula}:")          
             
             escalar = particulas[particula][-1]
 
-            ax = pontos_A[0]
-            ay = pontos_A[1]
-
-            ay[3][0] = escalar + ay[3][0]
+            ay_conta = ay.copy()
+            ay_conta[3][0] = escalar + ay[3][0]
 
             self.logger.info(f"Escalar:")
             self.logger.info(f"\n\n{escalar}\n\n")
@@ -139,14 +141,33 @@ class FuncaoObjetivo:
             bezier_controller = Bezier()
             linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
                 pontos_x=ax,
-                pontos_y=ay,
+                pontos_y=ay_conta,
                 pontos_p=pontos_p
             )
 
             if type(linhas) == int:
-                self.particulas_com_interseccao.append(particula)
+                verificacao = False
+                while verificacao == False:
+                    escalar = np.random.uniform(low=-0.05, high=0.05)
+                    ay_conta[3][0] = ay[3][0] + escalar
+
+                    bezier_controller = Bezier()
+                    linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
+                        pontos_x=ax,
+                        pontos_y=ay_conta,
+                        pontos_p=pontos_p
+                    )
+
+                    if type(linhas) != int:
+                        verificacao = True
+                        self.matriz[particula][-1] = escalar
 
             self.curvas_aerofolios_atual.append(linhas)
+
+            if not (self.pontos_A == pontos_A).all():
+                raise Exception(
+                    "Pontos A mudaram!!!"
+                )
 
         self.logger.info("Fim das rodagens por Bezier")
 
@@ -163,18 +184,18 @@ class FuncaoObjetivo:
 
         particula_com_interseccao = False
         for particula in range(len(matriz)):
-            if particula in self.particulas_com_interseccao:
-                particula_com_interseccao = True
-                aerofolios = ["" for _ in range(8)]
+            # if particula in self.particulas_com_interseccao:
+            #     particula_com_interseccao = True
+            #     aerofolios = ["" for _ in range(8)]
 
             alpha = matriz[particula][:7]
             alpha = np.append(alpha, 0) * np.pi/180.
 
-            if particula not in self.particulas_com_interseccao:
-                nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
-                    curvas_aerofolios[particula]
-                )
-                aerofolios = [nome_arq_aerofolio for _ in range(8)]
+            # if particula not in self.particulas_com_interseccao:
+            nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
+                curvas_aerofolios[particula]
+            )
+            aerofolios = [nome_arq_aerofolio for _ in range(8)]
 
             resultados_individuais = rodar_helice_inidividual(
                 condicoes_voo=condicoes_de_voo,
