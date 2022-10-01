@@ -91,8 +91,12 @@ class OtimizacaoHelice:
             id=self.id
         )
         
-        self.v      = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.matriz) + self.c2*self.r[1]*(self.g_best - self.matriz)
-        self.matriz = self.matriz + self.v       
+        self.atualizar_v_e_x(
+            v=self.v,
+            x=self.matriz,
+            p_best=self.p_best,
+            g_best=self.g_best
+        )
 
         self.logger.info("- Fim da gravação dos resultados\n\n")
         self.logger.info(f"//Início da iteração {self.t}//--------------------\n")
@@ -136,13 +140,13 @@ class OtimizacaoHelice:
             fo=self.fo
         )
 
-        self.convergencia.append(self.g_best_obj)
+        self.convergencia.append(self.fo.max())
         self.t_list.append(self.t)
         
         self.t += 1
-        # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        # self.c1 = -3*self.t/self.N + 3.5
-        # self.c2 = 3*self.t/self.N + 0.5
+        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        self.c1 = -3*self.t/self.N + 3.5
+        self.c2 = 3*self.t/self.N + 0.5
 
 
     def gerar_grafico(self):
@@ -205,7 +209,7 @@ class OtimizacaoHelice:
             )
 
             condicao_fo_nova = (
-                (fo_particula < 1) & (fo_particula > 0)
+                (fo_particula < 1) & (fo_particula >= 0)
             )
 
             if (
@@ -244,3 +248,24 @@ class OtimizacaoHelice:
 
         self.p_best_obj = p_best_obj.copy()
         self.g_best_obj = g_best_obj.copy()        
+
+
+    def atualizar_v_e_x(
+        self,
+        v: np.ndarray,
+        x: np.ndarray,
+        p_best: np.ndarray,
+        g_best: np.ndarray
+    ):
+        for particula in range(self.qde_particulas):
+            p_best_part = p_best[particula]
+            
+            if (x[particula] == g_best).all():
+                v[particula] = self.c1*self.r[0]*(p_best_part - x[particula]) + self.c2*self.r[1]*(g_best - x[particula])                
+            else:
+                v[particula] = self.w * v[particula] + self.c1*self.r[0]*(p_best_part - x[particula]) + self.c2*self.r[1]*(g_best - x[particula])
+            
+            x[particula] = x[particula] + v[particula]
+
+        self.v = v.copy()
+        self.matriz = x.copy()
