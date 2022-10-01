@@ -1,109 +1,271 @@
 import numpy as np
-from funcao_objetivo import funcao_objetivo
+from funcao_objetivo import FuncaoObjetivo
 from matplotlib import pyplot as plt
 import os
 import pandas as pd
+from utilidades import (
+    gravar_resultados_aerodinamicos,
+    gravar_resultados_matriz_pso,
+    salvar_resultados_json
+)
+import logging
 
-class avanco:
-    def __init__(self, qde_iteracoes, qde_de_particulas):
-        self.qde_part = qde_de_particulas
-        self.x = np.array([])
-        self.v = np.array([])
-        self.objetivo = np.array([])
-        self.p_best = np.array([])
-        self.g_best = np.array([])
-        self.c1 = 0
-        self.c2 = 0
-        self.w = 0
-        self.r = 0
-        self.N = qde_iteracoes
-        self.t = 0
-        self.convergencia = []
-        self.t_list = []
+class OtimizacaoHelice:
+    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, id):
+        self.qde_particulas = qde_de_particulas
+        self.N              = qde_iteracoes
+        self.condicao_voo   = condicao_de_voo
+        self.id             = id
+        self.logger         = logging.getLogger("logger_main")
+        
+        self.r              = np.random.rand(2)
+        self.t              = 0
+        self.convergencia   = []
+        self.t_list         = []
+
+        self.logger.info("//Início da Iteração 0//--------------------\n")
+        self.iterar_zero()
+
     
+    def iterar_zero(self):
+        self.logger.info("- Início da computação da função objetivo")
+        fo_controller = FuncaoObjetivo(
+            condicoes_de_voo=self.condicao_voo,
+            qde_particulas=self.qde_particulas,
+            inicial=True
+        )
+        self.logger.info("- Fim da computação da função objetivo")
 
+        eficiencia_invertida_inicial = fo_controller.retornar_eficiencia()
+        matriz = fo_controller.retornar_matriz()
+        pontos_p = fo_controller.retornar_pontos_p()
+        pontos_a = fo_controller.retornar_pontos_A()
+        resultados = fo_controller.retornar_resultados()
+        
+        p_best = matriz.copy()
+        self.p_best_obj = eficiencia_invertida_inicial.copy()
 
-    def start(self):
-        def f(x):
-            fo = funcao_objetivo(x)
-            fo.rodar_bezier()
-            resultados = fo.rodar_helice()
+        self.atualizar_g_best(
+            fo=eficiencia_invertida_inicial,
+            x=matriz
+        )
 
-            return resultados
+        self.matriz = matriz
+        self.v = np.zeros((self.qde_particulas, matriz.shape[1]), dtype=float)
+        self.p_best = p_best.copy()
+        self.pontos_p = pontos_p
+        self.pontos_A = pontos_a
+        self.fo = eficiencia_invertida_inicial.copy()
+        self.resultados = resultados.copy()
 
-        self.x = np.array([[round(np.random.uniform(19.5, 46.3), 2) for _ in range(7)] for _ in range(self.qde_part)])
-        # self.x = np.random.randint(low=4, high=8, size=(self.qde_part, 7))
-        self.v = np.zeros((self.qde_part, 7), dtype=float)
+        self.logger.info("- Início da gravação dos resultados")
+        gravar_resultados_aerodinamicos(
+            resultados=resultados,
+            id=self.id,
+            iteracao=0
+        )
 
-        self.objetivo = f(self.x)
-        # print(self.objetivo, '\n')
+        gravar_resultados_matriz_pso(
+            resultados=matriz,
+            id=self.id,
+            iteracao=self.t,
+            fo=eficiencia_invertida_inicial
+        )
 
-
-        self.p_best = self.x
-        self.g_best = self.p_best[self.objetivo.argmin(), :]
-        # print(self.g_best, '\n')
-
+        self.convergencia.append(self.g_best_obj)
+        self.t_list.append(self.t)
 
         self.c1 = 2.05
         self.c2 = 2.05
-        self.w = 0.72984
+        self.w  = 0.72984
+        self.t  = 1
+
+    def iterar(self):
+        salvar_resultados_json(
+            eficiencia=self.fo,
+            matriz_v=self.v,
+            matriz_pso=self.matriz,
+            p_best=self.p_best,
+            g_best=self.g_best,
+            r=self.r,
+            id=self.id
+        )
         
-        self.r = np.random.rand(2)
+        self.atualizar_v_e_x(
+            v=self.v,
+            x=self.matriz,
+            p_best=self.p_best,
+            g_best=self.g_best
+        )
 
+        self.logger.info("- Fim da gravação dos resultados\n\n")
+        self.logger.info(f"//Início da iteração {self.t}//--------------------\n")
+        self.logger.info("- Início da computação da função objetivo")
 
+        fo_controller = FuncaoObjetivo(
+            qde_particulas=self.qde_particulas,
+            condicoes_de_voo=self.condicao_voo,
+            inicial=False
+        )
+        fo_controller.inserir_parametros(
+            matriz=self.matriz,
+            pontos_p=self.pontos_p,
+            pontos_A=self.pontos_A
+        )
+        self.logger.info("- Fim da computação da função objetivo")
 
-    def next(self):        
-        def f(x):
-            fo = funcao_objetivo(x)
-            fo.rodar_bezier()
-            resultados = fo.rodar_helice()
+        self.fo = fo_controller.retornar_eficiencia()
+        resultados = fo_controller.retornar_resultados()
+        self.matriz = fo_controller.retornar_matriz()
 
-            return resultados
+        self.atualizar_p_best_e_g_best(
+            fo=self.fo,
+            p_best=self.p_best,
+            g_best=self.g_best,
+            p_best_obj=self.p_best_obj,
+            g_best_obj=self.g_best_obj,
+            x=self.matriz
+        )
 
-        self.v = self.w * self.v + self.c1*self.r[0]*(self.p_best - self.x) + self.c2*self.r[1]*(self.g_best - self.x)
-        self.x = self.x + self.v
+        gravar_resultados_aerodinamicos(
+            resultados=resultados,
+            id=self.id,
+            iteracao=self.t
+        )
 
-        objetivo_2 = f(self.x)
+        gravar_resultados_matriz_pso(
+            resultados=self.matriz,
+            id=self.id,
+            iteracao=self.t,
+            fo=self.fo
+        )
 
-
-        self.p_best[(objetivo_2 <= self.objetivo), :] = self.x[(objetivo_2 <= self.objetivo), :]
-
-        argumento_min = np.array([self.objetivo, objetivo_2]).min(axis=0).argmin()
-        self.g_best = self.p_best[argumento_min, :]
-
-        self.objetivo = objetivo_2
-
-        self.t += 1
-
-        self.convergencia.append(self.objetivo.min())
+        self.convergencia.append(self.fo.max())
         self.t_list.append(self.t)
+        
+        self.t += 1
+        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        self.c1 = -3*self.t/self.N + 3.5
+        self.c2 = 3*self.t/self.N + 0.5
 
 
-
-    def to_conv(self):
+    def gerar_grafico(self):
         df = pd.DataFrame({'t': [], 'Objetivo min': []})
 
         for i in range(len(self.convergencia)):
             df = df.append({'t': [self.t_list[i]], 'Objetivo min': [self.convergencia[i]]}, ignore_index=True)
         
-        with pd.ExcelWriter('Resultados-convergencia-otimizacao.xlsx') as writer:
+        with pd.ExcelWriter(f'resultados/resultados_id_{self.id}/Resultados-convergencia-otimizacao.xlsx') as writer:
             df.to_excel(writer, sheet_name='Convergencia')
             writer.save()
 
         plt.plot(self.t_list, self.convergencia, 'x')
         plt.xlabel('iteração')
         plt.ylabel('objetivo')
-        plt.savefig('Grafico-convergencia-otimizacao.jpg', dpi=300)
+        plt.savefig(f'resultados/resultados_id_{self.id}/Grafico-convergencia-otimizacao.jpg', dpi=300)
         plt.show()
 
 
-qde_iteracoes = 100
-qde_particulas = 50
+    def atualizar_g_best(
+        self,
+        fo: np.ndarray,
+        x: np.ndarray
+    ):
+        selecao = ((fo <= 1) & (fo > 0))
+        fo_maximo = fo[selecao].max()
 
-teste = avanco(qde_iteracoes=qde_iteracoes, qde_de_particulas=qde_particulas)
-teste.start()
+        if fo_maximo > 1:
+            raise Exception(
+                "O valor de fo_maximo não pode ser maior do que 1"
+                "Rever seleção"
+            )
 
-for _ in range(qde_iteracoes):
-    teste.next()
+        for particula in range(self.qde_particulas):
+            fo_particula = fo[particula]
 
-teste.to_conv()
+            if fo_particula == fo_maximo:
+                g_best = x[particula]
+                g_best_obj = fo_particula
+
+        self.g_best = g_best.copy()
+        self.g_best_obj = g_best_obj.copy()
+
+
+    def atualizar_p_best_e_g_best(
+        self,
+        fo: np.ndarray,
+        p_best: np.ndarray,
+        g_best: np.ndarray,
+        p_best_obj: np.ndarray,
+        g_best_obj: np.ndarray,
+        x: np.ndarray
+    ):
+        for particula in range(self.qde_particulas):
+            p_best_obj_part = p_best_obj[particula]
+            fo_particula = fo[particula]
+            
+            condicao_alpha = (
+                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
+            )
+
+            condicao_fo_nova = (
+                (fo_particula < 1) & (fo_particula >= 0)
+            )
+
+            if (
+                (fo_particula > p_best_obj_part) &
+                (condicao_alpha) &
+                (condicao_fo_nova)
+            ):
+                p_best[particula] = x[particula]
+                p_best_obj[particula] = fo_particula
+
+                if fo_particula > 1:
+                    raise Exception(
+                        "O valor de fo_maximo não pode ser maior do que 1"
+                        "Rever seleção"
+                    )
+        
+        selecao = ((p_best_obj > 0) & (p_best_obj <= 1))
+        p_best_obj_max = p_best_obj[selecao].max()
+        
+        for particula in range(self.qde_particulas):
+            p_best_obj_part = p_best_obj[particula]            
+            if (
+                p_best_obj_part == p_best_obj_max # TODO: rever
+            ):
+                g_best = x[particula]
+                g_best_obj = p_best_obj_part
+
+                if p_best_obj_part > 1:
+                    raise Exception(
+                        "O valor de fo_maximo não pode ser maior do que 1"
+                        "Rever seleção"
+                    )
+
+        self.p_best = p_best.copy()
+        self.g_best = g_best.copy()
+
+        self.p_best_obj = p_best_obj.copy()
+        self.g_best_obj = g_best_obj.copy()        
+
+
+    def atualizar_v_e_x(
+        self,
+        v: np.ndarray,
+        x: np.ndarray,
+        p_best: np.ndarray,
+        g_best: np.ndarray
+    ):
+        for particula in range(self.qde_particulas):
+            p_best_part = p_best[particula]
+            
+            if (x[particula] == g_best).all():
+                v[particula] = self.c1*self.r[0]*(p_best_part - x[particula]) + self.c2*self.r[1]*(g_best - x[particula])                
+            else:
+                v[particula] = self.w * v[particula] + self.c1*self.r[0]*(p_best_part - x[particula]) + self.c2*self.r[1]*(g_best - x[particula])
+            
+            x[particula] = x[particula] + v[particula]
+
+        self.v = v.copy()
+        self.matriz = x.copy()

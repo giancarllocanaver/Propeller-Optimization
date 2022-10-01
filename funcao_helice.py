@@ -2,6 +2,8 @@ import numpy as np
 import xfoil_funcao as xfoil
 import os
 import pandas as pd
+from scipy.interpolate import interp1d
+import time
 
 class helice:
     """
@@ -28,7 +30,8 @@ class helice:
     
     Parâmetros de output:
         eta: Eficiência da hélice
-        self.df_val: DataFrame contendo os resultados do xfoil (somente será gerado caso 'validacao' for verdadeiro)
+        self.df_val_aerof: DataFrame contendo os resultados do xfoil (somente será gerado caso 'validacao' for verdadeiro)
+        self.df_val_helice: DataFrame contendo os resultados para a hélice como um todo
     """
     def __init__(
         self,
@@ -41,10 +44,15 @@ class helice:
         Numero_de_pas: int,
         Array_raio_da_secao: list,
         Array_tamanho_de_corda_da_secao: list,
-        Array_angulo_beta_da_secao: list,
+        Array_angulo_alpha_da_secao: list,
         Rotacao_motor: float,
-        ler_coord_arq_ext=False,
-        validacao=False,
+        Solucoes_ligadas: list=['solucao_1', 'solucao_2', 'solucao_3'],
+        ler_coord_arq_ext: bool=False,
+        validacao: bool=False,
+        condicao_cl_grande: bool=False,
+        ligar_interpolacao_2a_ordem: bool=False,
+        ligar_solucao_aerof_naca: bool=False,
+        particula_com_interseccao: bool=False
     ):
         # Inicialização dos parâmetros de input
         self.aerof = Aerofolios
@@ -56,16 +64,26 @@ class helice:
         self.n = Numero_de_pas
         self.r = Array_raio_da_secao
         self.c = Array_tamanho_de_corda_da_secao
-        self.beta = Array_angulo_beta_da_secao
+        self.alpha = Array_angulo_alpha_da_secao
         self.rpm = Rotacao_motor
+        self.solucoes = Solucoes_ligadas
         self.ler = ler_coord_arq_ext
         self.bool_val = False
+        self.condicao_cl = condicao_cl_grande
+        self.condicao_2a_ordem = ligar_interpolacao_2a_ordem
+        self.solucao_naca = ligar_solucao_aerof_naca
+        self.solucao_interseccao = particula_com_interseccao
         
         # Caso o usuário queira ver validação, gera-se um DataFrame vazio
         if validacao == True:
-            self.df_val = pd.DataFrame(
+            self.df_val_aerof = pd.DataFrame(
                 {"Velocidade": [], "RPM": [], "Alpha": [], "Re": [], "Cl": [], "Cd": [], "Tipo": []}
             )
+
+            self.df_val_helice = pd.DataFrame(
+                {"Velocidade": [], "RPM": [], "Eficiencia": []}
+            )
+
             self.bool_val = True
 
     def integracao(self, f, x):
@@ -87,7 +105,8 @@ class helice:
 
         Caso Mach maior que 1 ou não convergência dos dados, será utililzado como padrão: CL=0 e CD=1
         """
-        if (Ma < 1) and (alpha <= 20 and alpha >= -20):
+
+        def solucao_1():
             # Tentativa de rodar solução viscosa
             xfoil.rodar_xfoil(
                 aerofolio,
@@ -97,128 +116,168 @@ class helice:
                 str(re),
                 str(Ma),
                 "9",
-                "100",
-                "arquivo_dados_v.txt",
+                "500",
+                "arquivo_dados_s1.txt",
                 mudar_paineis=True,
                 mostrar_grafico=False,
                 ler_arquivo_coord=self.ler,
                 compressibilidade=False,
                 solucao_viscosa=True,
+                solucoes_NACA=self.solucao_naca
             )
 
-            dados_v = np.loadtxt("arquivo_dados_v.txt", skiprows=12)
-            os.remove("arquivo_dados_v.txt")
+            dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+            os.remove("arquivo_dados_s1.txt")
 
-            # Sucesso na solução viscosa
-            if dados_v.size != 0:
-                cl = dados_v[1]
-                cd = abs(dados_v[2])
+            if dados.size != 0:
+                cl = dados[1]
+                cd = abs(dados[2])
 
                 cl = cl / (np.sqrt(1 - Ma**2))
                 cd = cd / (np.sqrt(1 - Ma**2))
+                
+                return cl, cd, "Solucao viscosa sem interpolação"
+            else:
+                return 0, 0, "Sem solução"
+        
+        def solucao_2():
+            delta_alpha = 0.25
+            delta_parada = 0.05
 
-                if self.bool_val == True:
-                    self.df_val = self.df_val.append(
-                        pd.DataFrame(
-                            {
-                                "Velocidade": [self.v],
-                                "RPM": [self.rpm],
-                                "Alpha": [alpha],
-                                "Re": [re],
-                                "Cl": [cl],
-                                "Cd": [cd],
-                                "Tipo": ["Solucao viscosa"],
-                            }
-                        ),
-                        ignore_index=True,
-                    )
-
-            # Fracasso na solução viscosa:
-            if dados_v.size == 0:
+            while (delta_alpha >= delta_parada):
                 xfoil.rodar_xfoil(
                     aerofolio,
-                    str(alpha),
-                    str(alpha),
-                    "0",
+                    str(alpha - 5),
+                    str(alpha + 5),
+                    str(delta_alpha),
                     str(re),
                     str(Ma),
                     "9",
                     "100",
-                    "arquivo_dados_i.txt",
+                    "arquivo_dados_s2.txt",
                     mudar_paineis=True,
                     mostrar_grafico=False,
                     ler_arquivo_coord=self.ler,
                     compressibilidade=False,
-                    solucao_viscosa=False,
+                    solucao_viscosa=True,
+                    solucao_com_interpolacao=True,
+                    solucoes_NACA=self.solucao_naca
                 )
 
-                dados_i = np.loadtxt("arquivo_dados_i.txt", skiprows=12)
-                os.remove("arquivo_dados_i.txt")
+                dados = np.loadtxt("arquivo_dados_s2.txt", skiprows=12)
+                os.remove("arquivo_dados_s2.txt")
 
-                cl = dados_i[1]
-                cd = abs(dados_i[3])
+                try:
+                    dados.shape[1]
+                    delta_alpha = delta_parada
+                except IndexError:
+                    delta_alpha = delta_alpha - 0.05
 
-                if dados_i.size != 0:
+            try:
+                dados.shape[1]
+                if (dados.shape[0] >= 2) and (dados.size != 0):
+                    if (dados.shape[0] == 2):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='linear', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='linear', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 1ª ordem"
+                    elif (dados.shape[0] == 3) and (self.ligar_interpolacao_2a_ordem):
+                        cd = interp1d(dados[:,0], dados[:,2], kind='quadratic', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='quadratic', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 2ª ordem"
+                    else:
+                        cd = interp1d(dados[:,0], dados[:,2], kind='cubic', fill_value='extrapolate')
+                        cl = interp1d(dados[:,0], dados[:,1], kind='cubic', fill_value='extrapolate')
+                        solucao_type = "Solução viscosa com interpolação de 3ª ordem"
+
                     cl = cl / (np.sqrt(1 - Ma**2))
-                    cd = cd / (np.sqrt(1 - Ma**2))
+                    cd = cd(alpha) / (np.sqrt(1 - Ma**2))
 
-                    if self.bool_val == True:
-                        self.df_val = self.df_val.append(
-                            pd.DataFrame(
-                                {
-                                    "Velocidade": [self.v],
-                                    "RPM": [self.rpm],
-                                    "Alpha": [alpha],
-                                    "Re": [re],
-                                    "Cl": [cl],
-                                    "Cd": [cd],
-                                    "Tipo": ["Solucao inviscida"],
-                                }
-                            ),
-                            ignore_index=True,
-                        )
+                    if (self.condicao_cl == True):
+                        if (cl > 2.5):
+                            cl = 0.0
+                
+                    return cl, cd, solucao_type
                 else:
-                    cl = 0
-                    cd = 1
+                    return 0, 0, "Sem solução"
+            except IndexError:
+                return 0, 0, "Sem solução"
 
-                    if self.bool_val == True:
-                        self.df_val = self.df_val.append(
-                            pd.DataFrame(
-                                {
-                                    "Velocidade": [self.v],
-                                    "RPM": [self.rpm],
-                                    "Alpha": [alpha],
-                                    "Re": [re],
-                                    "Cl": [cl],
-                                    "Cd": [cd],
-                                    "Tipo": ["Solucao não encontrada - tipo 1"],
-                                }
-                            ),
-                            ignore_index=True,
-                        )
+        def solucao_3():
+            xfoil.rodar_xfoil(
+                aerofolio,
+                str(alpha),
+                str(alpha),
+                "0",
+                str(re),
+                str(Ma),
+                "9",
+                "100",
+                "arquivo_dados_s3.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=self.ler,
+                compressibilidade=False,
+                solucao_viscosa=False,
+                solucoes_NACA=self.solucao_naca
+            )
+
+            dados = np.loadtxt("arquivo_dados_s3.txt", skiprows=12)
+            os.remove("arquivo_dados_s3.txt")
+
+            cl = dados[1]
+            if (self.condicao_cl == True):
+                if (cl > 2.5):
+                    cl = 0
+
+            cd = abs(dados[3])
+
+            cl = cl / (np.sqrt(1 - Ma**2))
+            cd = cd / (np.sqrt(1 - Ma**2))
+
+            return cl, cd, "Solução invíscida"
+
+        
+        if (Ma < 1):
+            if (len(self.solucoes) == 3):
+                cl, cd, tipo_solucao = solucao_1()
+
+                if (cl == 0 and cd == 0):
+                    cl, cd, tipo_solucao = solucao_2()
+                    
+                    if (cl == 0 and cd == 0):
+                        cl, cd, tipo_solucao = solucao_3()
+            elif (len(self.solucoes) == 1):
+                cl, cd, tipo_solucao = locals()[self.solucoes[0]]()
+        elif (Ma > 0):
+            cl = 0
+            cd = 1
+            tipo_solucao = "Ma > 1"
         else:
             cl = 0
             cd = 1
+            tipo_solucao = "Error sem solução"
 
-            if self.bool_val == True:
-                self.df_val = self.df_val.append(
-                    pd.DataFrame(
-                        {
-                            "Velocidade": [self.v],
-                            "RPM": [self.rpm],
-                            "Alpha": [alpha],
-                            "Re": [re],
-                            "Cl": [0],
-                            "Cd": [1],
-                            "Tipo": ["Solucao não encontrada - tipo 2"],
-                        }
-                    ),
-                    ignore_index=True,
-                )
+        if self.bool_val == True:
+            self.df_val_aerof = self.df_val_aerof.append(
+                pd.DataFrame(
+                    {
+                        "Velocidade": [self.v],
+                        "RPM": [self.rpm],
+                        "Alpha": [alpha],
+                        "Re": [re],
+                        "Cl": [cl],
+                        "Cd": [cd],
+                        "Tipo": [tipo_solucao],
+                    }
+                ),
+                ignore_index=True,
+            )
 
         return cl, cd
 
     def rodar_helice(self):
+        J = 60 * self.v / (self.rpm * self.D)
+        
         # Pressão Dinâmica
         q = 0.5 * self.rho * self.v**2
 
@@ -233,12 +292,32 @@ class helice:
         vr = vt / np.cos(phi)
 
         # Ângulo de ataque de cada seção
-        alpha_np = (self.beta - phi) * 180 / np.pi
-        alpha = [round(i, 2) for i in alpha_np]
-        alpha[-1] = 0.0
+        alpha = self.alpha.copy()
+        alpha_rad = self.alpha * np.pi / 180
+        beta = alpha_rad + phi
 
-        dCT = []
-        dCQ = []
+        if self.solucao_interseccao:
+            resultados = {
+                "velocidade": [self.v],
+                "rpm": [self.rpm],
+                "J": [J],
+                "eta": [0],
+                "T": [0],
+                "Q": [0],
+                "Cp": [0],
+                "Ct": [0],
+                "Cq": [0]
+            }
+            
+            for al in range(len(self.alpha)):
+                resultados[f"Alpha {al}"] = self.alpha[al]
+
+            for bet in range(len(beta)):
+                resultados[f"Beta {bet}"] = beta[bet] * 180 / np.pi
+            return resultados
+
+        dT = []
+        dQ = []
         r_new = []
 
         # Cálculo para cada seção
@@ -250,48 +329,53 @@ class helice:
                 self.aerof[i], round(reynolds, 0), alpha[i], Ma
             )
 
-            sigma_R = self.n * self.c[i] / (np.pi * self.r[i])
-            J = 60 * self.v / (self.rpm * self.D)
-            coef_T = (
-                np.pi
-                / 8
-                * sigma_R
-                * J**2
-                * (coef_l * np.cos(phi[i]) - coef_d * np.sin(phi[i]))
-                / (np.sin(phi[i]) ** 2)
-            )
-            x = self.r[i] / (self.D / 2)
-            coef_Q = (
-                np.pi
-                / 16
-                * sigma_R
-                * J**2
-                * x
-                * (coef_l * np.sin(phi[i]) + coef_d * np.cos(phi[i]))
-                / (np.sin(phi[i]) ** 2)
-            )
+            if coef_l != 0:
+                gamma = np.arctan(coef_d/coef_l)
 
-            dCT.append(coef_T)
-            dCQ.append(coef_Q)
+                dt = q*coef_l*self.c[i]*(np.cos(phi[i] + gamma))/(np.cos(gamma)*np.sin(phi[i])**2)
+                dq = q*coef_l*self.c[i]*self.r[i]*(np.sin(phi[i] + gamma))/(np.cos(gamma)*np.sin(phi[i])**2)
+                
+                dT.append(dt)
+                dQ.append(dq)
 
-            r_new.append(self.r[i])
+                r_new.append(self.r[i])
 
-        dCT.append(0)
-        dCQ.append(0)
+        dT.append(0)
+        dQ.append(0)
 
         r_new.append(self.r[-1])
 
-        coef_T = self.integracao(np.array(dCT), r_new) * self.n
-        coef_Q = self.integracao(np.array(dCQ), r_new) * self.n
+        T = self.integracao(np.array(dT), r_new) * self.n
+        Q = self.integracao(np.array(dQ), r_new) * self.n
 
-        if coef_T > 0 and coef_Q > 0:
-            coef_P = 2 * np.pi * coef_Q
+        n = self.rpm / 60
 
-            eta = J * coef_T / coef_P
+        Ct = T/(self.rho * n**2 * self.D**4)
+        Cq = Q/(self.rho * n**2 * self.D**5)
+
+        Cp = 2 * np.pi * Cq
+
+        if Cp != 0:
+            eta = J * Ct / Cp
         else:
-            eta = 0.1
+            eta = 0
 
-        if self.bool_val == True:
-            return eta, self.df_val
-        else:
-            return eta
+        resultados = {
+            "velocidade": [self.v],
+            "rpm": [self.rpm],
+            "J": [J],
+            "eta": [eta],
+            "T": [T],
+            "Q": [Q],
+            "Cp": [Cp],
+            "Ct": [Ct],
+            "Cq": [Cq]
+        }
+
+        for al in range(len(alpha)):
+            resultados[f"Alpha {al}"] = alpha[al]
+
+        for bet in range(len(beta)):
+            resultados[f"Beta {bet}"] = beta[bet] * 180 / np.pi
+
+        return resultados

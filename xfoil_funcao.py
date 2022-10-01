@@ -1,8 +1,6 @@
 import numpy as np
 import os
-import signal
 import subprocess
-import sys
 import psutil
 import time
 
@@ -22,6 +20,8 @@ def rodar_xfoil(
     ler_arquivo_coord=False,
     compressibilidade=False,
     solucao_viscosa=False,
+    solucao_com_interpolacao=False,
+    solucoes_NACA=False
 ):
     """ "
     Com esta função, é possível de se obter os resultados do XFOIL para dado aerofólio.
@@ -40,37 +40,9 @@ def rodar_xfoil(
     output:
         Gera arquivo de texto com os dados gerados, porém, não retorna nada.
     """
-
-    if os.path.exists("Arquivo_coordenadas.txt"):
-        os.remove("Arquivo_coordenadas.txt")
-
-    arquivo = open("Arquivo_coordenadas.txt", "w")
-
-    if ler_arquivo_coord == True:
-        for i in range(15):
-            try:
-                np.loadtxt(curvas_aerofolio, skiprows=i)
-            except:
-                continue
-            else:
-                arquivo_2 = np.loadtxt(curvas_aerofolio, skiprows=i)
-                x = arquivo_2[:, 0]
-                y = arquivo_2[:, 1]
-
-                y[0] = 0
-                y[-1] = 0
-
-                curvas_aerofolio = np.array((x, y))
-
-                break
-
-    for i in range(len(curvas_aerofolio[0])):
-        a = str(round(float(curvas_aerofolio[0, i]), 5))
-        b = str(round(float(curvas_aerofolio[1, i]), 5))
-        arquivo.write(" " + a + "     " + b + "\n")
-
-    arquivo.close()
-
+    if ler_arquivo_coord:
+        nome_arq_coord = curvas_aerofolio
+    
     nome_do_arquivo_de_input_do_xfoil = "arquivo_de_input.txt"
 
     if os.path.exists(nome_do_arquivo_de_input_do_xfoil):
@@ -86,8 +58,11 @@ def rodar_xfoil(
         arquivo_de_input.write("G" + "\n")
         arquivo_de_input.write("\n")
 
-    arquivo_de_input.write("LOAD" + "\n")
-    arquivo_de_input.write("Arquivo_coordenadas.txt" + "\n")
+    if not solucoes_NACA:
+        arquivo_de_input.write("LOAD" + "\n")
+        arquivo_de_input.write(nome_arq_coord + "\n")
+    else:
+        arquivo_de_input.write(curvas_aerofolio + "\n")
 
     if mudar_paineis == True:
         arquivo_de_input.write("PPAR" + "\n")
@@ -133,10 +108,13 @@ def rodar_xfoil(
         p = subprocess.Popen(
             "xfoil.exe < " + nome_do_arquivo_de_input_do_xfoil, shell=True
         )
-        p.wait(timeout=3)
+
+        if not solucao_com_interpolacao:
+            p.wait(timeout=1)
+        else:
+            p.wait(timeout=5)
     except subprocess.TimeoutExpired:
         kill(p.pid)
         time.sleep(1)
 
     os.remove(nome_do_arquivo_de_input_do_xfoil)
-    os.remove("Arquivo_coordenadas.txt")
