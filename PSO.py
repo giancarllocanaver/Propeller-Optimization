@@ -72,7 +72,6 @@ class OtimizacaoHelice:
             fo=eficiencia_invertida_inicial
         )
 
-        self.convergencia.append(self.g_best_obj)
         self.t_list.append(self.t)
 
         self.c1 = 2.05
@@ -140,7 +139,6 @@ class OtimizacaoHelice:
             fo=self.fo
         )
 
-        self.convergencia.append(self.fo.max())
         self.t_list.append(self.t)
         
         self.t += 1
@@ -187,6 +185,8 @@ class OtimizacaoHelice:
                 g_best = x[particula]
                 g_best_obj = fo_particula
 
+                self.convergencia.append(fo_particula)
+
         self.g_best = g_best.copy()
         self.g_best_obj = g_best_obj.copy()
 
@@ -205,7 +205,7 @@ class OtimizacaoHelice:
             fo_particula = fo[particula]
             
             condicao_alpha = (
-                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
+                (x[particula][0:7] >= 0).all()
             )
 
             condicao_fo_nova = (
@@ -228,6 +228,7 @@ class OtimizacaoHelice:
         
         selecao = ((p_best_obj > 0) & (p_best_obj <= 1))
         p_best_obj_max = p_best_obj[selecao].max()
+        self.convergencia.append(p_best_obj_max)
         
         for particula in range(self.qde_particulas):
             p_best_obj_part = p_best_obj[particula]            
