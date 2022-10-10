@@ -43,7 +43,7 @@ class FuncaoObjetivo:
             
 
     def criar_parametros_iniciais(self):
-        matriz = [round(np.random.uniform(-15, 15), 2) for _ in range(7)]
+        matriz = [round(np.random.uniform(-20, 20), 2) for _ in range(7)]
                 
         a        = self.pontos_A.copy()
         pontos_p = self.pontos_p.copy()

@@ -161,6 +161,8 @@ def gravar_resultados_matriz_pso(
 
     df_resultados.to_csv(path_output_matriz_pso, sep=';', index=False)
 
+    return path_output_matriz_pso
+
 
 def salvar_resultados_json(
     eficiencia,
