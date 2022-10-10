@@ -205,7 +205,7 @@ class OtimizacaoHelice:
             fo_particula = fo[particula]
             
             condicao_alpha = (
-                (x[particula][0:7] >= 0).all()
+                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
             )
 
             condicao_fo_nova = (
