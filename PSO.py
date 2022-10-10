@@ -203,10 +203,6 @@ class OtimizacaoHelice:
         for particula in range(self.qde_particulas):
             p_best_obj_part = p_best_obj[particula]
             fo_particula = fo[particula]
-            
-            condicao_alpha = (
-                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
-            )
 
             condicao_fo_nova = (
                 (fo_particula < 1) & (fo_particula >= 0)
@@ -214,7 +210,6 @@ class OtimizacaoHelice:
 
             if (
                 (fo_particula > p_best_obj_part) &
-                (condicao_alpha) &
                 (condicao_fo_nova)
             ):
                 p_best[particula] = x[particula]
