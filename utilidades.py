@@ -1,7 +1,7 @@
 from datetime import datetime
 from operator import mod
 import numpy as np
-from funcao_helice import helice
+from funcao_helice import Helice
 import shutil
 import os
 import pandas as pd
@@ -13,29 +13,20 @@ def rodar_helice_inidividual(
     aerofolios: list,
     raio: np.ndarray,
     c: np.ndarray,
-    alpha: np.ndarray,
     particula_com_interseccao: bool
 ):
-    resultados = helice(
-            Aerofolios=aerofolios,
-            Velocidade_da_aeronave=condicoes_voo["Velocidade"],
-            Viscosidade_dinamica=condicoes_voo["Viscosidade"],
-            Temperatura=condicoes_voo["Temperatura"],
-            Densidade_do_ar=condicoes_voo["Densidade do Ar"],
-            Diametro_helice=condicoes_voo["Diametro da Helice"],
-            Numero_de_pas=condicoes_voo["Numero de pas"],
-            Array_raio_da_secao=raio,
-            Array_tamanho_de_corda_da_secao=c,
-            Array_angulo_alpha_da_secao=alpha,
-            Rotacao_motor=condicoes_voo["Rotacao do Motor"],
-            Solucoes_ligadas=['solucao_1'],
-            particula_com_interseccao=particula_com_interseccao,
-            ler_coord_arq_ext=True,
-            ligar_solucao_aerof_naca=False,
-            ligar_interpolacao_2a_ordem=True
-        ).rodar_helice()
+    condicoes_geometricas = {
+        "Raio Secao": raio,
+        "Corda Secao": c
+    }
+    classe_helice = Helice(
+        aerofolios=aerofolios,
+        condicoes_voo=condicoes_voo,
+        condicoes_geometricas_helice=condicoes_geometricas,
+        particula_com_interseccao=particula_com_interseccao
+    )
 
-    return resultados
+    return classe_helice.resultados
 
 
 def criar_txt_pontos_aerofolio_para_rodar_xfoil(
@@ -128,13 +119,6 @@ def gravar_resultados_matriz_pso(
         existe_output = 1
 
     colunas = [
-        "beta 1",
-        "beta 2",
-        "beta 3",
-        "beta 4",
-        "beta 5",
-        "beta 6",
-        "beta 7",
         "escalar Ay3",
         "particula",
         "iteracao",
