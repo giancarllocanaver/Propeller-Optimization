@@ -35,6 +35,10 @@ class Helice:
         self.cd = None
         self.gamma = None
         self.eficiencia = None
+        self.dT = []
+        self.dQ = []
+        self.beta = []
+        self.r_integrar = []
 
         self.calcular_velocidade_tangencial()
         self.calcular_razao_de_avanco()
@@ -46,7 +50,9 @@ class Helice:
         if not particula_com_interseccao:
             self.calcular_cl_cd_alpha_5()
             self.calcular_gamma()
+            self.calcular_dt_e_dq()
             self.calcular_eficiencia()
+            self.calcular_beta()
             self.computar_resultados()
         else:
             self.computar_resultados_interseccao()
@@ -121,11 +127,62 @@ class Helice:
             self.gamma = np.arctan(self.cd/self.cl)
 
 
-    def calcular_eficiencia(self):
+    def calcular_dt_e_dq(self):
+        q = 0.5 * self.rho * self.v**2
         if self.gamma is not None:
-            self.eficiencia = np.tan(self.phi[4]) / np.tan(self.phi[4] + self.gamma)
+            for secao in range(len(self.phi) - 1):
+                dt = q*self.cl*self.c[secao]*(np.cos(self.phi[secao] + self.gamma))/(np.cos(self.gamma)*np.sin(self.phi[secao])**2)
+                dq = q*self.cl*self.c[secao]*self.r[secao]*(np.sin(self.phi[secao] + self.gamma))/(np.cos(self.gamma)*np.sin(self.phi[secao])**2)
+
+                self.dT.append(dt)
+                self.dQ.append(dq)
+            
+            self.dT.append(0)
+            self.dQ.append(0)
+
+
+    def integracao(self, f, x):
+        """
+        Função com objetivo de realizar a integração numérica dos dados inputados
+        """
+        I = 0.0
+
+        for i in range(1, len(x)):
+            I += (x[i] - x[i - 1]) * (f[i] + f[i - 1]) / 2.0
+
+        return I
+
+
+    def calcular_eficiencia(self):
+        Cp = 0
+
+        if len(self.dT) == len(self.r):
+            T = self.integracao(self.dT, self.r)
+            Q = self.integracao(self.dQ, self.r)
+        
+            n = self.rpm / 60
+
+            Ct = T/(self.rho * n**2 * self.D**4)
+            Cq = Q/(self.rho * n**2 * self.D**5)
+            Cp = 2 * np.pi * Cq
+
+            self.T = T
+            self.Q = Q
+        else:
+            T = 0
+            Q = 0
+
+            self.T = T
+            self.Q = Q
+
+        if Cp != 0:
+            self.eficiencia = self.J * Ct / Cp
         else:
             self.gamma = 0
+
+
+    def calcular_beta(self):
+        self.beta = 5/180*np.pi + self.phi
 
 
     def computar_resultados(self):
@@ -136,8 +193,13 @@ class Helice:
                 "J": [self.J],
                 "reynolds": [self.reynolds],
                 "mach": [self.ma],
-                "eficiencia": [self.eficiencia]
+                "eficiencia": [self.eficiencia],
+                "tracao": [self.T],
+                "torque": [self.Q]
             }
+
+            for bet in range(len(self.beta)):
+                resultados[f"Beta {bet}"] = self.beta[bet] * 180 / np.pi
         else:
             resultados = {
                 "velocidade": [self.v],
@@ -145,8 +207,13 @@ class Helice:
                 "J": [self.J],
                 "reynolds": [self.reynolds],
                 "mach": [self.ma],
-                "eficiencia": [0]
+                "eficiencia": [0],
+                "tracao": [self.T],
+                "torque": [self.Q]
             }
+
+            for bet in range(len(self.beta)):
+                resultados[f"Beta {bet}"] = self.beta[bet] * 180 / np.pi
 
         self.resultados = resultados
 
