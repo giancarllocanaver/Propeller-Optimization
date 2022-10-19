@@ -1,3 +1,4 @@
+from genericpath import isfile
 import re
 import numpy as np
 import xfoil_funcao as xfoil
@@ -33,12 +34,14 @@ class Helice:
         self.ma = None
         self.cl = None
         self.cd = None
-        self.gamma = None
+        self.gamma = []
         self.eficiencia = None
         self.dT = []
         self.dQ = []
         self.beta = []
         self.r_integrar = []
+        self.cl = []
+        self.cd = []
 
         self.calcular_velocidade_tangencial()
         self.calcular_razao_de_avanco()
@@ -87,58 +90,80 @@ class Helice:
 
 
     def calcular_cl_cd_alpha_5(self):
-        xfoil.rodar_xfoil(
-            self.aerof[4],
-            str(5),
-            str(5),
-            "0",
-            str(self.reynolds),
-            str(self.ma),
-            "9",
-            "200",
-            "arquivo_dados_s1.txt",
-            mudar_paineis=True,
-            mostrar_grafico=False,
-            ler_arquivo_coord=True,
-            compressibilidade=False,
-            solucao_viscosa=True,
-            solucoes_NACA=False
-        )
+        for aerofolio in self.aerof:
+            xfoil.rodar_xfoil(
+                aerofolio,
+                str(5),
+                str(5),
+                "0",
+                str(self.reynolds),
+                str(self.ma),
+                "9",
+                "200",
+                "arquivo_dados_s1.txt",
+                mudar_paineis=True,
+                mostrar_grafico=False,
+                ler_arquivo_coord=True,
+                compressibilidade=False,
+                solucao_viscosa=True,
+                solucoes_NACA=False
+            )
 
-        dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
-        os.remove("arquivo_dados_s1.txt")
+            try:
+                dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+                encontrou = 1
+            except OSError:
+                time.sleep(0.5)
+            
+            try:
+                dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
+                encontrou = 1
+            except OSError:
+                cl = 0
+                cd = 1
+            
+            if os.path.isfile("arquivo_dados_s1.txt"):
+                os.remove("arquivo_dados_s1.txt")
 
-        if (dados.size != 0) & (self.ma < 1):
-            cl = dados[1]
-            cd = abs(dados[2])
+            if encontrou:
+                if (dados.size != 0) & (self.ma < 1):
+                    cl = dados[1]
+                    cd = abs(dados[2])
 
-            cl = cl / (np.sqrt(1 - self.ma**2))
-            cd = cd / (np.sqrt(1 - self.ma**2))
-        else:
-            cl = 0
-            cd = 1
+                    cl = cl / (np.sqrt(1 - self.ma**2))
+                    cd = cd / (np.sqrt(1 - self.ma**2))
+                else:
+                    cl = 0
+                    cd = 1
 
-        self.cl = cl
-        self.cd = cd
+            self.cl.append(cl)
+            self.cd.append(cd)
 
 
     def calcular_gamma(self):
-        if self.cl != 0:
-            self.gamma = np.arctan(self.cd/self.cl)
+        for secao in range(len(self.cl)):
+            if self.cl[secao] != 0:
+                self.gamma.append(np.arctan(self.cd[secao]/self.cl[secao]))
+            else:
+                self.gamma.append(None)
 
 
     def calcular_dt_e_dq(self):
         q = 0.5 * self.rho * self.v**2
-        if self.gamma is not None:
-            for secao in range(len(self.phi) - 1):
-                dt = q*self.cl*self.c[secao]*(np.cos(self.phi[secao] + self.gamma))/(np.cos(self.gamma)*np.sin(self.phi[secao])**2)
-                dq = q*self.cl*self.c[secao]*self.r[secao]*(np.sin(self.phi[secao] + self.gamma))/(np.cos(self.gamma)*np.sin(self.phi[secao])**2)
+        
+        for secao in range(len(self.phi) - 1):
+            if self.gamma[secao] != None:
+                dt = q*self.cl[secao]*self.c[secao]*(np.cos(self.phi[secao] + self.gamma[secao]))/(np.cos(self.gamma[secao])*np.sin(self.phi[secao])**2)
+                dq = q*self.cl[secao]*self.c[secao]*self.r[secao]*(np.sin(self.phi[secao] + self.gamma[secao]))/(np.cos(self.gamma[secao])*np.sin(self.phi[secao])**2)
 
                 self.dT.append(dt)
                 self.dQ.append(dq)
-            
-            self.dT.append(0)
-            self.dQ.append(0)
+            else:
+                self.dT.append(0)
+                self.dQ.append(0)
+        
+        self.dT.append(0)
+        self.dQ.append(0)
 
 
     def integracao(self, f, x):

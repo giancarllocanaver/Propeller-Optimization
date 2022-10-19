@@ -41,33 +41,44 @@ class FuncaoObjetivo:
         self.pontos_A = a0.copy()
             
 
-    def criar_parametros_iniciais(self):        
-        a        = self.pontos_A.copy()
+    def criar_parametros_iniciais(self):
         pontos_p = self.pontos_p.copy()
-
+        pontos_A_validacao = self.pontos_A.copy()
         self.logger.info(f"Particula {self.particula_escolhida}: Pontos A de Bezier com a seguinte configuração")
-        self.logger.info(f"\n\n{a}\n\n")
+        self.logger.info(f"\n\n{self.pontos_A}\n\n")
 
         self.logger.info(f"Particula {self.particula_escolhida}: Pontos P de Bezier com a seguinte configuração")
         self.logger.info(f"\n\n{pontos_p}\n\n")
 
-        verificacao = False
-        while verificacao == False:
-            escalar = np.random.uniform(low=-0.05, high=0.05)
-            a[1][3][0] = self.pontos_A[1][3][0] + escalar
+        matriz = []
+        pontos_aerofolio = []
+        for secao in range(7):
+            a = self.pontos_A.copy()
 
-            bezier_controller = Bezier()
-            linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
-                pontos_x=a[0],
-                pontos_y=a[1],
-                pontos_p=pontos_p
-            )
+            if (self.pontos_A != pontos_A_validacao).any():
+                raise Exception(
+                    "Os pontos A mudaram!!!"
+                )
 
-            if type(linhas) != int:
-                verificacao = True
+            verificacao = False
+            while verificacao == False:
+                escalar = np.random.uniform(low=-0.05, high=0.05)
+                a[1][3][0] = self.pontos_A[1][3][0] + escalar
 
-        matriz = [escalar]
-        self.curvas_aerofolios_inicial.append(linhas)
+                bezier_controller = Bezier()
+                linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
+                    pontos_x=a[0],
+                    pontos_y=a[1],
+                    pontos_p=pontos_p
+                )
+
+                if type(linhas) != int:
+                    verificacao = True
+
+            matriz.append(escalar)
+            pontos_aerofolio.append(linhas)
+
+        self.curvas_aerofolios_inicial.append(pontos_aerofolio)
 
         return matriz
 
@@ -120,50 +131,54 @@ class FuncaoObjetivo:
         for particula in range(len(particulas)):
             self.logger.info(f"Início bezier para partícula {particula}:")          
             
-            escalar = particulas[particula][-1]
+            escalares = particulas[particula]
+            pontos_aerofolio = []
 
-            ay_conta = ay.copy()
-            ay_conta[3][0] = escalar + ay[3][0]
+            for escalar in escalares:
+                ay_conta = ay.copy()
+                ay_conta[3][0] = escalar + ay[3][0]
 
-            self.logger.info(f"Escalar:")
-            self.logger.info(f"\n\n{escalar}\n\n")
-            self.logger.info(f"Ponto AX:")
-            self.logger.info(f"\n\n{ax}\n\n")
-            self.logger.info(f"Ponto AY:")
-            self.logger.info(f"\n\n{ay}\n\n")
-            self.logger.info(f"Pontos P da partícula:")
-            self.logger.info(f"\n\n{pontos_p}\n\n")
+                self.logger.info(f"Escalar:")
+                self.logger.info(f"\n\n{escalar}\n\n")
+                self.logger.info(f"Ponto AX:")
+                self.logger.info(f"\n\n{ax}\n\n")
+                self.logger.info(f"Ponto AY:")
+                self.logger.info(f"\n\n{ay}\n\n")
+                self.logger.info(f"Pontos P da partícula:")
+                self.logger.info(f"\n\n{pontos_p}\n\n")
 
-            bezier_controller = Bezier()
-            linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
-                pontos_x=ax,
-                pontos_y=ay_conta,
-                pontos_p=pontos_p
-            )
+                bezier_controller = Bezier()
+                linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
+                    pontos_x=ax,
+                    pontos_y=ay_conta,
+                    pontos_p=pontos_p
+                )
 
-            if type(linhas) == int:
-                verificacao = False
-                while verificacao == False:
-                    escalar = np.random.uniform(low=-0.05, high=0.05)
-                    ay_conta[3][0] = ay[3][0] + escalar
+                if type(linhas) == int:
+                    verificacao = False
+                    while verificacao == False:
+                        escalar = np.random.uniform(low=-0.05, high=0.05)
+                        ay_conta[3][0] = ay[3][0] + escalar
 
-                    bezier_controller = Bezier()
-                    linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
-                        pontos_x=ax,
-                        pontos_y=ay_conta,
-                        pontos_p=pontos_p
+                        bezier_controller = Bezier()
+                        linhas, _, _, _ = bezier_controller.atualizar_aerofolio(
+                            pontos_x=ax,
+                            pontos_y=ay_conta,
+                            pontos_p=pontos_p
+                        )
+
+                        if type(linhas) != int:
+                            verificacao = True
+                            self.matriz[particula][-1] = escalar
+
+                if not (self.pontos_A == pontos_A).all():
+                    raise Exception(
+                        "Pontos A mudaram!!!"
                     )
 
-                    if type(linhas) != int:
-                        verificacao = True
-                        self.matriz[particula][-1] = escalar
+                pontos_aerofolio.append(linhas)
 
-            self.curvas_aerofolios_atual.append(linhas)
-
-            if not (self.pontos_A == pontos_A).all():
-                raise Exception(
-                    "Pontos A mudaram!!!"
-                )
+            self.curvas_aerofolios_atual.append(pontos_aerofolio)
 
         self.logger.info("Fim das rodagens por Bezier")
 
@@ -180,10 +195,12 @@ class FuncaoObjetivo:
 
         particula_com_interseccao = False
         for particula in range(len(matriz)):
-            nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
-                curvas_aerofolios[particula]
-            )
-            aerofolios = [nome_arq_aerofolio for _ in range(8)]
+            aerofolios = []
+            for secao in range(7):
+                nome_arq_aerofolio = criar_txt_pontos_aerofolio_para_rodar_xfoil(
+                    curvas_aerofolios[particula][secao]
+                )
+                aerofolios.append(nome_arq_aerofolio)
 
             resultados_individuais = rodar_helice_inidividual(
                 condicoes_voo=condicoes_de_voo,
@@ -195,8 +212,8 @@ class FuncaoObjetivo:
             
             self.resultados.append(resultados_individuais)
             
-            if particula not in self.particulas_com_interseccao:
-                mover_arquivos_coordenadas(nome_arq_aerofolio)
+            for secao in range(7):
+                mover_arquivos_coordenadas(aerofolios[secao])
 
         self.logger.info("Fim das rodagens por Bezier")
 
@@ -237,9 +254,6 @@ class FuncaoObjetivo:
 
     def retornar_matriz(self):
         return self.matriz
-
-    def retornar_resultados(self):
-        return self.resultados
 
     def retornar_pontos_A(self):
         return self.pontos_A

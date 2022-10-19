@@ -59,7 +59,8 @@ def mover_arquivos_coordenadas(
     if not os.path.isdir(f"coordenadas_aerofolios"):
         os.mkdir(f"coordenadas_aerofolios")
         
-    shutil.move(nome_arquivo, f"coordenadas_aerofolios/{nome_arquivo}")
+    if os.path.isfile(nome_arquivo):
+        shutil.move(nome_arquivo, f"coordenadas_aerofolios/{nome_arquivo}")
 
 
 def gravar_resultados_aerodinamicos(
@@ -119,7 +120,13 @@ def gravar_resultados_matriz_pso(
         existe_output = 1
 
     colunas = [
-        "escalar Ay3",
+        "escalar 1 Ay3",
+        "escalar 2 Ay3",
+        "escalar 3 Ay3",
+        "escalar 4 Ay3",
+        "escalar 5 Ay3",
+        "escalar 6 Ay3",
+        "escalar 7 Ay3",
         "particula",
         "iteracao",
         "fo"
