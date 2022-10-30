@@ -16,12 +16,15 @@ class OtimizacaoHelice:
         self.N              = qde_iteracoes
         self.condicao_voo   = condicao_de_voo
         self.id             = id
-        self.logger         = logging.getLogger("logger_main")
-        
+        self.logger         = logging.getLogger("logger_main")        
         self.r              = np.random.rand(2)
         self.t              = 0
         self.convergencia   = []
         self.t_list         = []
+
+        self.resultados_aerodinamicos = None
+        self.resultados_matriz_pso = None
+        self.path_pasta_cenario = f"resultados/resultados_id_{id}"
 
         self.logger.info("//Início da Iteração 0//--------------------\n")
         self.iterar_zero()
@@ -59,13 +62,13 @@ class OtimizacaoHelice:
         self.resultados = resultados.copy()
 
         self.logger.info("- Início da gravação dos resultados")
-        gravar_resultados_aerodinamicos(
+        self.resultados_aerodinamicos = gravar_resultados_aerodinamicos(
             resultados=resultados,
             id=self.id,
             iteracao=0
         )
 
-        gravar_resultados_matriz_pso(
+        _, self.resultados_matriz_pso = gravar_resultados_matriz_pso(
             resultados=matriz,
             id=self.id,
             iteracao=self.t,
@@ -126,13 +129,13 @@ class OtimizacaoHelice:
             x=self.matriz
         )
 
-        gravar_resultados_aerodinamicos(
+        self.resultados_aerodinamicos = gravar_resultados_aerodinamicos(
             resultados=resultados,
             id=self.id,
             iteracao=self.t
         )
 
-        gravar_resultados_matriz_pso(
+        _, self.resultados_matriz_pso = gravar_resultados_matriz_pso(
             resultados=self.matriz,
             id=self.id,
             iteracao=self.t,
@@ -145,23 +148,6 @@ class OtimizacaoHelice:
         self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
         self.c1 = -3*self.t/self.N + 3.5
         self.c2 = 3*self.t/self.N + 0.5
-
-
-    def gerar_grafico(self):
-        df = pd.DataFrame({'t': [], 'Objetivo min': []})
-
-        for i in range(len(self.convergencia)):
-            df = df.append({'t': [self.t_list[i]], 'Objetivo min': [self.convergencia[i]]}, ignore_index=True)
-        
-        with pd.ExcelWriter(f'resultados/resultados_id_{self.id}/Resultados-convergencia-otimizacao.xlsx') as writer:
-            df.to_excel(writer, sheet_name='Convergencia')
-            writer.save()
-
-        plt.plot(self.t_list, self.convergencia, 'x')
-        plt.xlabel('iteração')
-        plt.ylabel('objetivo')
-        plt.savefig(f'resultados/resultados_id_{self.id}/Grafico-convergencia-otimizacao.jpg', dpi=300)
-        plt.show()
 
 
     def atualizar_g_best(

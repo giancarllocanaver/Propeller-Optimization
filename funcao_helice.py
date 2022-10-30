@@ -225,6 +225,9 @@ class Helice:
 
             for bet in range(len(self.beta)):
                 resultados[f"Beta {bet}"] = self.beta[bet] * 180 / np.pi
+
+            for secao in range(len(self.aerof)):
+                resultados[f"Aerofolio secao {secao}"] = self.aerof[secao]
         else:
             resultados = {
                 "velocidade": [self.v],
@@ -239,6 +242,9 @@ class Helice:
 
             for bet in range(len(self.beta)):
                 resultados[f"Beta {bet}"] = self.beta[bet] * 180 / np.pi
+            
+            for secao in range(len(self.aerof)):
+                resultados[f"Aerofolio secao {secao}"] = self.aerof[secao]
 
         self.resultados = resultados
 

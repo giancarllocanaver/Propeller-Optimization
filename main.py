@@ -8,12 +8,14 @@ import logging
 from utilidades import (
     gerar_time_stamp,
     criar_logger,
-    criar_pastas
+    criar_pastas,
+    limpar_pasta_coordenadas_aerofolios
 )
+from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 100
-    qde_particulas = 20
+    qde_iteracoes = 2
+    qde_particulas = 3
 
     condicao_de_voo = {
         "Velocidade": 3,
@@ -39,8 +41,16 @@ if __name__ == '__main__':
         id=id
     )
 
+    limpar_pasta_coordenadas_aerofolios()
+
     for _ in tqdm(range(qde_iteracoes)):
         time.sleep(5)
         otimization_controller.iterar()
 
-    otimization_controller.gerar_grafico()
+    GerenciaGraficos(
+        dados_pso=otimization_controller.resultados_matriz_pso,
+        dados_aerodinamicos=otimization_controller.resultados_aerodinamicos,
+        path_local_cenario=otimization_controller.path_pasta_cenario,
+        passos_iteracao=otimization_controller.t_list,
+        valores_fo=otimization_controller.convergencia
+    )

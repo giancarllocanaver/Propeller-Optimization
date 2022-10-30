@@ -1,4 +1,5 @@
 from datetime import datetime
+from genericpath import isdir
 from operator import mod
 import numpy as np
 from funcao_helice import Helice
@@ -97,6 +98,8 @@ def gravar_resultados_aerodinamicos(
 
     df_resultados.to_csv(path_output_aerodinamico, sep=';', index=False)
 
+    return df_resultados
+
 
 def gravar_resultados_matriz_pso(
     resultados,
@@ -152,7 +155,7 @@ def gravar_resultados_matriz_pso(
 
     df_resultados.to_csv(path_output_matriz_pso, sep=';', index=False)
 
-    return path_output_matriz_pso
+    return path_output_matriz_pso, df_resultados
 
 
 def salvar_resultados_json(
@@ -205,3 +208,35 @@ def criar_logger(id):
     
     handler = logging.FileHandler(f"resultados/resultados_id_{id}/logger_id_{id}.txt", mode='a')
     logger.addHandler(handler)
+
+
+def limpar_pasta_coordenadas_aerofolios():
+    if os.path.isdir("coordenadas_aerofolios"):
+        arquivos = os.listdir("coordenadas_aerofolios")
+
+        if len(arquivos) != 0:
+            for arquivo in arquivos:
+                os.remove(f"coordenadas_aerofolios/{arquivo}")
+
+
+def montar_array_coordenadas_aerofolios(
+    nome_coordenada_aerofolio: str
+):
+    coordenadas = np.loadtxt(
+        f"coordenadas_aerofolios/{nome_coordenada_aerofolio}"
+    )
+
+    return coordenadas
+
+
+def aplicar_rotacao(
+    coordenadas: np.ndarray,
+    beta: float
+):
+    coordenadas[:,0] = coordenadas[:,0] - 0.5
+    beta = beta * np.pi / 180
+
+    coordenadas[:,0] =  np.cos(beta)*coordenadas[:,0] + np.sin(beta)*coordenadas[:,1]
+    coordenadas[:,1] = -np.sin(beta)*coordenadas[:,0] + np.cos(beta)*coordenadas[:,1]
+    
+    return coordenadas
