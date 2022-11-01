@@ -213,7 +213,8 @@ class FuncaoObjetivo:
             self.resultados.append(resultados_individuais)
             
             for secao in range(7):
-                mover_arquivos_coordenadas(aerofolios[secao])
+                if os.path.isfile(aerofolios[secao]):
+                    os.remove(aerofolios[secao])
 
         self.logger.info("Fim das rodagens por Bezier")
 

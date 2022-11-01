@@ -228,6 +228,18 @@ class Helice:
 
             for secao in range(len(self.aerof)):
                 resultados[f"Aerofolio secao {secao}"] = self.aerof[secao]
+
+            for diferencial in range(len(self.dT)):
+                resultados[f"dT Seção {diferencial}"] = self.dT[diferencial]
+            
+            for diferencial in range(len(self.dQ)):
+                resultados[f"dQ Seção {diferencial}"] = self.dQ[diferencial]
+
+            for diferencial in range(len(self.r)):
+                resultados[f"dr Seção {diferencial}"] = self.r[diferencial]
+
+            for corda in range(len(self.c)):
+                resultados[f"c Seção {corda}"] = self.c[corda]
         else:
             resultados = {
                 "velocidade": [self.v],
@@ -245,6 +257,18 @@ class Helice:
             
             for secao in range(len(self.aerof)):
                 resultados[f"Aerofolio secao {secao}"] = self.aerof[secao]
+            
+            for diferencial in range(len(self.dT)):
+                resultados[f"dT Seção {diferencial}"] = 0
+            
+            for diferencial in range(len(self.dQ)):
+                resultados[f"dQ Seção {diferencial}"] = 0
+
+            for diferencial in range(len(self.r)):
+                resultados[f"dr Seção {diferencial}"] = self.r[diferencial]
+
+            for corda in range(len(self.c)):
+                resultados[f"c Seção {corda}"] = self.c[corda]
 
         self.resultados = resultados
 

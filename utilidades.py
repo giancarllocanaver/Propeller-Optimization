@@ -2,6 +2,7 @@ from datetime import datetime
 from genericpath import isdir
 from operator import mod
 import numpy as np
+from pyrsistent import dq
 from funcao_helice import Helice
 import shutil
 import os
@@ -50,6 +51,11 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
                 f"{round(pontos_x[ponto], 4)}    {round(pontos_y[ponto], 4)}\n"
             )
         writer.close()
+
+    shutil.copy(
+        src=f"{nome_arquivo}",
+        dst=f"coordenadas_aerofolios/{nome_arquivo}"
+    )
 
     return nome_arquivo
 
@@ -240,3 +246,28 @@ def aplicar_rotacao(
     coordenadas[:,1] = -np.sin(beta)*coordenadas[:,0] + np.cos(beta)*coordenadas[:,1]
     
     return coordenadas
+
+
+def montar_array_dT_dr_e_dQ(
+    df: pd.DataFrame
+):
+    selecao_colunas_dT = [f"dT Seção {secao}" for secao in range(7)]
+    selecao_colunas_dQ = [f"dQ Seção {secao}" for secao in range(7)]
+    selecao_colunas_dr = [f"dr Seção {secao}" for secao in range(7)]
+
+    dT_values = df.loc[:,selecao_colunas_dT].values
+    dQ_values = df.loc[:,selecao_colunas_dQ].values
+    dr_values = df.loc[:,selecao_colunas_dr].values
+
+    return {
+        "dT values": dT_values,
+        "dQ_values": dQ_values,
+        "dr values": dr_values
+    }
+
+
+def gerar_dados_diveras_velocidades(
+    df: pd.DataFrame
+):
+    nomes_coordenadas_aerofolios = [f"Aerofolio secao {secao}" for secao in range(7)]
+    

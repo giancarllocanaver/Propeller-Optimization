@@ -4,7 +4,11 @@ from matplotlib import pyplot as plt
 import plotly.express as px
 import re
 import numpy as np
-from utilidades import aplicar_rotacao, montar_array_coordenadas_aerofolios
+from utilidades import (
+    aplicar_rotacao,
+    montar_array_coordenadas_aerofolios,
+    montar_array_dT_dr_e_dQ
+)
 
 class GerenciaGraficos:
     def __init__(
@@ -124,5 +128,31 @@ class GerenciaGraficos:
             ax.set_ylim((-0.25, 0.25))
             ax.grid()
 
+        for figura in range(8):
+            if figura < 4:
+                axs[0,figura].set_title(f"Seção {figura+1}")
+            else:
+                axs[1,(figura - 4)].set_title(f"Seção {figura+1}")
+
         fig.savefig(f'{self.path_local_cenario}/graficos/Aerofolios.jpeg', dpi=300)
+
+
+    def gerar_grafico_dT_e_dQ_vs_dr(self):
+        valores = montar_array_dT_dr_e_dQ(
+            df=self.df_melhor_particula
+        )
+
+        fig_dT, axs_dT = plt.subplots(1,1)
+        axs_dT.plot(valores["dr values"], valores["dT values"], "--o", color='blue')
+        axs_dT.set(xlabel=r"$dr$", ylabel=r"$dT$")
+        axs_dT.grid()
+        fig_dT.savefig(f'{self.path_local_cenario}/graficos/dT_vs_dr.jpeg', dpi=300)
+
+        fig_dQ, axs_dQ = plt.subplots(1,1)
+        axs_dQ.plot(valores["dr values"], valores["dQ values"], "--o", color='blue')
+        axs_dQ.set(xlabel=r"$dr$", ylabel=r"$dQ$")
+        axs_dQ.grid()
+        fig_dQ.savefig(f'{self.path_local_cenario}/graficos/dQ_vs_dr.jpeg', dpi=300)
+
+
             

@@ -14,7 +14,7 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 2
+    qde_iteracoes = 3
     qde_particulas = 3
 
     condicao_de_voo = {
@@ -31,6 +31,8 @@ if __name__ == '__main__':
     criar_pastas(id)
     criar_logger(id)
     
+    limpar_pasta_coordenadas_aerofolios()
+
     logger = logging.getLogger("logger_main")
 
     logger.info("\n----------Processamento Iniciado----------\n")
@@ -40,8 +42,6 @@ if __name__ == '__main__':
         condicao_de_voo=condicao_de_voo,
         id=id
     )
-
-    limpar_pasta_coordenadas_aerofolios()
 
     for _ in tqdm(range(qde_iteracoes)):
         time.sleep(5)
