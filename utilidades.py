@@ -43,7 +43,7 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
         high=1000,
         dtype=int
     )
-    nome_arquivo = "aerofolio" + str(id) + ".dat"
+    nome_arquivo = "coordenadas_aerofolios/aerofolio" + str(id) + ".dat"
     
     with open(nome_arquivo, "w") as writer:
         for ponto in range(len(pontos_x)):
@@ -52,10 +52,10 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
             )
         writer.close()
 
-    shutil.copy(
-        src=f"{nome_arquivo}",
-        dst=f"coordenadas_aerofolios/{nome_arquivo}"
-    )
+    # shutil.copy(
+    #     src=f"{nome_arquivo}",
+    #     dst=f"coordenadas_aerofolios/{nome_arquivo}"
+    # )
 
     return nome_arquivo
 
@@ -229,7 +229,7 @@ def montar_array_coordenadas_aerofolios(
     nome_coordenada_aerofolio: str
 ):
     coordenadas = np.loadtxt(
-        f"coordenadas_aerofolios/{nome_coordenada_aerofolio}"
+        f"{nome_coordenada_aerofolio}"
     )
 
     return coordenadas
@@ -267,7 +267,41 @@ def montar_array_dT_dr_e_dQ(
 
 
 def gerar_dados_diveras_velocidades(
-    df: pd.DataFrame
+    df: pd.DataFrame,
+    corda: np.ndarray,
+    raio: np.ndarray,
+    condicoes_de_voo: dict
 ):
     nomes_coordenadas_aerofolios = [f"Aerofolio secao {secao}" for secao in range(7)]
+    aerofolios = df.loc[:, nomes_coordenadas_aerofolios].values.tolist()[0]
+    
+    velocidades = [vel for vel in range(1,200, 1)]
+
+    resultados_totais = []
+    resultados_ct = []
+    resultados_cq = []
+    resultados_eta = []
+    J_list = []
+    for velocidade in velocidades:
+        condicoes_de_voo["Velocidade"] = velocidade
+        resultados_individuais = rodar_helice_inidividual(
+            aerofolios=aerofolios,
+            condicoes_voo=condicoes_de_voo,
+            raio=raio,
+            c=corda,
+            particula_com_interseccao=False
+        )
+        resultados_totais.append(resultados_individuais)
+        resultados_ct.append(resultados_individuais["Ct"])
+        resultados_cq.append(resultados_individuais["Cq"])
+        resultados_eta.append(resultados_individuais["eficiencia"][0])
+        J_list.append(resultados_individuais["J"])
+
+    return {
+        "resultados_totais": resultados_totais,
+        "resultados Ct": resultados_ct,
+        "resultados Cq": resultados_cq,
+        "resultados eficiencia": resultados_eta,
+        "razão de avanço": J_list
+    }
     

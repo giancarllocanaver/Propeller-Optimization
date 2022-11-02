@@ -118,7 +118,7 @@ class Helice:
             try:
                 dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
                 encontrou = 1
-            except OSError:
+            except (OSError, Exception):
                 cl = 0
                 cd = 1
             
@@ -179,17 +179,15 @@ class Helice:
 
 
     def calcular_eficiencia(self):
-        Cp = 0
-
         if len(self.dT) == len(self.r):
             T = self.integracao(self.dT, self.r)
             Q = self.integracao(self.dQ, self.r)
         
             n = self.rpm / 60
 
-            Ct = T/(self.rho * n**2 * self.D**4)
-            Cq = Q/(self.rho * n**2 * self.D**5)
-            Cp = 2 * np.pi * Cq
+            self.Ct = T/(self.rho * n**2 * self.D**4)
+            self.Cq = Q/(self.rho * n**2 * self.D**5)
+            self.Cp = 2 * np.pi * self.Cq
 
             self.T = T
             self.Q = Q
@@ -197,11 +195,15 @@ class Helice:
             T = 0
             Q = 0
 
+            self.Ct = 0
+            self.Cq = 0
+            self.Cp = 0
+
             self.T = T
             self.Q = Q
 
-        if Cp != 0:
-            self.eficiencia = self.J * Ct / Cp
+        if self.Cp != 0:
+            self.eficiencia = self.J * self.Ct / self.Cp
         else:
             self.gamma = 0
 
@@ -220,7 +222,10 @@ class Helice:
                 "mach": [self.ma],
                 "eficiencia": [self.eficiencia],
                 "tracao": [self.T],
-                "torque": [self.Q]
+                "torque": [self.Q],
+                "Ct": self.Ct,
+                "Cq": self.Cq,
+                "Cp": self.Cp
             }
 
             for bet in range(len(self.beta)):
@@ -249,7 +254,10 @@ class Helice:
                 "mach": [self.ma],
                 "eficiencia": [0],
                 "tracao": [self.T],
-                "torque": [self.Q]
+                "torque": [self.Q],
+                "Ct": self.Ct,
+                "Cq": self.Cq,
+                "Cp": self.Cp
             }
 
             for bet in range(len(self.beta)):

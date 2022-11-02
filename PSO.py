@@ -11,11 +11,12 @@ from utilidades import (
 import logging
 
 class OtimizacaoHelice:
-    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, id):
+    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, **kwargs):
         self.qde_particulas = qde_de_particulas
         self.N              = qde_iteracoes
         self.condicao_voo   = condicao_de_voo
-        self.id             = id
+        self.id             = kwargs.get("id")
+        self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
         self.logger         = logging.getLogger("logger_main")        
         self.r              = np.random.rand(2)
         self.t              = 0
@@ -24,7 +25,7 @@ class OtimizacaoHelice:
 
         self.resultados_aerodinamicos = None
         self.resultados_matriz_pso = None
-        self.path_pasta_cenario = f"resultados/resultados_id_{id}"
+        self.path_pasta_cenario = f"resultados/resultados_id_{self.id}"
 
         self.logger.info("//Início da Iteração 0//--------------------\n")
         self.iterar_zero()
@@ -35,7 +36,8 @@ class OtimizacaoHelice:
         fo_controller = FuncaoObjetivo(
             condicoes_de_voo=self.condicao_voo,
             qde_particulas=self.qde_particulas,
-            inicial=True
+            inicial=True,
+            condicoes_geometricas=self.condicoes_geometricas
         )
         self.logger.info("- Fim da computação da função objetivo")
 
@@ -107,7 +109,8 @@ class OtimizacaoHelice:
         fo_controller = FuncaoObjetivo(
             qde_particulas=self.qde_particulas,
             condicoes_de_voo=self.condicao_voo,
-            inicial=False
+            inicial=False,
+            condicoes_geometricas=self.condicoes_geometricas
         )
         fo_controller.inserir_parametros(
             matriz=self.matriz,

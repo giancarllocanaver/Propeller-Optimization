@@ -10,10 +10,11 @@ from utilidades import (
 import logging
 
 class FuncaoObjetivo:
-    def __init__(self, qde_particulas: int, condicoes_de_voo:dict, inicial:bool=False):
+    def __init__(self, qde_particulas: int, condicoes_de_voo:dict, inicial:bool=False, **kwargs):
         self.qde_particulas                    = qde_particulas
         self.condicoes_de_voo                  = condicoes_de_voo
         self.logger                            = logging.getLogger("logger_main")
+        self.condicoes_geometricas             = kwargs.get("condicoes_geometricas")
         self.matriz                            = None
         self.particula_escolhida               = None
         self.pontos_p                          = None
@@ -190,8 +191,8 @@ class FuncaoObjetivo:
         curvas_aerofolios = self.curvas_aerofolios_atual.copy()
         condicoes_de_voo  = self.condicoes_de_voo
 
-        raio = np.array([10, 12, 18, 24, 30, 36, 42, 48])*0.0254
-        c = np.array([4.82, 5.48, 6.86, 7.29, 7.06, 6.35, 5.06, 0])*0.0254
+        raio = self.condicoes_geometricas["raio"]
+        c = self.condicoes_geometricas["corda"]
 
         particula_com_interseccao = False
         for particula in range(len(matriz)):
@@ -211,10 +212,6 @@ class FuncaoObjetivo:
             )
             
             self.resultados.append(resultados_individuais)
-            
-            for secao in range(7):
-                if os.path.isfile(aerofolios[secao]):
-                    os.remove(aerofolios[secao])
 
         self.logger.info("Fim das rodagens por Bezier")
 

@@ -7,7 +7,8 @@ import numpy as np
 from utilidades import (
     aplicar_rotacao,
     montar_array_coordenadas_aerofolios,
-    montar_array_dT_dr_e_dQ
+    montar_array_dT_dr_e_dQ,
+    gerar_dados_diveras_velocidades
 )
 
 class GerenciaGraficos:
@@ -18,15 +19,17 @@ class GerenciaGraficos:
         self.df_aerodinamicos: pd.DataFrame = kwargs["dados_aerodinamicos"]
         self.df_pso: pd.DataFrame = kwargs["dados_pso"]
         self.path_local_cenario: str = kwargs["path_local_cenario"]
-        # self.aerofolios: list = kwargs["aerofolios"]
         self.passos_iteracao: list = kwargs["passos_iteracao"]
         self.valores_fo: list = kwargs["valores_fo"]
+        self.condicoes_de_voo: np.ndarray = kwargs.get("condicao_de_voo")
+        self.condicoes_geometricas: np.ndarray = kwargs.get("condicoes_geometricas")
 
         self.gerar_pastas()
         self.realizar_grafico_fo_iteracao()
         self.realizar_graficos_escalares_iteracoes()
         self.selecionar_melhor_particula()
         self.gerar_grafico_aerofolios()
+        self.gerar_grafico_cT_e_cQ_por_J()
 
     def gerar_pastas(self):
         if not os.path.isdir(f"{self.path_local_cenario}/graficos"):
@@ -155,4 +158,35 @@ class GerenciaGraficos:
         fig_dQ.savefig(f'{self.path_local_cenario}/graficos/dQ_vs_dr.jpeg', dpi=300)
 
 
-            
+    def gerar_grafico_cT_e_cQ_por_J(self):
+        resultados = gerar_dados_diveras_velocidades(
+            df=self.df_melhor_particula,
+            corda=self.condicoes_geometricas["corda"],
+            raio=self.condicoes_geometricas["raio"],
+            condicoes_de_voo=self.condicoes_de_voo
+        )
+
+        fig_1, axs_1 = plt.subplots(1,1)
+        axs_1.plot(
+            resultados["razão de avanço"], resultados["resultados Ct"], '--o', color='blue'
+        )
+        axs_1.set(xlabel=r"$J$", ylabel=r"$C_T$")
+        axs_1.grid()
+        fig_1.savefig(f'{self.path_local_cenario}/graficos/CT_vs_J.jpeg', dpi=300)
+
+        fig_2, axs_2 = plt.subplots(1,1)
+        axs_2.plot(
+            resultados["razão de avanço"], resultados["resultados Cq"], '--o', color='red'
+        )
+        axs_2.set(xlabel=r"$J$", ylabel=r"$C_Q$")
+        axs_2.grid()
+        fig_2.savefig(f'{self.path_local_cenario}/graficos/CQ_vs_J.jpeg', dpi=300)
+
+        fig_3, axs_3 = plt.subplots(1,1)
+        axs_3.plot(
+            resultados["razão de avanço"], resultados["resultados eficiencia"], '--o', color='orange'
+        )
+        axs_3.set(xlabel=r"$J$", ylabel=r"$\eta$")
+        axs_3.grid()
+        fig_3.savefig(f'{self.path_local_cenario}/graficos/eta_vs_J.jpeg', dpi=300)
+
