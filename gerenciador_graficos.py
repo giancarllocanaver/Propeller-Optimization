@@ -1,4 +1,5 @@
 import os
+from turtle import color
 import pandas as pd
 from matplotlib import pyplot as plt
 import plotly.express as px
@@ -30,6 +31,7 @@ class GerenciaGraficos:
         self.selecionar_melhor_particula()
         self.gerar_grafico_aerofolios()
         self.gerar_grafico_cT_e_cQ_por_J()
+        self.gerar_grafico_beta_por_r()
 
     def gerar_pastas(self):
         if not os.path.isdir(f"{self.path_local_cenario}/graficos"):
@@ -128,7 +130,9 @@ class GerenciaGraficos:
         for ax in axs.flat:
             ax.set(xlabel='x', ylabel='y')
             ax.label_outer()
-            ax.set_ylim((-0.25, 0.25))
+            x_left, x_right = ax.get_xlim()
+            y_low, y_high = ax.get_ylim()
+            ax.set_aspect(abs((x_right-x_left)/(y_low-y_high))*1)
             ax.grid()
 
         for figura in range(8):
@@ -190,3 +194,16 @@ class GerenciaGraficos:
         axs_3.grid()
         fig_3.savefig(f'{self.path_local_cenario}/graficos/eta_vs_J.jpeg', dpi=300)
 
+
+    def gerar_grafico_beta_por_r(self):
+        nomes_betas = [f"Beta {secao}" for secao in range(8)]
+        betas = self.df_melhor_particula.loc[:, nomes_betas].values.tolist()[0]
+        raio = self.condicoes_geometricas["raio"]
+
+        fig, ax = plt.subplots(1,1)
+        ax.plot(
+            raio, betas, '--o', color="blue"
+        )
+        ax.grid()
+        ax.set(xlabel=r"$Raio [m]$", ylabel=r"$\beta$")
+        fig.savefig(f'{self.path_local_cenario}/graficos/beta_vs_r.jpeg', dpi=300)
