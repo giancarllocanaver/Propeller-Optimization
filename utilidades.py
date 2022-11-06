@@ -1,9 +1,6 @@
 from datetime import datetime
-from genericpath import isdir
-from operator import mod
 import numpy as np
-from pyrsistent import dq
-from funcao_helice import Helice
+from funcao_helice import Helice, HeliceGeral
 import shutil
 import os
 import pandas as pd
@@ -273,29 +270,41 @@ def gerar_dados_diveras_velocidades(
     condicoes_de_voo: dict
 ):
     nomes_coordenadas_aerofolios = [f"Aerofolio secao {secao}" for secao in range(7)]
+    nomes_betas = [f"Beta {secao}" for secao in range(8)]
     aerofolios = df.loc[:, nomes_coordenadas_aerofolios].values.tolist()[0]
+    betas = df.loc[:, nomes_betas].values.tolist()[0]
     
-    velocidades = [vel for vel in range(1,200, 1)]
+    velocidades = [vel for vel in range(1,100, 5)]
 
     resultados_totais = []
     resultados_ct = []
     resultados_cq = []
     resultados_eta = []
     J_list = []
+
+    condicoes_geometricas = {
+        "Raio Secao": raio,
+        "Corda Secao": corda,
+        "Beta": np.array(betas)
+    }
+
     for velocidade in velocidades:
         condicoes_de_voo["Velocidade"] = velocidade
-        resultados_individuais = rodar_helice_inidividual(
+        helice_contoller = HeliceGeral(
             aerofolios=aerofolios,
-            condicoes_voo=condicoes_de_voo,
-            raio=raio,
-            c=corda,
-            particula_com_interseccao=False
+            condicoes_geometricas=condicoes_geometricas,
+            condicoes_de_voo=condicoes_de_voo
         )
-        resultados_totais.append(resultados_individuais)
-        resultados_ct.append(resultados_individuais["Ct"])
-        resultados_cq.append(resultados_individuais["Cq"])
-        resultados_eta.append(resultados_individuais["eficiencia"][0])
-        J_list.append(resultados_individuais["J"])
+        resultados_individuais = helice_contoller.resultados
+
+        if (resultados_individuais["eficiencia"][0] > 1) or (resultados_individuais["eficiencia"][0] < 0):
+            break
+        else:
+            resultados_totais.append(resultados_individuais)
+            J_list.append(resultados_individuais["J"])
+            resultados_eta.append(resultados_individuais["eficiencia"][0])
+            resultados_ct.append(resultados_individuais["Ct"])
+            resultados_cq.append(resultados_individuais["Cq"])
 
     return {
         "resultados_totais": resultados_totais,

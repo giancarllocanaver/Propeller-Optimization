@@ -14,8 +14,8 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 50
-    qde_particulas = 20
+    qde_iteracoes = 2
+    qde_particulas = 3
 
     condicao_de_voo = {
         "Velocidade": 62,
