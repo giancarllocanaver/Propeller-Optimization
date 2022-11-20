@@ -99,10 +99,14 @@ def rodar_xfoil(
     arquivo_de_input.close()
 
     def kill(proc_pid):
-        process = psutil.Process(proc_pid)
-        for proc in process.children(recursive=True):
-            proc.kill()
-        process.kill()
+        try:
+            process = psutil.Process(proc_pid)
+            for proc in process.children(recursive=True):
+                proc.kill()
+        
+            process.kill()
+        except psutil.NoSuchProcess:
+            return
 
     try:
         p = subprocess.Popen(

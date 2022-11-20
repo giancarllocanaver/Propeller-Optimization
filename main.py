@@ -9,13 +9,16 @@ from utilidades import (
     gerar_time_stamp,
     criar_logger,
     criar_pastas,
-    limpar_pasta_coordenadas_aerofolios
+    limpar_pasta_coordenadas_aerofolios,
+    checar_convergencia
 )
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
     qde_iteracoes = 2
-    qde_particulas = 3
+    qde_particulas = 100
+    tolerancia = 0.005
+    continuar = False
 
     condicao_de_voo = {
         "Velocidade": 62,
@@ -46,12 +49,25 @@ if __name__ == '__main__':
         qde_de_particulas=qde_particulas,
         condicao_de_voo=condicao_de_voo,
         id=id,
-        condicoes_geometricas=condicoes_geometricas
+        condicoes_geometricas=condicoes_geometricas,
+        continuar=continuar
     )
 
+    media_distancias = np.array([])
     for _ in tqdm(range(qde_iteracoes)):
         time.sleep(5)
         otimization_controller.iterar()
+        convergencia, _ = checar_convergencia(
+            valores_fo=otimization_controller.fo,
+            matriz=otimization_controller.matriz,
+            tolerancia=tolerancia
+        )
+        # media_distancias = np.append(media_distancias, media)
+        if convergencia:
+            print(
+                "Convergência atingida!"
+            )
+            break
 
     GerenciaGraficos(
         dados_pso=otimization_controller.resultados_matriz_pso,

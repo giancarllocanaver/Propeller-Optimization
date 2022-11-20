@@ -6,17 +6,15 @@ import pandas as pd
 from utilidades import (
     gravar_resultados_aerodinamicos,
     gravar_resultados_matriz_pso,
+    ler_dados_para_continuacao,
     salvar_resultados_json
 )
 import logging
 
 class OtimizacaoHelice:
     def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, **kwargs):
-        self.qde_particulas = qde_de_particulas
         self.N              = qde_iteracoes
-        self.condicao_voo   = condicao_de_voo
         self.id             = kwargs.get("id")
-        self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
         self.logger         = logging.getLogger("logger_main")        
         self.r              = np.random.rand(2)
         self.t              = 0
@@ -28,7 +26,23 @@ class OtimizacaoHelice:
         self.path_pasta_cenario = f"resultados/resultados_id_{self.id}"
 
         self.logger.info("//Início da Iteração 0//--------------------\n")
-        self.iterar_zero()
+        
+        if not kwargs.get("continuar"):
+            self.condicao_voo   = condicao_de_voo
+            self.qde_particulas = qde_de_particulas
+            self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
+            self.iterar_zero()
+        else:
+            self.iterar_continuacao()
+        
+    def iterar_continuacao(self):
+        dados: dict = ler_dados_para_continuacao()
+        for key in dados.keys():
+            dado = dados[key]
+            if type(dado) == list:
+                dado = np.array(dado)
+            setattr(self, key, dado)
+        self.t_list = [t for t in range(self.t+1)]
 
     
     def iterar_zero(self):
@@ -92,7 +106,17 @@ class OtimizacaoHelice:
             p_best=self.p_best,
             g_best=self.g_best,
             r=self.r,
-            id=self.id
+            id=self.id,
+            qde_particulas=self.qde_particulas,
+            condicao_voo=self.condicao_voo,
+            condicoes_geometricas=self.condicoes_geometricas,
+            p_best_obj=self.p_best_obj,
+            g_best_obj=self.g_best_obj,
+            w=self.w,
+            c1=self.c1,
+            c2=self.c2,
+            t=self.t,
+            convergencia=self.convergencia
         )
         
         self.atualizar_v_e_x(
@@ -149,8 +173,8 @@ class OtimizacaoHelice:
         
         self.t += 1
         self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        self.c1 = -3*self.t/self.N + 3.5
-        self.c2 = 3*self.t/self.N + 0.5
+        self.c1 = 3*self.t/self.N + 3.5
+        self.c2 = -3*self.t/self.N + 0.5
 
 
     def atualizar_g_best(

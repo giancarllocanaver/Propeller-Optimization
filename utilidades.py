@@ -162,13 +162,10 @@ def gravar_resultados_matriz_pso(
 
 
 def salvar_resultados_json(
-    eficiencia,
-    matriz_v,
-    matriz_pso,
-    p_best,
-    g_best,
-    r,
-    id
+    matriz_v: np.ndarray,
+    matriz_pso: np.ndarray,
+    id: str,
+    **kwargs
 ):
     if not os.path.isdir("resultados"):
         os.mkdir("resultados")
@@ -177,12 +174,22 @@ def salvar_resultados_json(
         os.mkdir(f"resultados/resultados_id_{id}")
 
     arquivo = {
-        "eficiencia": eficiencia.tolist(),
+        "eficiencia": kwargs.get("eficiencia").tolist(),
         "matriz_v": matriz_v.tolist(),
         "matriz_pso": matriz_pso.tolist(),
-        "p_best": p_best.tolist(),
-        "g_best": g_best.tolist(),
-        "r": r.tolist()
+        "p_best": kwargs.get("p_best").tolist(),
+        "g_best": kwargs.get("g_best").tolist(),
+        "r": kwargs.get("r").tolist(),
+        "qde_particulas": kwargs.get("qde_particulas"),
+        "condicao_voo": kwargs.get("condicao_voo"),
+        "condicoes_geometricas": kwargs.get("condicoes_geometricas"),
+        "p_best_obj": kwargs.get("p_best_obj").tolist(),
+        "g_best_obj": kwargs.get("g_best_obj").tolist(),
+        "w": kwargs.get("w"),
+        "c1": kwargs.get("c1"),
+        "c2": kwargs.get("c2"),
+        "t": kwargs.get("t"),
+        "convergencia": kwargs.get("convergencia"),
     }
 
     nome_arq = f"resultados/resultados_id_{id}/parametros_PSO_id_{id}.json"
@@ -313,4 +320,43 @@ def gerar_dados_diveras_velocidades(
         "resultados eficiencia": resultados_eta,
         "razão de avanço": J_list
     }
+
+
+def checar_convergencia(
+    valores_fo: np.ndarray,
+    matriz: np.ndarray,
+    tolerancia: float
+):
+    melhor_particula = np.argmax(valores_fo)
+    soma_convergencias = 0
+    media_distancias = np.array([])
+    for variavel in range(7):
+        valor_variavel_melhor_paticula = np.max(matriz[melhor_particula,variavel])
+
+        distancias_variavel = matriz[:,variavel] - valor_variavel_melhor_paticula
+        distancias_abs = np.abs(distancias_variavel)
+        media_distancias = np.mean(distancias_abs)
+
+        if media_distancias <= tolerancia:
+            soma_convergencias += 1
+        media_distancias = np.append(media_distancias, media_distancias)
+
+    media = np.mean(media_distancias)
+
+    if soma_convergencias == 7:
+        return True, media
+    else:
+        return False, media
+
+
+def ler_dados_para_continuacao():
+    arquivos = os.listdir(
+        "fila_continuacao"
+    )
+    nome_arquivo = arquivos[0]
+
+    with open(f"fila_continuacao/{nome_arquivo}", 'rb') as file:
+        arquivo_bytes = file.read()
     
+    dados = json.loads(arquivo_bytes)
+    return dados
