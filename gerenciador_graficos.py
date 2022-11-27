@@ -130,9 +130,11 @@ class GerenciaGraficos:
         for ax in axs.flat:
             ax.set(xlabel='x', ylabel='y')
             ax.label_outer()
-            x_left, x_right = ax.get_xlim()
-            y_low, y_high = ax.get_ylim()
-            ax.set_aspect(abs((x_right-x_left)/(y_low-y_high))*1)
+            # x_left, x_right = ax.get_xlim()
+            # y_low, y_high = ax.get_ylim()
+            # ax.set_aspect(abs((x_right-x_left)/(y_low-y_high))*1)
+            ax.set_xlim((-0.5,0.5))
+            ax.set_ylim((-0.5,0.5))
             ax.grid()
 
         for figura in range(8):

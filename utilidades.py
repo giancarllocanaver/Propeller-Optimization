@@ -249,12 +249,14 @@ def aplicar_rotacao(
     beta: float
 ):
     coordenadas[:,0] = coordenadas[:,0] - 0.5
-    beta = beta * np.pi / 180
+    beta = -1 * beta * np.pi / 180
 
-    coordenadas[:,0] =  np.cos(beta)*coordenadas[:,0] + np.sin(beta)*coordenadas[:,1]
-    coordenadas[:,1] = -np.sin(beta)*coordenadas[:,0] + np.cos(beta)*coordenadas[:,1]
+    coordenadas_novas = coordenadas.copy()
+
+    coordenadas_novas[:,0] =  np.cos(beta)*coordenadas[:,0] - np.sin(beta)*coordenadas[:,1]
+    coordenadas_novas[:,1] =  np.sin(beta)*coordenadas[:,0] + np.cos(beta)*coordenadas[:,1]
     
-    return coordenadas
+    return coordenadas_novas
 
 
 def montar_array_dT_dr_e_dQ(

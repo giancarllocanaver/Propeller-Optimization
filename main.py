@@ -15,8 +15,8 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 2
-    qde_particulas = 100
+    qde_iteracoes = 3
+    qde_particulas = 5
     tolerancia = 0.005
     continuar = False
 

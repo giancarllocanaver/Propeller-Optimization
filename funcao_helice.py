@@ -395,6 +395,8 @@ class HeliceGeral:
                 solucoes_NACA=False
             )
 
+            encontrou = 0
+
             try:
                 dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
                 encontrou = 1
@@ -421,6 +423,9 @@ class HeliceGeral:
                 else:
                     cl = 0
                     cd = 1
+            else:
+                cl=0
+                cd=1
 
             self.cl.append(cl)
             self.cd.append(cd)
