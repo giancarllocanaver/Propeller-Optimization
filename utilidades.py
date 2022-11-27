@@ -173,6 +173,11 @@ def salvar_resultados_json(
     if not os.path.isdir(f"resultados/resultados_id_{id}"):
         os.mkdir(f"resultados/resultados_id_{id}")
 
+    condicoes_geometricas = {
+        "raio": kwargs.get("condicoes_geometricas")["raio"].tolist(),
+        "corda": kwargs.get("condicoes_geometricas")["corda"].tolist()
+    }
+
     arquivo = {
         "eficiencia": kwargs.get("eficiencia").tolist(),
         "matriz_v": matriz_v.tolist(),
@@ -182,7 +187,7 @@ def salvar_resultados_json(
         "r": kwargs.get("r").tolist(),
         "qde_particulas": kwargs.get("qde_particulas"),
         "condicao_voo": kwargs.get("condicao_voo"),
-        "condicoes_geometricas": kwargs.get("condicoes_geometricas"),
+        "condicoes_geometricas": condicoes_geometricas,
         "p_best_obj": kwargs.get("p_best_obj").tolist(),
         "g_best_obj": kwargs.get("g_best_obj").tolist(),
         "w": kwargs.get("w"),
