@@ -113,7 +113,7 @@ class Helice:
             try:
                 dados = np.loadtxt("arquivo_dados_s1.txt", skiprows=12)
                 encontrou = 1
-            except OSError:
+            except (OSError, Exception):
                 time.sleep(0.5)
             
             try:

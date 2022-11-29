@@ -15,8 +15,8 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 3
-    qde_particulas = 5
+    qde_iteracoes = 50
+    qde_particulas = 20
     tolerancia = 0.005
     continuar = False
 
@@ -65,8 +65,14 @@ if __name__ == '__main__':
         # media_distancias = np.append(media_distancias, media)
         if convergencia:
             print(
-                "Convergência atingida!"
+                "\n\n\nConvergência atingida!\n\n\n"
             )
+            with open(f"{otimization_controller.path_pasta_cenario}/convergencia.txt", 'w') as file:
+                file.write(
+                    f"Convergência atingida!\n"
+                    f"Número de iterações: {max(otimization_controller.t_list)}"
+                )
+                file.close()
             break
 
     GerenciaGraficos(

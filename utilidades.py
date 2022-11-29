@@ -367,3 +367,29 @@ def ler_dados_para_continuacao():
     
     dados = json.loads(arquivo_bytes)
     return dados
+
+
+def transformar_dados_json_para_objeto(
+    local_arquivo_json: str
+):
+    with open(local_arquivo_json,'rb') as file:
+        arquivo_bytes = file.read()
+        dados: dict = json.loads(arquivo_bytes)
+
+    dados_array = [
+        "eficiencia",
+        "matriz_v",
+        "matriz_pso",
+        "p_best",
+        "g_best",
+        "p_best_obj",
+        "g_best_obj",
+    ]
+
+    for dado_array in dados_array:
+        dados[dado_array] = np.array(dados[dado_array])
+
+    dados["condicoes_geometricas"]["raio"] = np.array(dados["condicoes_geometricas"]["raio"])
+    dados["condicoes_geometricas"]["corda"] = np.array(dados["condicoes_geometricas"]["corda"])
+
+    return dados

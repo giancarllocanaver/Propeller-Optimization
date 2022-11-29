@@ -172,9 +172,12 @@ class OtimizacaoHelice:
         self.t_list.append(self.t)
         
         self.t += 1
-        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        self.c1 = 3*self.t/self.N + 3.5
-        self.c2 = -3*self.t/self.N + 0.5
+        # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        self.w = 0.72984
+        # self.c1 = 3*self.t/self.N + 3.5
+        # self.c2 = -3*self.t/self.N + 0.5
+        self.c1 = 2.05
+        self.c2 = 2.05
 
 
     def atualizar_g_best(

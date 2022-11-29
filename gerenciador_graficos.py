@@ -22,21 +22,39 @@ class GerenciaGraficos:
         self.path_local_cenario: str = kwargs["path_local_cenario"]
         self.passos_iteracao: list = kwargs["passos_iteracao"]
         self.valores_fo: list = kwargs["valores_fo"]
-        self.condicoes_de_voo: np.ndarray = kwargs.get("condicao_de_voo")
-        self.condicoes_geometricas: np.ndarray = kwargs.get("condicoes_geometricas")
+        self.condicoes_de_voo: dict = kwargs.get("condicao_de_voo")
+        self.condicoes_geometricas: dict = kwargs.get("condicoes_geometricas")
+        self.gerador_graficos_externo = False
+        self.particula_escolhida = None
+        self.iteracao_escolhida = None
+
+        if "graficos_externos" in kwargs.keys():
+            self.gerador_graficos_externo = kwargs.get("graficos_externos")
+
+        if "particula_escolhida" in kwargs.keys():
+            self.particula_escolhida = kwargs.get("particula_escolhida")
+
+        if "iteracao_escolhida" in kwargs.keys():
+            self.iteracao_escolhida = kwargs.get("iteracao_escolhida")            
 
         self.gerar_pastas()
-        self.realizar_grafico_fo_iteracao()
-        self.realizar_graficos_escalares_iteracoes()
+        if not self.gerador_graficos_externo:
+            self.realizar_grafico_fo_iteracao()
+            self.realizar_graficos_escalares_iteracoes()
         self.selecionar_melhor_particula()
         self.gerar_grafico_aerofolios()
         self.gerar_grafico_cT_e_cQ_por_J()
-        self.gerar_grafico_beta_por_r()
+        if not self.gerador_graficos_externo:
+            self.gerar_grafico_beta_por_r()
+        self.gerar_grafico_caminho_particula_unica()
 
     def gerar_pastas(self):
         if not os.path.isdir(f"{self.path_local_cenario}/graficos"):
             os.mkdir(f"{self.path_local_cenario}/graficos")
 
+        if self.gerador_graficos_externo:
+            if not os.path.isdir(f"{self.path_local_cenario}/graficos_extras"):
+                os.mkdir(f"{self.path_local_cenario}/graficos_extras")
 
     def realizar_grafico_fo_iteracao(self):
         df = pd.DataFrame(
@@ -99,9 +117,25 @@ class GerenciaGraficos:
 
 
     def selecionar_melhor_particula(self):
-        selecao = self.df_aerodinamicos["eficiencia"] == self.valores_fo[-1]
-        df_melhor_particula = self.df_aerodinamicos[selecao].sample()
-
+        if self.particula_escolhida is None:
+            if self.iteracao_escolhida is None:
+                selecao = self.df_aerodinamicos["eficiencia"] == self.valores_fo[-1]
+                df_melhor_particula = self.df_aerodinamicos[selecao].sample()
+            else:
+                selecao = self.df_aerodinamicos["iteracao"] == self.iteracao_escolhida
+                df_particulas = self.df_aerodinamicos[selecao]
+                selecao_melhor_particula = df_particulas["eficiencia"] == df_particulas["eficiencia"].max()
+                df_melhor_particula = df_particulas[selecao_melhor_particula].sample()
+        else:
+            selecao = self.df_aerodinamicos["Particula"] == self.particula_escolhida
+            df_selecao_particula = self.df_aerodinamicos[selecao]
+            if self.iteracao_escolhida is None:
+                selecao = df_selecao_particula["Iteracao"] == df_selecao_particula["Iteracao"].max()
+                df_melhor_particula = df_selecao_particula[selecao]
+            else:
+                selecao = df_selecao_particula["Iteracao"] == self.iteracao_escolhida
+                df_melhor_particula = df_selecao_particula[selecao]
+        
         self.df_melhor_particula = df_melhor_particula.copy()
 
 
@@ -143,7 +177,10 @@ class GerenciaGraficos:
             else:
                 axs[1,(figura - 4)].set_title(f"Seção {figura+1}")
 
-        fig.savefig(f'{self.path_local_cenario}/graficos/Aerofolios.jpeg', dpi=300)
+        if not self.gerador_graficos_externo:
+            fig.savefig(f'{self.path_local_cenario}/graficos/Aerofolios.jpeg', dpi=300)
+        else:
+            fig.savefig(f"{self.path_local_cenario}/graficos_extras/Aerofolios.jpeg", dpi=300)
 
 
     def gerar_grafico_dT_e_dQ_vs_dr(self):
@@ -155,13 +192,21 @@ class GerenciaGraficos:
         axs_dT.plot(valores["dr values"], valores["dT values"], "--o", color='blue')
         axs_dT.set(xlabel=r"$dr$", ylabel=r"$dT$")
         axs_dT.grid()
-        fig_dT.savefig(f'{self.path_local_cenario}/graficos/dT_vs_dr.jpeg', dpi=300)
+
+        if not self.gerador_graficos_externo:
+            fig_dT.savefig(f'{self.path_local_cenario}/graficos/dT_vs_dr.jpeg', dpi=300)
+        else:
+            fig_dT.savefig(f"{self.path_local_cenario}/graficos_extras/dT_vs_dr.jpeg", dpi=300)
 
         fig_dQ, axs_dQ = plt.subplots(1,1)
         axs_dQ.plot(valores["dr values"], valores["dQ values"], "--o", color='blue')
         axs_dQ.set(xlabel=r"$dr$", ylabel=r"$dQ$")
         axs_dQ.grid()
-        fig_dQ.savefig(f'{self.path_local_cenario}/graficos/dQ_vs_dr.jpeg', dpi=300)
+
+        if not self.gerador_graficos_externo:
+            fig_dQ.savefig(f'{self.path_local_cenario}/graficos/dQ_vs_dr.jpeg', dpi=300)
+        else:
+            fig_dQ.savefig(f"{self.path_local_cenario}/graficos_extras/dQ_vs_dr.jpeg", dpi=300)
 
 
     def gerar_grafico_cT_e_cQ_por_J(self):
@@ -178,7 +223,11 @@ class GerenciaGraficos:
         )
         axs_1.set(xlabel=r"$J$", ylabel=r"$C_T$")
         axs_1.grid()
-        fig_1.savefig(f'{self.path_local_cenario}/graficos/CT_vs_J.jpeg', dpi=300)
+
+        if not self.gerador_graficos_externo:
+            fig_1.savefig(f'{self.path_local_cenario}/graficos/CT_vs_J.jpeg', dpi=300)
+        else:
+            fig_1.savefig(f'{self.path_local_cenario}/graficos_extras/CT_vs_J.jpeg', dpi=300)
 
         fig_2, axs_2 = plt.subplots(1,1)
         axs_2.plot(
@@ -186,7 +235,11 @@ class GerenciaGraficos:
         )
         axs_2.set(xlabel=r"$J$", ylabel=r"$C_Q$")
         axs_2.grid()
-        fig_2.savefig(f'{self.path_local_cenario}/graficos/CQ_vs_J.jpeg', dpi=300)
+
+        if not self.gerador_graficos_externo:
+            fig_2.savefig(f'{self.path_local_cenario}/graficos/CQ_vs_J.jpeg', dpi=300)
+        else:
+            fig_2.savefig(f'{self.path_local_cenario}/graficos_extras/CQ_vs_J.jpeg', dpi=300)
 
         fig_3, axs_3 = plt.subplots(1,1)
         axs_3.plot(
@@ -194,7 +247,11 @@ class GerenciaGraficos:
         )
         axs_3.set(xlabel=r"$J$", ylabel=r"$\eta$")
         axs_3.grid()
-        fig_3.savefig(f'{self.path_local_cenario}/graficos/eta_vs_J.jpeg', dpi=300)
+
+        if not self.gerador_graficos_externo:
+            fig_3.savefig(f'{self.path_local_cenario}/graficos/eta_vs_J.jpeg', dpi=300)
+        else:
+            fig_3.savefig(f'{self.path_local_cenario}/graficos_extras/eta_vs_J.jpeg', dpi=300)
 
 
     def gerar_grafico_beta_por_r(self):
@@ -209,3 +266,57 @@ class GerenciaGraficos:
         ax.grid()
         ax.set(xlabel=r"$Raio [m]$", ylabel=r"$\beta$")
         fig.savefig(f'{self.path_local_cenario}/graficos/beta_vs_r.jpeg', dpi=300)
+
+
+    def gerar_grafico_caminho_particula_unica(self):
+        if self.particula_escolhida is not None:
+            selecao = self.df_pso["particula"] == self.particula_escolhida
+            df_pso_particula = self.df_pso[selecao]
+        else:
+            particula = self.df_pso["particula"].sample().values[0]
+            selecao = self.df_pso["particula"] == particula
+            df_pso_particula = self.df_pso[selecao]        
+        
+        colunas_escalares = [
+            "escalar 1 Ay3",
+            "escalar 2 Ay3",
+            "escalar 3 Ay3",
+            "escalar 4 Ay3",
+            "escalar 5 Ay3",
+            "escalar 6 Ay3",
+            "escalar 7 Ay3"
+        ]
+
+        for coluna in colunas_escalares:
+            coluna_nova = coluna.replace(" Ay3", "")
+            num_escalar = coluna_nova.replace("escalar ", "")
+            df_pso_particula.rename(
+                columns={
+                    coluna: f"Escalar Ay seção {num_escalar}"
+                },
+                inplace=True
+            )
+
+        df_pso_particula.rename(
+            columns={
+                "iteracao": "Iteração"
+            },
+            inplace=True
+        )
+
+        for num_secao in range(6):
+            fig = px.scatter(
+                data_frame=df_pso_particula,
+                x=f"Escalar Ay seção {num_secao+1}",
+                y=f"Escalar Ay seção {num_secao+2}",
+                color="Iteração",
+                color_continuous_scale=px.colors.diverging.Spectral
+            )
+            if self.particula_escolhida is None:
+                fig.write_image(
+                    f"{self.path_local_cenario}/graficos/Escalar {num_secao+1} vs Escalar {num_secao+2} particula {particula} por iteracao.jpeg"
+                )
+            else:
+                fig.write_image(
+                    f"{self.path_local_cenario}/graficos_extras/Escalar {num_secao+1} vs Escalar {num_secao+2} particula {self.particula_escolhida} por iteracao.jpeg"
+                )
