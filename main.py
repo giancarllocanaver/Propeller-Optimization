@@ -15,13 +15,13 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 50
-    qde_particulas = 20
+    qde_iteracoes = 5
+    qde_particulas = 5
     tolerancia = 0.005
     continuar = False
 
     condicao_de_voo = {
-        "Velocidade": 62,
+        "Velocidade": 20,
         "Viscosidade": 1.789e-5,
         "Temperatura": 288.2,
         "Densidade do Ar": 1.225,
@@ -53,7 +53,6 @@ if __name__ == '__main__':
         continuar=continuar
     )
 
-    media_distancias = np.array([])
     for _ in tqdm(range(qde_iteracoes)):
         time.sleep(5)
         otimization_controller.iterar()
@@ -62,7 +61,6 @@ if __name__ == '__main__':
             matriz=otimization_controller.matriz,
             tolerancia=tolerancia
         )
-        # media_distancias = np.append(media_distancias, media)
         if convergencia:
             print(
                 "\n\n\nConvergência atingida!\n\n\n"
