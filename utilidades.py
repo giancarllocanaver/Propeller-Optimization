@@ -393,3 +393,13 @@ def transformar_dados_json_para_objeto(
     dados["condicoes_geometricas"]["corda"] = np.array(dados["condicoes_geometricas"]["corda"])
 
     return dados
+
+
+def checar_adequacao_espessura_perfil(
+    vetor_escalares: np.ndarray
+):
+    for id_escalar in range(len(vetor_escalares)):
+        if (vetor_escalares[0] > vetor_escalares[id_escalar]):
+            return False
+    
+    return True
