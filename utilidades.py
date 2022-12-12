@@ -1,7 +1,6 @@
 from datetime import datetime
-from operator import mod
 import numpy as np
-from funcao_helice import helice
+from funcao_helice import Helice, HeliceGeral
 import shutil
 import os
 import pandas as pd
@@ -13,29 +12,20 @@ def rodar_helice_inidividual(
     aerofolios: list,
     raio: np.ndarray,
     c: np.ndarray,
-    alpha: np.ndarray,
     particula_com_interseccao: bool
 ):
-    resultados = helice(
-            Aerofolios=aerofolios,
-            Velocidade_da_aeronave=condicoes_voo["Velocidade"],
-            Viscosidade_dinamica=condicoes_voo["Viscosidade"],
-            Temperatura=condicoes_voo["Temperatura"],
-            Densidade_do_ar=condicoes_voo["Densidade do Ar"],
-            Diametro_helice=condicoes_voo["Diametro da Helice"],
-            Numero_de_pas=condicoes_voo["Numero de pas"],
-            Array_raio_da_secao=raio,
-            Array_tamanho_de_corda_da_secao=c,
-            Array_angulo_alpha_da_secao=alpha,
-            Rotacao_motor=condicoes_voo["Rotacao do Motor"],
-            Solucoes_ligadas=['solucao_1'],
-            particula_com_interseccao=particula_com_interseccao,
-            ler_coord_arq_ext=True,
-            ligar_solucao_aerof_naca=False,
-            ligar_interpolacao_2a_ordem=True
-        ).rodar_helice()
+    condicoes_geometricas = {
+        "Raio Secao": raio,
+        "Corda Secao": c
+    }
+    classe_helice = Helice(
+        aerofolios=aerofolios,
+        condicoes_voo=condicoes_voo,
+        condicoes_geometricas_helice=condicoes_geometricas,
+        particula_com_interseccao=particula_com_interseccao
+    )
 
-    return resultados
+    return classe_helice.resultados
 
 
 def criar_txt_pontos_aerofolio_para_rodar_xfoil(
@@ -50,7 +40,7 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
         high=1000,
         dtype=int
     )
-    nome_arquivo = "aerofolio" + str(id) + ".dat"
+    nome_arquivo = "coordenadas_aerofolios/aerofolio" + str(id) + ".dat"
     
     with open(nome_arquivo, "w") as writer:
         for ponto in range(len(pontos_x)):
@@ -58,6 +48,11 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
                 f"{round(pontos_x[ponto], 4)}    {round(pontos_y[ponto], 4)}\n"
             )
         writer.close()
+
+    # shutil.copy(
+    #     src=f"{nome_arquivo}",
+    #     dst=f"coordenadas_aerofolios/{nome_arquivo}"
+    # )
 
     return nome_arquivo
 
@@ -68,7 +63,8 @@ def mover_arquivos_coordenadas(
     if not os.path.isdir(f"coordenadas_aerofolios"):
         os.mkdir(f"coordenadas_aerofolios")
         
-    shutil.move(nome_arquivo, f"coordenadas_aerofolios/{nome_arquivo}")
+    if os.path.isfile(nome_arquivo):
+        shutil.move(nome_arquivo, f"coordenadas_aerofolios/{nome_arquivo}")
 
 
 def gravar_resultados_aerodinamicos(
@@ -105,6 +101,8 @@ def gravar_resultados_aerodinamicos(
 
     df_resultados.to_csv(path_output_aerodinamico, sep=';', index=False)
 
+    return df_resultados
+
 
 def gravar_resultados_matriz_pso(
     resultados,
@@ -128,14 +126,13 @@ def gravar_resultados_matriz_pso(
         existe_output = 1
 
     colunas = [
-        "beta 1",
-        "beta 2",
-        "beta 3",
-        "beta 4",
-        "beta 5",
-        "beta 6",
-        "beta 7",
-        "escalar Ay3",
+        "escalar 1 Ay3",
+        "escalar 2 Ay3",
+        "escalar 3 Ay3",
+        "escalar 4 Ay3",
+        "escalar 5 Ay3",
+        "escalar 6 Ay3",
+        "escalar 7 Ay3",
         "particula",
         "iteracao",
         "fo"
@@ -161,17 +158,14 @@ def gravar_resultados_matriz_pso(
 
     df_resultados.to_csv(path_output_matriz_pso, sep=';', index=False)
 
-    return path_output_matriz_pso
+    return path_output_matriz_pso, df_resultados
 
 
 def salvar_resultados_json(
-    eficiencia,
-    matriz_v,
-    matriz_pso,
-    p_best,
-    g_best,
-    r,
-    id
+    matriz_v: np.ndarray,
+    matriz_pso: np.ndarray,
+    id: str,
+    **kwargs
 ):
     if not os.path.isdir("resultados"):
         os.mkdir("resultados")
@@ -179,13 +173,28 @@ def salvar_resultados_json(
     if not os.path.isdir(f"resultados/resultados_id_{id}"):
         os.mkdir(f"resultados/resultados_id_{id}")
 
+    condicoes_geometricas = {
+        "raio": kwargs.get("condicoes_geometricas")["raio"].tolist(),
+        "corda": kwargs.get("condicoes_geometricas")["corda"].tolist()
+    }
+
     arquivo = {
-        "eficiencia": eficiencia.tolist(),
+        "eficiencia": kwargs.get("eficiencia").tolist(),
         "matriz_v": matriz_v.tolist(),
         "matriz_pso": matriz_pso.tolist(),
-        "p_best": p_best.tolist(),
-        "g_best": g_best.tolist(),
-        "r": r.tolist()
+        "p_best": kwargs.get("p_best").tolist(),
+        "g_best": kwargs.get("g_best").tolist(),
+        "r": kwargs.get("r").tolist(),
+        "qde_particulas": kwargs.get("qde_particulas"),
+        "condicao_voo": kwargs.get("condicao_voo"),
+        "condicoes_geometricas": condicoes_geometricas,
+        "p_best_obj": kwargs.get("p_best_obj").tolist(),
+        "g_best_obj": kwargs.get("g_best_obj").tolist(),
+        "w": kwargs.get("w"),
+        "c1": kwargs.get("c1"),
+        "c2": kwargs.get("c2"),
+        "t": kwargs.get("t"),
+        "convergencia": kwargs.get("convergencia"),
     }
 
     nome_arq = f"resultados/resultados_id_{id}/parametros_PSO_id_{id}.json"
@@ -214,3 +223,183 @@ def criar_logger(id):
     
     handler = logging.FileHandler(f"resultados/resultados_id_{id}/logger_id_{id}.txt", mode='a')
     logger.addHandler(handler)
+
+
+def limpar_pasta_coordenadas_aerofolios():
+    if os.path.isdir("coordenadas_aerofolios"):
+        arquivos = os.listdir("coordenadas_aerofolios")
+
+        if len(arquivos) != 0:
+            for arquivo in arquivos:
+                os.remove(f"coordenadas_aerofolios/{arquivo}")
+
+
+def montar_array_coordenadas_aerofolios(
+    nome_coordenada_aerofolio: str
+):
+    coordenadas = np.loadtxt(
+        f"{nome_coordenada_aerofolio}"
+    )
+
+    return coordenadas
+
+
+def aplicar_rotacao(
+    coordenadas: np.ndarray,
+    beta: float
+):
+    coordenadas[:,0] = coordenadas[:,0] - 0.5
+    beta = -1 * beta * np.pi / 180
+
+    coordenadas_novas = coordenadas.copy()
+
+    coordenadas_novas[:,0] =  np.cos(beta)*coordenadas[:,0] - np.sin(beta)*coordenadas[:,1]
+    coordenadas_novas[:,1] =  np.sin(beta)*coordenadas[:,0] + np.cos(beta)*coordenadas[:,1]
+    
+    return coordenadas_novas
+
+
+def montar_array_dT_dr_e_dQ(
+    df: pd.DataFrame
+):
+    selecao_colunas_dT = [f"dT Seção {secao}" for secao in range(7)]
+    selecao_colunas_dQ = [f"dQ Seção {secao}" for secao in range(7)]
+    selecao_colunas_dr = [f"dr Seção {secao}" for secao in range(7)]
+
+    dT_values = df.loc[:,selecao_colunas_dT].values
+    dQ_values = df.loc[:,selecao_colunas_dQ].values
+    dr_values = df.loc[:,selecao_colunas_dr].values
+
+    return {
+        "dT values": dT_values,
+        "dQ_values": dQ_values,
+        "dr values": dr_values
+    }
+
+
+def gerar_dados_diveras_velocidades(
+    df: pd.DataFrame,
+    corda: np.ndarray,
+    raio: np.ndarray,
+    condicoes_de_voo: dict
+):
+    nomes_coordenadas_aerofolios = [f"Aerofolio secao {secao}" for secao in range(7)]
+    nomes_betas = [f"Beta {secao}" for secao in range(8)]
+    aerofolios = df.loc[:, nomes_coordenadas_aerofolios].values.tolist()[0]
+    betas = df.loc[:, nomes_betas].values.tolist()[0]
+    
+    velocidades = [vel for vel in range(1,100, 5)]
+
+    resultados_totais = []
+    resultados_ct = []
+    resultados_cq = []
+    resultados_eta = []
+    J_list = []
+
+    condicoes_geometricas = {
+        "Raio Secao": raio,
+        "Corda Secao": corda,
+        "Beta": np.array(betas)
+    }
+
+    for velocidade in velocidades:
+        condicoes_de_voo["Velocidade"] = velocidade
+        helice_contoller = HeliceGeral(
+            aerofolios=aerofolios,
+            condicoes_geometricas=condicoes_geometricas,
+            condicoes_de_voo=condicoes_de_voo
+        )
+        resultados_individuais = helice_contoller.resultados
+
+        if (resultados_individuais["eficiencia"][0] > 1) or (resultados_individuais["eficiencia"][0] < 0):
+            break
+        else:
+            resultados_totais.append(resultados_individuais)
+            J_list.append(resultados_individuais["J"])
+            resultados_eta.append(resultados_individuais["eficiencia"][0])
+            resultados_ct.append(resultados_individuais["Ct"])
+            resultados_cq.append(resultados_individuais["Cq"])
+
+    return {
+        "resultados_totais": resultados_totais,
+        "resultados Ct": resultados_ct,
+        "resultados Cq": resultados_cq,
+        "resultados eficiencia": resultados_eta,
+        "razão de avanço": J_list
+    }
+
+
+def checar_convergencia(
+    valores_fo: np.ndarray,
+    matriz: np.ndarray,
+    tolerancia: float
+):
+    melhor_particula = np.argmax(valores_fo)
+    soma_convergencias = 0
+    media_distancias = np.array([])
+    for variavel in range(7):
+        valor_variavel_melhor_paticula = np.max(matriz[melhor_particula,variavel])
+
+        distancias_variavel = matriz[:,variavel] - valor_variavel_melhor_paticula
+        distancias_abs = np.abs(distancias_variavel)
+        media_distancias = np.mean(distancias_abs)
+
+        if media_distancias <= tolerancia:
+            soma_convergencias += 1
+        media_distancias = np.append(media_distancias, media_distancias)
+
+    media = np.mean(media_distancias)
+
+    if soma_convergencias == 7:
+        return True, media
+    else:
+        return False, media
+
+
+def ler_dados_para_continuacao():
+    arquivos = os.listdir(
+        "fila_continuacao"
+    )
+    nome_arquivo = arquivos[0]
+
+    with open(f"fila_continuacao/{nome_arquivo}", 'rb') as file:
+        arquivo_bytes = file.read()
+    
+    dados = json.loads(arquivo_bytes)
+    return dados
+
+
+def transformar_dados_json_para_objeto(
+    local_arquivo_json: str
+):
+    with open(local_arquivo_json,'rb') as file:
+        arquivo_bytes = file.read()
+        dados: dict = json.loads(arquivo_bytes)
+
+    dados_array = [
+        "eficiencia",
+        "matriz_v",
+        "matriz_pso",
+        "p_best",
+        "g_best",
+        "p_best_obj",
+        "g_best_obj",
+    ]
+
+    for dado_array in dados_array:
+        dados[dado_array] = np.array(dados[dado_array])
+
+    dados["condicoes_geometricas"]["raio"] = np.array(dados["condicoes_geometricas"]["raio"])
+    dados["condicoes_geometricas"]["corda"] = np.array(dados["condicoes_geometricas"]["corda"])
+
+    return dados
+
+
+def checar_adequacao_espessura_perfil(
+    vetor_escalares: np.ndarray
+):
+    for id_escalar in range(len(vetor_escalares)):
+        if (vetor_escalares[0] > vetor_escalares[id_escalar]):
+            return False
+    
+    return True

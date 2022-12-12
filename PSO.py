@@ -6,25 +6,43 @@ import pandas as pd
 from utilidades import (
     gravar_resultados_aerodinamicos,
     gravar_resultados_matriz_pso,
+    ler_dados_para_continuacao,
     salvar_resultados_json
 )
 import logging
 
 class OtimizacaoHelice:
-    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, id):
-        self.qde_particulas = qde_de_particulas
+    def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, **kwargs):
         self.N              = qde_iteracoes
-        self.condicao_voo   = condicao_de_voo
-        self.id             = id
-        self.logger         = logging.getLogger("logger_main")
-        
+        self.id             = kwargs.get("id")
+        self.logger         = logging.getLogger("logger_main")        
         self.r              = np.random.rand(2)
         self.t              = 0
         self.convergencia   = []
         self.t_list         = []
 
+        self.resultados_aerodinamicos = None
+        self.resultados_matriz_pso = None
+        self.path_pasta_cenario = f"resultados/resultados_id_{self.id}"
+
         self.logger.info("//Início da Iteração 0//--------------------\n")
-        self.iterar_zero()
+        
+        if not kwargs.get("continuar"):
+            self.condicao_voo   = condicao_de_voo
+            self.qde_particulas = qde_de_particulas
+            self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
+            self.iterar_zero()
+        else:
+            self.iterar_continuacao()
+        
+    def iterar_continuacao(self):
+        dados: dict = ler_dados_para_continuacao()
+        for key in dados.keys():
+            dado = dados[key]
+            if type(dado) == list:
+                dado = np.array(dado)
+            setattr(self, key, dado)
+        self.t_list = [t for t in range(self.t+1)]
 
     
     def iterar_zero(self):
@@ -32,7 +50,8 @@ class OtimizacaoHelice:
         fo_controller = FuncaoObjetivo(
             condicoes_de_voo=self.condicao_voo,
             qde_particulas=self.qde_particulas,
-            inicial=True
+            inicial=True,
+            condicoes_geometricas=self.condicoes_geometricas
         )
         self.logger.info("- Fim da computação da função objetivo")
 
@@ -59,13 +78,13 @@ class OtimizacaoHelice:
         self.resultados = resultados.copy()
 
         self.logger.info("- Início da gravação dos resultados")
-        gravar_resultados_aerodinamicos(
+        self.resultados_aerodinamicos = gravar_resultados_aerodinamicos(
             resultados=resultados,
             id=self.id,
             iteracao=0
         )
 
-        gravar_resultados_matriz_pso(
+        _, self.resultados_matriz_pso = gravar_resultados_matriz_pso(
             resultados=matriz,
             id=self.id,
             iteracao=self.t,
@@ -87,7 +106,17 @@ class OtimizacaoHelice:
             p_best=self.p_best,
             g_best=self.g_best,
             r=self.r,
-            id=self.id
+            id=self.id,
+            qde_particulas=self.qde_particulas,
+            condicao_voo=self.condicao_voo,
+            condicoes_geometricas=self.condicoes_geometricas,
+            p_best_obj=self.p_best_obj,
+            g_best_obj=self.g_best_obj,
+            w=self.w,
+            c1=self.c1,
+            c2=self.c2,
+            t=self.t,
+            convergencia=self.convergencia
         )
         
         self.atualizar_v_e_x(
@@ -104,7 +133,8 @@ class OtimizacaoHelice:
         fo_controller = FuncaoObjetivo(
             qde_particulas=self.qde_particulas,
             condicoes_de_voo=self.condicao_voo,
-            inicial=False
+            inicial=False,
+            condicoes_geometricas=self.condicoes_geometricas
         )
         fo_controller.inserir_parametros(
             matriz=self.matriz,
@@ -126,13 +156,13 @@ class OtimizacaoHelice:
             x=self.matriz
         )
 
-        gravar_resultados_aerodinamicos(
+        self.resultados_aerodinamicos = gravar_resultados_aerodinamicos(
             resultados=resultados,
             id=self.id,
             iteracao=self.t
         )
 
-        gravar_resultados_matriz_pso(
+        _, self.resultados_matriz_pso = gravar_resultados_matriz_pso(
             resultados=self.matriz,
             id=self.id,
             iteracao=self.t,
@@ -142,26 +172,12 @@ class OtimizacaoHelice:
         self.t_list.append(self.t)
         
         self.t += 1
-        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        self.c1 = -3*self.t/self.N + 3.5
-        self.c2 = 3*self.t/self.N + 0.5
-
-
-    def gerar_grafico(self):
-        df = pd.DataFrame({'t': [], 'Objetivo min': []})
-
-        for i in range(len(self.convergencia)):
-            df = df.append({'t': [self.t_list[i]], 'Objetivo min': [self.convergencia[i]]}, ignore_index=True)
-        
-        with pd.ExcelWriter(f'resultados/resultados_id_{self.id}/Resultados-convergencia-otimizacao.xlsx') as writer:
-            df.to_excel(writer, sheet_name='Convergencia')
-            writer.save()
-
-        plt.plot(self.t_list, self.convergencia, 'x')
-        plt.xlabel('iteração')
-        plt.ylabel('objetivo')
-        plt.savefig(f'resultados/resultados_id_{self.id}/Grafico-convergencia-otimizacao.jpg', dpi=300)
-        plt.show()
+        # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        self.w = 0.72984
+        # self.c1 = 3*self.t/self.N + 3.5
+        # self.c2 = -3*self.t/self.N + 0.5
+        self.c1 = 2.05
+        self.c2 = 2.05
 
 
     def atualizar_g_best(
@@ -203,10 +219,6 @@ class OtimizacaoHelice:
         for particula in range(self.qde_particulas):
             p_best_obj_part = p_best_obj[particula]
             fo_particula = fo[particula]
-            
-            condicao_alpha = (
-                (x[particula][0:7] >= -20).all() & (x[particula][0:7] <= 20).all()
-            )
 
             condicao_fo_nova = (
                 (fo_particula < 1) & (fo_particula >= 0)
@@ -214,7 +226,6 @@ class OtimizacaoHelice:
 
             if (
                 (fo_particula > p_best_obj_part) &
-                (condicao_alpha) &
                 (condicao_fo_nova)
             ):
                 p_best[particula] = x[particula]

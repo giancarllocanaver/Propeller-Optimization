@@ -36,7 +36,6 @@ class helice:
         self.ler = ler_coord_arq_ext
         self.solucao_naca = ligar_solucao_aerof_naca
 
-
     def integracao(self, f, x):
         """
         Função com objetivo de realizar a integração numérica dos dados inputados
@@ -244,7 +243,7 @@ beta = np.array([
 
 velocidades = list(np.linspace(1,100,200))
 
-aerofolios = ["clarky.txt" for _ in range(8)]
+aerofolios = [f"aerofolio_{aer}.txt" for aer in range(8)]
 # velocidades = [vel for vel in range(5, 100, )]
 
 for velocidade in velocidades:
