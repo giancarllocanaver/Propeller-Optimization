@@ -7,7 +7,8 @@ from utilidades import (
     gravar_resultados_aerodinamicos,
     gravar_resultados_matriz_pso,
     ler_dados_para_continuacao,
-    salvar_resultados_json
+    salvar_resultados_json,
+    checar_adequacao_espessura_perfil
 )
 import logging
 
@@ -20,6 +21,7 @@ class OtimizacaoHelice:
         self.t              = 0
         self.convergencia   = []
         self.t_list         = []
+        self.id_melhor_particula = None
 
         self.resultados_aerodinamicos = None
         self.resultados_matriz_pso = None
@@ -172,12 +174,12 @@ class OtimizacaoHelice:
         self.t_list.append(self.t)
         
         self.t += 1
-        # self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        self.w = 0.72984
-        # self.c1 = 3*self.t/self.N + 3.5
-        # self.c2 = -3*self.t/self.N + 0.5
-        self.c1 = 2.05
-        self.c2 = 2.05
+        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+        # self.w = 0.72984
+        self.c1 = -3*self.t/self.N + 3.5
+        self.c2 = 3*self.t/self.N + 0.5
+        # self.c1 = 2.05
+        # self.c2 = 2.05
 
 
     def atualizar_g_best(
@@ -224,9 +226,14 @@ class OtimizacaoHelice:
                 (fo_particula < 1) & (fo_particula >= 0)
             )
 
+            condicao_espessura = checar_adequacao_espessura_perfil(
+                vetor_escalares=x[particula]
+            )
+
             if (
                 (fo_particula > p_best_obj_part) &
-                (condicao_fo_nova)
+                (condicao_fo_nova) &
+                (condicao_espessura)
             ):
                 p_best[particula] = x[particula]
                 p_best_obj[particula] = fo_particula
@@ -248,6 +255,8 @@ class OtimizacaoHelice:
             ):
                 g_best = x[particula]
                 g_best_obj = p_best_obj_part
+
+                self.id_melhor_particula = particula
 
                 if p_best_obj_part > 1:
                     raise Exception(

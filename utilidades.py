@@ -403,3 +403,35 @@ def checar_adequacao_espessura_perfil(
             return False
     
     return True
+
+
+def escolher_escalar(secao):
+    if secao == 0:
+        escalar_menor = -0.05
+        escalar_maior = -0.036
+    
+    if secao == 1:
+        escalar_menor = -0.035
+        escalar_maior = -0.021
+
+    if secao == 2:
+        escalar_menor = -0.02
+        escalar_maior = -0.006
+    
+    if secao == 3:
+        escalar_menor = -0.005
+        escalar_maior = 0.009
+    
+    if secao == 4:
+        escalar_menor = 0.01
+        escalar_maior = 0.024
+
+    if secao == 5:
+        escalar_menor = 0.025
+        escalar_maior = 0.039
+    
+    if secao == 6:
+        escalar_menor = 0.04
+        escalar_maior = 0.05
+
+    return np.random.uniform(low=escalar_menor, high=escalar_maior)

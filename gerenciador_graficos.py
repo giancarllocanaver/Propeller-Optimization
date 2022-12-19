@@ -28,6 +28,9 @@ class GerenciaGraficos:
         self.particula_escolhida = None
         self.iteracao_escolhida = None
 
+        if "melhor_particula" in kwargs.keys():
+            self.melhor_particula = kwargs.get("melhor_particula")
+
         if "graficos_externos" in kwargs.keys():
             self.gerador_graficos_externo = kwargs.get("graficos_externos")
 
@@ -119,8 +122,8 @@ class GerenciaGraficos:
     def selecionar_melhor_particula(self):
         if self.particula_escolhida is None:
             if self.iteracao_escolhida is None:
-                selecao = self.df_aerodinamicos["eficiencia"] == self.valores_fo[-1]
-                df_melhor_particula = self.df_aerodinamicos[selecao].sample()
+                selecao = (self.df_aerodinamicos["Particula"] == self.melhor_particula) & (self.df_aerodinamicos["Iteracao"] == self.df_aerodinamicos["Iteracao"].max())
+                df_melhor_particula = self.df_aerodinamicos[selecao]
             else:
                 selecao = self.df_aerodinamicos["iteracao"] == self.iteracao_escolhida
                 df_particulas = self.df_aerodinamicos[selecao]
