@@ -15,9 +15,9 @@ from utilidades import (
 from gerenciador_graficos import GerenciaGraficos
 
 if __name__ == '__main__':
-    qde_iteracoes = 5
-    qde_particulas = 5
-    tolerancia = 0.005
+    qde_iteracoes = 20
+    qde_particulas = 15
+    tolerancia = 0.0001
     continuar = False
 
     condicao_de_voo = {
@@ -80,5 +80,6 @@ if __name__ == '__main__':
         passos_iteracao=otimization_controller.t_list,
         valores_fo=otimization_controller.convergencia,
         condicao_de_voo=condicao_de_voo,
-        condicoes_geometricas=condicoes_geometricas
+        condicoes_geometricas=condicoes_geometricas,
+        melhor_particula=otimization_controller.id_melhor_particula
     )

@@ -3,6 +3,7 @@ from shutil import ExecError
 import numpy as np
 from funcoes_de_bezier import Bezier
 from utilidades import (
+    escolher_escalar,
     rodar_helice_inidividual,
     criar_txt_pontos_aerofolio_para_rodar_xfoil,
     mover_arquivos_coordenadas
@@ -63,7 +64,7 @@ class FuncaoObjetivo:
 
             verificacao = False
             while verificacao == False:
-                escalar = np.random.uniform(low=-0.05, high=0.05)
+                escalar = escolher_escalar(secao=secao)
                 a[1][3][0] = self.pontos_A[1][3][0] + escalar
 
                 bezier_controller = Bezier()
