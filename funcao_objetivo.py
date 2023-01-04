@@ -36,7 +36,7 @@ class FuncaoObjetivo:
 
     def criar_pontos_de_bezier_inicial(self):
         bezier_controller = Bezier()
-        pontos_p = bezier_controller.gerar_aerofolio("aerofolioClarkY", naca=True)
+        pontos_p = bezier_controller.gerar_aerofolio("naca 0020", naca=True)
         linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
 
         self.pontos_p = pontos_p.copy()
