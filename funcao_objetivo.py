@@ -4,7 +4,7 @@ import numpy as np
 from funcoes_de_bezier import Bezier
 from utilidades import (
     escolher_escalar,
-    rodar_helice_inidividual,
+    executar_TEP,
     criar_txt_pontos_aerofolio_para_rodar_xfoil,
 )
 import logging
@@ -31,7 +31,7 @@ class FuncaoObjetivo:
         if inicial:
             self.criar_pontos_de_bezier_inicial()
             self.criar_matriz_inicial()
-            self.rodar_helice_total()
+            self.rodar_TEP()
             self.computar_eficiencia()
             
 
@@ -40,7 +40,7 @@ class FuncaoObjetivo:
         naca = False
         if ("NACA" in self.aerofolio_inicial) or ("naca" in self.aerofolio_inicial):
             naca = True
-        pontos_p = bezier_controller.gerar_aerofolio(self.aerofolio_inicial, naca=naca)
+        pontos_p = bezier_controller.gerar_aerofolio_base(self.aerofolio_inicial, naca=naca)
         _, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
 
         self.pontos_p = pontos_p.copy()
@@ -111,12 +111,12 @@ class FuncaoObjetivo:
         self.pontos_p = pontos_p
         self.pontos_A = pontos_A
 
-        self.rodar_bezier()
-        self.rodar_helice_total()
+        self.mudar_pontos_de_controle()
+        self.rodar_TEP()
         self.computar_eficiencia()
 
 
-    def rodar_bezier(self):
+    def mudar_pontos_de_controle(self):
         self.logger.info("Início das rodagens por Bezier")
 
         particulas                   = self.matriz.copy()
@@ -189,7 +189,7 @@ class FuncaoObjetivo:
         self.logger.info("Fim das rodagens por Bezier")
 
 
-    def rodar_helice_total(self):
+    def rodar_TEP(self):
         self.logger.info("Início das rodagens das Hélices")
 
         matriz            = self.matriz.copy()
@@ -208,7 +208,7 @@ class FuncaoObjetivo:
                 )
                 aerofolios.append(nome_arq_aerofolio)
 
-            resultados_individuais = rodar_helice_inidividual(
+            resultados_individuais = executar_TEP(
                 condicoes_voo=condicoes_de_voo,
                 aerofolios=aerofolios,
                 raio=raio,
