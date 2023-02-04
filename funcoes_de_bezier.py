@@ -15,7 +15,7 @@ class Bezier:
         self.pontos_a = None
         self.pontos_b = None
 
-    def gerar_aerofolio(self, aerofolio=None, naca=False):
+    def gerar_aerofolio_base(self, aerofolio=None, naca=False):
         controle_aerof = GerenciaAerofolios(aerofolio=aerofolio, naca=naca)
         pontos_p = controle_aerof.gerar_pontos_P()
 
@@ -25,15 +25,6 @@ class Bezier:
         self.pontos_p = pontos_p.copy()
 
         return pontos_p
-
-    def gerar_aerofolio_base(self, retornar=False):
-        x = np.array([1, 0.32957, 0, 0.32957, 1])
-        y = np.array([0, 0.04497, 0, -0.04497, 0])
-
-        self.pontos_p = np.array((x, y))
-
-        if retornar:
-            return self.pontos_p
 
     def verificar_interseccao(self, curvas):
         def intersection(x1, x2, x3, x4, y1, y2, y3, y4):
@@ -390,15 +381,6 @@ class Bezier:
             pontos.append([pontos_x[i], pontos_y[i]])
 
         self.pontos_a = np.array([pontos_x, pontos_y])
-        # ponto = 0
-        # for ponto_x, ponto_y in pontos:
-        #     ponto = ponto + 1
-        #     self.mudar_ponto_A(
-        #         ponto=ponto,
-        #         mudanca_x=ponto_x,
-        #         mudanca_y=ponto_y,
-        #         mudanca_adicional=False
-        #     )
 
         curvas_aerofolio, a, b, pontos_p = self.mudar_pontos_de_bezier(
             pontos_p=pontos_p,
