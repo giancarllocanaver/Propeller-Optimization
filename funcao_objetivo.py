@@ -4,9 +4,8 @@ import numpy as np
 from funcoes_de_bezier import Bezier
 from utilidades import (
     escolher_escalar,
-    rodar_helice_inidividual,
+    executar_TEP,
     criar_txt_pontos_aerofolio_para_rodar_xfoil,
-    mover_arquivos_coordenadas
 )
 import logging
 
@@ -16,6 +15,8 @@ class FuncaoObjetivo:
         self.condicoes_de_voo                  = condicoes_de_voo
         self.logger                            = logging.getLogger("logger_main")
         self.condicoes_geometricas             = kwargs.get("condicoes_geometricas")
+        self.alpha                             = kwargs.get("alpha")
+        self.aerofolio_inicial                 = kwargs.get("aerofolio_inicial")
         self.matriz                            = None
         self.particula_escolhida               = None
         self.pontos_p                          = None
@@ -30,14 +31,17 @@ class FuncaoObjetivo:
         if inicial:
             self.criar_pontos_de_bezier_inicial()
             self.criar_matriz_inicial()
-            self.rodar_helice_total()
+            self.rodar_TEP()
             self.computar_eficiencia()
             
 
     def criar_pontos_de_bezier_inicial(self):
         bezier_controller = Bezier()
-        pontos_p = bezier_controller.gerar_aerofolio("naca 0020", naca=True)
-        linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
+        naca = False
+        if ("NACA" in self.aerofolio_inicial) or ("naca" in self.aerofolio_inicial):
+            naca = True
+        pontos_p = bezier_controller.gerar_aerofolio_base(self.aerofolio_inicial, naca=naca)
+        _, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
 
         self.pontos_p = pontos_p.copy()
         self.pontos_A = a0.copy()
@@ -107,12 +111,12 @@ class FuncaoObjetivo:
         self.pontos_p = pontos_p
         self.pontos_A = pontos_A
 
-        self.rodar_bezier()
-        self.rodar_helice_total()
+        self.mudar_pontos_de_controle()
+        self.rodar_TEP()
         self.computar_eficiencia()
 
 
-    def rodar_bezier(self):
+    def mudar_pontos_de_controle(self):
         self.logger.info("Início das rodagens por Bezier")
 
         particulas                   = self.matriz.copy()
@@ -185,7 +189,7 @@ class FuncaoObjetivo:
         self.logger.info("Fim das rodagens por Bezier")
 
 
-    def rodar_helice_total(self):
+    def rodar_TEP(self):
         self.logger.info("Início das rodagens das Hélices")
 
         matriz            = self.matriz.copy()
@@ -204,12 +208,13 @@ class FuncaoObjetivo:
                 )
                 aerofolios.append(nome_arq_aerofolio)
 
-            resultados_individuais = rodar_helice_inidividual(
+            resultados_individuais = executar_TEP(
                 condicoes_voo=condicoes_de_voo,
                 aerofolios=aerofolios,
                 raio=raio,
                 c=c,
-                particula_com_interseccao=particula_com_interseccao
+                particula_com_interseccao=particula_com_interseccao,
+                alpha=self.alpha,
             )
             
             self.resultados.append(resultados_individuais)

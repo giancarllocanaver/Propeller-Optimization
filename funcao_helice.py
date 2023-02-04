@@ -1,7 +1,7 @@
 from genericpath import isfile
 import re
 import numpy as np
-import xfoil_funcao as xfoil
+from xfoil_funcao import Xfoil
 import os
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -13,7 +13,8 @@ class Helice:
         aerofolios: list,
         condicoes_voo: dict,
         condicoes_geometricas_helice: dict,
-        particula_com_interseccao: bool=False
+        alpha: float,
+        particula_com_interseccao: bool=False,
     ):
         self.aerof = aerofolios
         self.v = condicoes_voo["Velocidade"]
@@ -26,6 +27,7 @@ class Helice:
         self.r = condicoes_geometricas_helice["Raio Secao"]
         self.c = condicoes_geometricas_helice["Corda Secao"]
         self.solucao_interseccao = particula_com_interseccao
+        self.alpha = alpha
 
         self.vt = None
         self.J = None
@@ -47,11 +49,10 @@ class Helice:
         self.calcular_razao_de_avanco()
         self.calcular_phi()
         self.calcular_vr()
-        self.calcular_reynolds()
-        self.calcular_mach()
+        self.calcular_reynolds_e_mach()
 
         if not particula_com_interseccao:
-            self.calcular_cl_cd_alpha_5()
+            self.calcular_cl_cd()
             self.calcular_gamma()
             self.calcular_dt_e_dq()
             self.calcular_eficiencia()
@@ -80,21 +81,18 @@ class Helice:
         self.vr = self.vt / np.cos(self.phi)
 
 
-    def calcular_reynolds(self):
+    def calcular_reynolds_e_mach(self):
         self.reynolds = self.rho * self.v * self.D / self.mi
-
-
-    def calcular_mach(self):
         Ma = self.vr / (np.sqrt(1.4 * 287 * self.T))
-        self.ma = Ma.max()
+        self.ma = Ma.max()        
 
 
-    def calcular_cl_cd_alpha_5(self):
+    def calcular_cl_cd(self):
         for aerofolio in self.aerof:
-            xfoil.rodar_xfoil(
+            xfoil = Xfoil(
                 aerofolio,
-                str(5),
-                str(5),
+                str(self.alpha),
+                str(self.alpha),
                 "0",
                 str(self.reynolds),
                 str(self.ma),
@@ -108,6 +106,7 @@ class Helice:
                 solucao_viscosa=True,
                 solucoes_NACA=False
             )
+            xfoil.rodar_xfoil()
 
             encontrou = 0
             try:
@@ -377,7 +376,7 @@ class HeliceGeral:
 
     def calcular_cl_e_cd(self):
         for secao in range(len(self.aerofolios)):       
-            xfoil.rodar_xfoil(
+            xfoil = Xfoil(
                 self.aerofolios[secao],
                 str(self.alpha[secao]),
                 str(self.alpha[secao]),
@@ -394,6 +393,7 @@ class HeliceGeral:
                 solucao_viscosa=True,
                 solucoes_NACA=False
             )
+            xfoil.rodar_xfoil()
 
             encontrou = 0
 

@@ -19,6 +19,9 @@ if __name__ == '__main__':
     qde_particulas = 15
     tolerancia = 0.0001
     continuar = False
+    aerofolio_inicial = "naca 0020"
+    angulo_ataque_maxima_eficiencia_perfil_inicial = 5
+    hiperparametros_constantes = False
 
     condicao_de_voo = {
         "Velocidade": 20,
@@ -36,7 +39,7 @@ if __name__ == '__main__':
     }
 
     id = gerar_time_stamp()
-    criar_pastas(id)
+    pasta_com_id = criar_pastas(id)
     criar_logger(id)
     
     limpar_pasta_coordenadas_aerofolios()
@@ -50,7 +53,10 @@ if __name__ == '__main__':
         condicao_de_voo=condicao_de_voo,
         id=id,
         condicoes_geometricas=condicoes_geometricas,
-        continuar=continuar
+        continuar=continuar,
+        aerofolio_inicial=aerofolio_inicial,
+        alpha_maxima_eficiencia=angulo_ataque_maxima_eficiencia_perfil_inicial,
+        opcao_hiperparametros=hiperparametros_constantes,
     )
 
     for _ in tqdm(range(qde_iteracoes)):
@@ -82,4 +88,9 @@ if __name__ == '__main__':
         condicao_de_voo=condicao_de_voo,
         condicoes_geometricas=condicoes_geometricas,
         melhor_particula=otimization_controller.id_melhor_particula
+    )
+
+    print(
+        f"\n\n--- FERRAMENTA DE OTIMIZAÇÃO FINALIZADA ---\n"
+        f"Resultados salvos no diretório: {pasta_com_id}"
     )

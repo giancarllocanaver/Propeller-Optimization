@@ -7,12 +7,13 @@ import pandas as pd
 import json
 import logging
 
-def rodar_helice_inidividual(
+def executar_TEP(
     condicoes_voo: dict,
     aerofolios: list,
     raio: np.ndarray,
     c: np.ndarray,
-    particula_com_interseccao: bool
+    particula_com_interseccao: bool,
+    **kwargs
 ):
     condicoes_geometricas = {
         "Raio Secao": raio,
@@ -22,7 +23,8 @@ def rodar_helice_inidividual(
         aerofolios=aerofolios,
         condicoes_voo=condicoes_voo,
         condicoes_geometricas_helice=condicoes_geometricas,
-        particula_com_interseccao=particula_com_interseccao
+        particula_com_interseccao=particula_com_interseccao,
+        alpha=kwargs.get("alpha")
     )
 
     return classe_helice.resultados
@@ -208,6 +210,8 @@ def criar_pastas(id):
     
     if not os.path.isdir(f"resultados/resultados_id_{id}"):
         os.mkdir(f"resultados/resultados_id_{id}")
+
+    return f"resultados/resultados_id_{id}"
 
 
 def gerar_time_stamp():
