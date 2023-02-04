@@ -7,53 +7,44 @@ from utilidades import (
     gravar_resultados_aerodinamicos,
     gravar_resultados_matriz_pso,
     ler_dados_para_continuacao,
-    salvar_resultados_json,
-    checar_adequacao_espessura_perfil
+    checar_adequacao_espessura_perfil,
 )
 import logging
 
 class OtimizacaoHelice:
     def __init__(self, qde_iteracoes, qde_de_particulas, condicao_de_voo, **kwargs):
         self.N              = qde_iteracoes
+        self.condicao_voo   = condicao_de_voo
+        self.qde_particulas = qde_de_particulas        
         self.id             = kwargs.get("id")
-        self.logger         = logging.getLogger("logger_main")        
+        self.aerofolio_inicial = kwargs.get("aerofolio_inicial")
+        self.alpha_maxima_eficiencia = kwargs.get("alpha_maxima_eficiencia")
+        self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
+        self.hiperparametros = kwargs.get("opcao_hiperparametros")
+        
+        self.logger         = logging.getLogger("logger_main")
         self.r              = np.random.rand(2)
         self.t              = 0
         self.convergencia   = []
         self.t_list         = []
         self.id_melhor_particula = None
-
         self.resultados_aerodinamicos = None
         self.resultados_matriz_pso = None
         self.path_pasta_cenario = f"resultados/resultados_id_{self.id}"
 
         self.logger.info("//Início da Iteração 0//--------------------\n")
-        
-        if not kwargs.get("continuar"):
-            self.condicao_voo   = condicao_de_voo
-            self.qde_particulas = qde_de_particulas
-            self.condicoes_geometricas = kwargs.get("condicoes_geometricas")
-            self.iterar_zero()
-        else:
-            self.iterar_continuacao()
-        
-    def iterar_continuacao(self):
-        dados: dict = ler_dados_para_continuacao()
-        for key in dados.keys():
-            dado = dados[key]
-            if type(dado) == list:
-                dado = np.array(dado)
-            setattr(self, key, dado)
-        self.t_list = [t for t in range(self.t+1)]
-
     
+        self.iterar_zero()
+            
     def iterar_zero(self):
         self.logger.info("- Início da computação da função objetivo")
         fo_controller = FuncaoObjetivo(
             condicoes_de_voo=self.condicao_voo,
             qde_particulas=self.qde_particulas,
             inicial=True,
-            condicoes_geometricas=self.condicoes_geometricas
+            condicoes_geometricas=self.condicoes_geometricas,
+            alpha=self.alpha_maxima_eficiencia,
+            aerofolio_inicial=self.aerofolio_inicial,
         )
         self.logger.info("- Fim da computação da função objetivo")
 
@@ -95,31 +86,19 @@ class OtimizacaoHelice:
 
         self.t_list.append(self.t)
 
-        self.c1 = 2.05
-        self.c2 = 2.05
-        self.w  = 0.72984
-        self.t  = 1
+        
 
     def iterar(self):
-        salvar_resultados_json(
-            eficiencia=self.fo,
-            matriz_v=self.v,
-            matriz_pso=self.matriz,
-            p_best=self.p_best,
-            g_best=self.g_best,
-            r=self.r,
-            id=self.id,
-            qde_particulas=self.qde_particulas,
-            condicao_voo=self.condicao_voo,
-            condicoes_geometricas=self.condicoes_geometricas,
-            p_best_obj=self.p_best_obj,
-            g_best_obj=self.g_best_obj,
-            w=self.w,
-            c1=self.c1,
-            c2=self.c2,
-            t=self.t,
-            convergencia=self.convergencia
-        )
+        if self.hiperparametros:
+            self.c1 = 2.05
+            self.c2 = 2.05
+            self.w  = 0.72984
+            self.t  = 1
+        else:
+            self.t += 1
+            self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
+            self.c1 = -3*self.t/self.N + 3.5
+            self.c2 = 3*self.t/self.N + 0.5
         
         self.atualizar_v_e_x(
             v=self.v,
@@ -136,7 +115,9 @@ class OtimizacaoHelice:
             qde_particulas=self.qde_particulas,
             condicoes_de_voo=self.condicao_voo,
             inicial=False,
-            condicoes_geometricas=self.condicoes_geometricas
+            condicoes_geometricas=self.condicoes_geometricas,
+            alpha=self.alpha_maxima_eficiencia,
+            aerofolio_inicial=self.aerofolio_inicial,
         )
         fo_controller.inserir_parametros(
             matriz=self.matriz,
@@ -172,14 +153,6 @@ class OtimizacaoHelice:
         )
 
         self.t_list.append(self.t)
-        
-        self.t += 1
-        self.w = 0.4*(self.t - self.N)/self.N**2 + 0.4
-        # self.w = 0.72984
-        self.c1 = -3*self.t/self.N + 3.5
-        self.c2 = 3*self.t/self.N + 0.5
-        # self.c1 = 2.05
-        # self.c2 = 2.05
 
 
     def atualizar_g_best(

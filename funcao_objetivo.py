@@ -6,7 +6,6 @@ from utilidades import (
     escolher_escalar,
     rodar_helice_inidividual,
     criar_txt_pontos_aerofolio_para_rodar_xfoil,
-    mover_arquivos_coordenadas
 )
 import logging
 
@@ -16,6 +15,8 @@ class FuncaoObjetivo:
         self.condicoes_de_voo                  = condicoes_de_voo
         self.logger                            = logging.getLogger("logger_main")
         self.condicoes_geometricas             = kwargs.get("condicoes_geometricas")
+        self.alpha                             = kwargs.get("alpha")
+        self.aerofolio_inicial                 = kwargs.get("aerofolio_inicial")
         self.matriz                            = None
         self.particula_escolhida               = None
         self.pontos_p                          = None
@@ -36,8 +37,11 @@ class FuncaoObjetivo:
 
     def criar_pontos_de_bezier_inicial(self):
         bezier_controller = Bezier()
-        pontos_p = bezier_controller.gerar_aerofolio("naca 0020", naca=True)
-        linhas, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
+        naca = False
+        if ("NACA" in self.aerofolio_inicial) or ("naca" in self.aerofolio_inicial):
+            naca = True
+        pontos_p = bezier_controller.gerar_aerofolio(self.aerofolio_inicial, naca=naca)
+        _, a0, _, _ = bezier_controller.gerar_pontos_de_bezier(retornar=True)
 
         self.pontos_p = pontos_p.copy()
         self.pontos_A = a0.copy()
@@ -209,7 +213,8 @@ class FuncaoObjetivo:
                 aerofolios=aerofolios,
                 raio=raio,
                 c=c,
-                particula_com_interseccao=particula_com_interseccao
+                particula_com_interseccao=particula_com_interseccao,
+                alpha=self.alpha,
             )
             
             self.resultados.append(resultados_individuais)

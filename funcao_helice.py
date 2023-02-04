@@ -13,7 +13,8 @@ class Helice:
         aerofolios: list,
         condicoes_voo: dict,
         condicoes_geometricas_helice: dict,
-        particula_com_interseccao: bool=False
+        alpha: float,
+        particula_com_interseccao: bool=False,
     ):
         self.aerof = aerofolios
         self.v = condicoes_voo["Velocidade"]
@@ -26,6 +27,7 @@ class Helice:
         self.r = condicoes_geometricas_helice["Raio Secao"]
         self.c = condicoes_geometricas_helice["Corda Secao"]
         self.solucao_interseccao = particula_com_interseccao
+        self.alpha = alpha
 
         self.vt = None
         self.J = None
@@ -93,8 +95,8 @@ class Helice:
         for aerofolio in self.aerof:
             xfoil.rodar_xfoil(
                 aerofolio,
-                str(5),
-                str(5),
+                str(self.alpha),
+                str(self.alpha),
                 "0",
                 str(self.reynolds),
                 str(self.ma),

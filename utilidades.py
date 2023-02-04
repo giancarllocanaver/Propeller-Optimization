@@ -12,7 +12,8 @@ def rodar_helice_inidividual(
     aerofolios: list,
     raio: np.ndarray,
     c: np.ndarray,
-    particula_com_interseccao: bool
+    particula_com_interseccao: bool,
+    **kwargs
 ):
     condicoes_geometricas = {
         "Raio Secao": raio,
@@ -22,7 +23,8 @@ def rodar_helice_inidividual(
         aerofolios=aerofolios,
         condicoes_voo=condicoes_voo,
         condicoes_geometricas_helice=condicoes_geometricas,
-        particula_com_interseccao=particula_com_interseccao
+        particula_com_interseccao=particula_com_interseccao,
+        alpha=kwargs.get("alpha")
     )
 
     return classe_helice.resultados

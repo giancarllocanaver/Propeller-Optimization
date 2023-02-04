@@ -121,4 +121,7 @@ def rodar_xfoil(
         kill(p.pid)
         time.sleep(1)
 
-    os.remove(nome_do_arquivo_de_input_do_xfoil)
+    try:
+        os.remove(nome_do_arquivo_de_input_do_xfoil)
+    except PermissionError:
+        pass

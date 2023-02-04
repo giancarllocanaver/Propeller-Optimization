@@ -1,2 +1,0 @@
-Convergência atingida!
-Número de iterações: 20
