@@ -1,2 +1,3 @@
-call conda create --name tcc_giancarllo python=3.8 -y
+call conda remove --name propeller_optimization --all
+call conda create --name propeller_optimization python=3.8 -y
 pause
