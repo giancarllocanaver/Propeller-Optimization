@@ -45,13 +45,14 @@ class Helice:
         self.cl = []
         self.cd = []
 
+    def executar_helice(self):
         self.calcular_velocidade_tangencial()
         self.calcular_razao_de_avanco()
         self.calcular_phi()
         self.calcular_vr()
         self.calcular_reynolds_e_mach()
 
-        if not particula_com_interseccao:
+        if not self.solucao_interseccao:
             self.calcular_cl_cd()
             self.calcular_gamma()
             self.calcular_dt_e_dq()

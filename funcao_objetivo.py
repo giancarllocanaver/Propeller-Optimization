@@ -212,7 +212,7 @@ class FuncaoObjetivo:
                 condicoes_voo=condicoes_de_voo,
                 aerofolios=aerofolios,
                 raio=raio,
-                c=c,
+                corda=c,
                 particula_com_interseccao=particula_com_interseccao,
                 alpha=self.alpha,
             )

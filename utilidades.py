@@ -11,13 +11,27 @@ def executar_TEP(
     condicoes_voo: dict,
     aerofolios: list,
     raio: np.ndarray,
-    c: np.ndarray,
+    corda: np.ndarray,
     particula_com_interseccao: bool,
     **kwargs
-):
+) -> dict:
+    """
+    Método responsável por executar a Teoria dos Elementos
+    de Pá para a hélice selecionada.
+    
+    :param condicoes_voo: condições de voo da hélice
+    :param aerofolios: lista com os aerofólios ao longo da pá
+    :param raio: raio das seções ao longo da pá
+    :param corda: corda das seções ao longo da pá
+    :param particula_com_interseccao: se True refere-se a uma
+        partícula com intersecção
+    ...
+    :return: resultados obtidos advindos da Teoria dos Elementos
+        de Pá
+    """
     condicoes_geometricas = {
         "Raio Secao": raio,
-        "Corda Secao": c
+        "Corda Secao": corda,
     }
     classe_helice = Helice(
         aerofolios=aerofolios,
@@ -26,13 +40,23 @@ def executar_TEP(
         particula_com_interseccao=particula_com_interseccao,
         alpha=kwargs.get("alpha")
     )
+    classe_helice.executar_helice()
 
     return classe_helice.resultados
 
 
 def criar_txt_pontos_aerofolio_para_rodar_xfoil(
     pontos: np.ndarray
-):
+) -> str:
+    """
+    Método responsável por criar um arquivo .txt com
+    os pontos do aerofólio de uma seção da pá.
+
+    :param pontos: pontos do aerofólio de uma seção da
+        pá específica.
+    ...
+    :return: nome do arquivo do aerofólio criado
+    """
     pontos = pontos.reshape((pontos.shape[0], pontos.shape[1]))
     pontos_x = pontos[0]
     pontos_y = pontos[1]
@@ -51,17 +75,17 @@ def criar_txt_pontos_aerofolio_para_rodar_xfoil(
             )
         writer.close()
 
-    # shutil.copy(
-    #     src=f"{nome_arquivo}",
-    #     dst=f"coordenadas_aerofolios/{nome_arquivo}"
-    # )
-
     return nome_arquivo
 
 
 def mover_arquivos_coordenadas(
-    nome_arquivo
+    nome_arquivo: str
 ):
+    """
+    Método responsável por mover um arquivo contendo
+    as coordenadas de um aerofólio para a pasta
+    'coordenadas_aerofolios'.
+    """
     if not os.path.isdir(f"coordenadas_aerofolios"):
         os.mkdir(f"coordenadas_aerofolios")
         
@@ -70,10 +94,21 @@ def mover_arquivos_coordenadas(
 
 
 def gravar_resultados_aerodinamicos(
-    resultados,
-    id,
-    iteracao
-):
+    resultados: list,
+    id: str,
+    iteracao: int
+) -> pd.DataFrame:
+    """
+    Método responsável por salvar os resultados relacionados
+    à aerodinâmica da hélice em um arquivo '.csv', e retornar
+    os resultados.
+
+    :param resultados: resultados aerodinâmicos obtidos.
+    :param id: identificador do cenário
+    :param iteracao: iteração específica
+    ...
+    :return: dataframe com os resultados
+    """
     if not os.path.isdir("resultados"):
         os.mkdir("resultados")
     
@@ -439,3 +474,28 @@ def escolher_escalar(secao):
         escalar_maior = 0.05
 
     return np.random.uniform(low=escalar_menor, high=escalar_maior)
+
+
+def ler_input(cenario: str) -> dict:
+    """
+    Método responsável por estar lendo o
+    arquivo de input na pasta 'fila_de_cenarios'
+
+    :param cenario: nome do cenário a ser lido
+        na pasta
+    ...
+    :return: dicionário contendo o cenário de
+        configuração da hélice.
+    """
+    arquivo_a_ser_lido = f"fila_de_cenarios/{cenario}"
+    with open(arquivo_a_ser_lido, 'rb') as file:
+        cenario_lido = json.load(file)
+        file.close()
+    shutil.move(
+        arquivo_a_ser_lido,
+        f"fila_de_cenarios/antigos/{cenario}",
+    )
+    cenario_lido["condicoes_geometricas"]["raio"] = np.array(cenario_lido["condicoes_geometricas"]["raio"])
+    cenario_lido["condicoes_geometricas"]["corda"] = np.array(cenario_lido["condicoes_geometricas"]["corda"])
+
+    return cenario_lido

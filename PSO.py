@@ -1,12 +1,8 @@
 import numpy as np
 from funcao_objetivo import FuncaoObjetivo
-from matplotlib import pyplot as plt
-import os
-import pandas as pd
 from utilidades import (
     gravar_resultados_aerodinamicos,
     gravar_resultados_matriz_pso,
-    ler_dados_para_continuacao,
     checar_adequacao_espessura_perfil,
 )
 import logging
@@ -87,7 +83,6 @@ class OtimizacaoHelice:
         self.t_list.append(self.t)
 
         
-
     def iterar(self):
         if self.hiperparametros:
             self.c1 = 2.05
