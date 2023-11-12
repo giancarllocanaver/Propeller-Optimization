@@ -198,47 +198,6 @@ def gravar_resultados_matriz_pso(
     return path_output_matriz_pso, df_resultados
 
 
-def salvar_resultados_json(
-    matriz_v: np.ndarray,
-    matriz_pso: np.ndarray,
-    id: str,
-    **kwargs
-):
-    if not os.path.isdir("resultados"):
-        os.mkdir("resultados")
-    
-    if not os.path.isdir(f"resultados/resultados_id_{id}"):
-        os.mkdir(f"resultados/resultados_id_{id}")
-
-    condicoes_geometricas = {
-        "raio": kwargs.get("condicoes_geometricas")["raio"].tolist(),
-        "corda": kwargs.get("condicoes_geometricas")["corda"].tolist()
-    }
-
-    arquivo = {
-        "eficiencia": kwargs.get("eficiencia").tolist(),
-        "matriz_v": matriz_v.tolist(),
-        "matriz_pso": matriz_pso.tolist(),
-        "p_best": kwargs.get("p_best").tolist(),
-        "g_best": kwargs.get("g_best").tolist(),
-        "r": kwargs.get("r").tolist(),
-        "qde_particulas": kwargs.get("qde_particulas"),
-        "condicao_voo": kwargs.get("condicao_voo"),
-        "condicoes_geometricas": condicoes_geometricas,
-        "p_best_obj": kwargs.get("p_best_obj").tolist(),
-        "g_best_obj": kwargs.get("g_best_obj").tolist(),
-        "w": kwargs.get("w"),
-        "c1": kwargs.get("c1"),
-        "c2": kwargs.get("c2"),
-        "t": kwargs.get("t"),
-        "convergencia": kwargs.get("convergencia"),
-    }
-
-    nome_arq = f"resultados/resultados_id_{id}/parametros_PSO_id_{id}.json"
-    with open(nome_arq, 'w') as file:
-        json.dump(arquivo,file)
-
-
 def criar_pastas(id):
     if not os.path.isdir("resultados"):
         os.mkdir("resultados")

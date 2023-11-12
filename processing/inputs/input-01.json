@@ -1,0 +1,41 @@
+{
+    "optimization": {
+        "quantityOfParticles": 20,
+        "maximumIterations": 15,
+        "tolerance": 0.0001,
+        "constantHyperParameters": false
+    },
+    "flightConditions": {
+        "speed": 20.0,
+        "viscosity": 1.789e-5,
+        "tempeture": 288.2,
+        "airDensity": 1.225,
+        "bladeDiameter": 2.4384,
+        "numberOfBlades": 2,
+        "engineSpin": 1000
+    },
+    "propellerGeometricConditions": {
+        "airfoil": "naca 0020",
+        "AoAInMaximumEfficiency": 5.0,
+        "radius": [
+            0.254,
+            0.3048,
+            0.4572,
+            0.6096,
+            0.762,
+            0.9144,
+            1.0668,
+            1.2192
+        ],
+        "chord": [
+            0.122428,
+            0.139192,
+            0.174244,
+            0.185166,
+            0.179324,
+            0.16129,
+            0.128524,
+            0
+        ]
+    }
+}
