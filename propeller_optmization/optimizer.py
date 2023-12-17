@@ -1,16 +1,7 @@
 import numpy as np
-from typing import NamedTuple
 
-from .data_reader import DataReader
-
-
-class Particle(NamedTuple):
-    objective_function: float
-    variables: np.ndarray
-    velocity: np.ndarray
-    points_p: np.ndarray
-    points_a: np.ndarray
-
+from propeller_optmization.data_reader import DataReader
+from propeller_optmization.data_structures import Particle
 
 class PSO:
     def __init__(self, data_reader: DataReader, airfoil_coordinates_dir: str, results_dir: str) -> None:
@@ -30,6 +21,7 @@ class PSO:
                 velocity=np.array([0.0 for _ in range(7)]),
                 points_p=np.array([0.0 for _ in range(7)]),
                 points_a=np.array([0.0 for _ in range(7)]),
+                splines=list(np.array([]) for _ in range(7)),
             )
             for particle in range(self.data_reader.optimization_data.quantityOfParticles)
         }
