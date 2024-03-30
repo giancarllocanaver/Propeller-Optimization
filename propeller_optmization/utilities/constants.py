@@ -8,7 +8,7 @@ INPUT_SCHEMA = {
     "flightConditions": {
         "speed": float,
         "viscosity": float,
-        "tempeture": float,
+        "temperature": float,
         "airDensity": float,
         "bladeDiameter": float,
         "numberOfBlades": int,
