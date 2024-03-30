@@ -1,10 +1,9 @@
-from genericpath import isfile
-
 import json
 import argparse
 
 from .exceptions import *
 from .data_validation import DataValidation
+
 
 class DataReader:
     def __init__(self, arguments_parsed: argparse.Namespace) -> None:
@@ -21,20 +20,20 @@ class DataReader:
         """
         Calling DataReader pipeline methods.
         """
-        self._pre_reading_validation()
-        self._read_data()
-        self._post_reading_validation()
-        self._instantiate_variables()
+        self.__pre_reading_validation()
+        self.__read_data()
+        self.__post_reading_validation()
+        self.__instantiate_variables()
 
-    def _pre_reading_validation(self):
+    def __pre_reading_validation(self):
         """
         Method responsible for validating the existance
         and the extennsion of the input file
         """
         self.validator.check_file_existance(self.argument_parser.file)
         self.validator.check_file_extension(self.argument_parser.file)
-    
-    def _read_data(self):
+
+    def __read_data(self):
         """
         Method responsible for reading the json input
         file.
@@ -42,7 +41,7 @@ class DataReader:
         with open(self.argument_parser.file) as file:
             self.input_data = json.load(file)
 
-    def _post_reading_validation(self):
+    def __post_reading_validation(self):
         """
         Method responsible for validating post reading
         data.
@@ -50,12 +49,14 @@ class DataReader:
         self.validator.check_json_keys(self.input_data)
         self.validator.check_data_dtypes(self.input_data)
 
-    def _instantiate_variables(self):
+    def __instantiate_variables(self):
         """
         Method responsible for instantiating the main variables
         to the software.
         """
         self.optimization_data = self.input_data.get("optimization")
         self.flight_conditions = self.input_data.get("flightConditions")
-        self.propeller_geometric_conditions = self.input_data.get("propellerGeometricConditions")
-    
+        self.propeller_geometric_conditions = self.input_data.get(
+            "propellerGeometricConditions"
+        )
+        self.airfoil_geometry = self.input_data.get("airfoilGeometry", None)

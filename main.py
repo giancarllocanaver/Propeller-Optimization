@@ -1,4 +1,5 @@
 import argparse
+import os
 from PSO import OtimizacaoHelice
 from tqdm import tqdm
 import time
@@ -27,7 +28,7 @@ def define_parser() -> dict:
     parser = ArgumentParser(
         prog="main.py",
         description="Propeller Optimization input and output arguments",
-        usage="%(prog)s [-f] <file> [-o]"
+        usage="%(prog)s [-f] <file> [-o]",
     )
 
     parser.add_argument(
@@ -43,11 +44,10 @@ def define_parser() -> dict:
         type=str,
         help="output directory for the output files",
         required=False,
-        default="processing/outputs"
+        default=os.path.join(os.getcwd(), "processing", "outputs"),
     )
 
     return parser.parse_args()
-
 
 
 def main(arguments_parsed: argparse.Namespace) -> None:
@@ -55,15 +55,13 @@ def main(arguments_parsed: argparse.Namespace) -> None:
     Main funtion of the propeller optimizer.
     """
     pipeline = PipelineMethods(arguments_parsed)
-    pipeline.create_folders()
-    pipeline.create_logger()
     pipeline.read_data()
+    pipeline.optimize()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     arguments_parsed = define_parser()
     main(arguments_parsed)
-
 
 
 # if __name__ == '__main__':
@@ -74,7 +72,7 @@ if __name__ == '__main__':
 #     id = gerar_time_stamp()
 #     pasta_com_id = criar_pastas(id)
 #     criar_logger(id)
-    
+
 #     limpar_pasta_coordenadas_aerofolios()
 
 #     logger = logging.getLogger("logger_main")

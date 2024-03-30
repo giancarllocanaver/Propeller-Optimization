@@ -1,7 +1,14 @@
 import logging
 from time import time
 
+
 class CustomLogger(logging.Logger):
+    def __init__(self, name: str, level: int, file_dir: str):
+        super().__init__(name, level)
+
+        self.addHandler(logging.StreamHandler())
+        self.addHandler(logging.FileHandler(file_dir))
+
     def start(self, info: str) -> None:
         """
         Method responsible to write a beggining information
@@ -9,17 +16,16 @@ class CustomLogger(logging.Logger):
         """
         _time = time()
         _info = info.lower()
-        
+
         try:
-            self.timed_infos # type_ignore
+            self.timed_infos  # type_ignore
         except AttributeError:
             self.timed_infos = dict()
-        
+
         self.timed_infos[_info] = _time
-        
+
         complete_message = f"Beggining {_info}"
         self.info(complete_message)
-        print(complete_message)
 
     def info(self, info: str) -> None:
         """
@@ -27,7 +33,6 @@ class CustomLogger(logging.Logger):
         in the log and print the message along the execution.
         """
         self.info(info.lower())
-        print(info.lower())
 
     def end(self, info: str) -> None:
         """
@@ -39,6 +44,5 @@ class CustomLogger(logging.Logger):
 
         complete_message = f">>> Executed {_info} in {_total_time} s"
         self.info(complete_message)
-        print(complete_message)
-        
+
         del self.timed_infos[_info]
