@@ -4,22 +4,23 @@ INPUT_SCHEMA = {
         "maximumIterations": int,
         "tolerance": float,
         "constantHyperParameters": bool,
+        "xfoilInstances": int,
     },
     "flightConditions": {
         "speed": float,
         "viscosity": float,
         "temperature": float,
         "airDensity": float,
-        "bladeDiameter": float,
-        "numberOfBlades": int,
         "engineSpin": int,
     },
-    "propellerGeometricConditions": {
+    "propellerGeometricConditions": {        
         "airfoil": str,
+        "bladeDiameter": float,
+        "numberOfBlades": int,
         "AoAInMaximumEfficiency": float,
         "radius": list,
         "chord": list,
-    }
+    },
 }
 
 POINTS_BETWEEN_POINTS_P = 20
