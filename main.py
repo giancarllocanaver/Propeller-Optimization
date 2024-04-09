@@ -56,6 +56,7 @@ def main(arguments_parsed: argparse.Namespace) -> None:
     """
     pipeline = PipelineMethods(arguments_parsed)
     pipeline.read_data()
+    pipeline.create_xfoil_instances()
     pipeline.optimize()
 
 
