@@ -2,6 +2,7 @@ import argparse
 import uuid
 import os
 import logging
+import shutil
 
 from .data_reader import DataReader
 from .utilities.custom_logger import CustomLogger
@@ -15,9 +16,27 @@ class PipelineMethods:
         self.results_dir = os.path.join(parsed_arguments.output, self.uuid)
         self.data_reader = DataReader(self.parsed_arguments)
 
+        self.__clean_old_data()
         self.__create_folders()
         self.__create_logger()
 
+    def __clean_old_data(self):
+        """
+        Method responsible for cleaning purge
+        data.
+        """
+        for file in os.listdir("processing/execution_steps"):
+            if file == ".gitkeep":
+                continue
+
+            os.remove(
+                os.path.join(
+                    "processing",
+                    "execution_steps",
+                    file
+                )
+            )
+    
     def __create_folders(self) -> None:
         """
         Method responsible for creating the
@@ -43,6 +62,25 @@ class PipelineMethods:
         """
         self.data_reader.process_data_reader_pipeline()
 
+    def create_xfoil_instances(self) -> None:
+        """
+        Method responsible for creating new
+        instances of xfoil.
+        """
+        dir_base = os.path.join(
+            os.getcwd(),
+            "processing",
+            "xfoil_instances",
+        )
+        xfoil_base = os.path.join(
+            dir_base,
+            "xfoil.exe",
+        )
+        quantity_of_instances = self.data_reader.optimization_data.get("xfoilInstances")
+
+        for i in range(quantity_of_instances):
+            shutil.copy(xfoil_base, os.path.join(dir_base, f"xfoil_{i}.exe"))
+
     def optimize(self):
         """
         Method responsible to start the optimization
@@ -50,5 +88,7 @@ class PipelineMethods:
         """
         optimization_instance = PSO(
             data_reader=self.data_reader,
+            uuid=self.uuid,
             results_dir=self.results_dir,
         )
+        optimization_instance.set_initial_conditions()
