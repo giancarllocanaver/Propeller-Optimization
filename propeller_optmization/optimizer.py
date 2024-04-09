@@ -1,29 +1,33 @@
 import numpy as np
 import pandas as pd
 
-from propeller_optmization.data_reader import DataReader
-from propeller_optmization.data_structures import Particle
+from .data_reader import DataReader
+from .data_structures import Particle
+from .objective_function import ObjectiveFunction
 
 
 class PSO:
-    def __init__(self, data_reader: DataReader, results_dir: str) -> None:
+    def __init__(
+        self, data_reader: DataReader, uuid: str, results_dir: str
+    ) -> None:
         self.data_reader = data_reader
+        self.uuid = uuid
         self.results_dir = results_dir
 
-        self.particles = self._set_particles()
-        self.best = self._set_best()
-        self.hyperparameters = self._set_hyperparameters()
+        self.particles = self.__set_particles()
+        self.best = self.__set_best()
+        self.hyperparameters = self.__set_hyperparameters()
 
-    def _set_particles(self) -> dict:
+    def __set_particles(self) -> dict:
         particles = {
             particle: Particle(
                 objective_function=0.0,
-                variables=np.array([0.0 for _ in range(7)]),
-                velocity=np.array([0.0 for _ in range(7)]),
-                points_p=np.array([0.0 for _ in range(7)]),
-                points_a=np.array([0.0 for _ in range(7)]),
-                splines=list(np.array([]) for _ in range(7)),
-                results=pd.DataFrame(),
+                variables=np.array([]),
+                velocity=np.array([]),
+                points_p=np.array([]),
+                points_a=np.array([]),
+                splines=list(),
+                results=dict(),
             )
             for particle in range(
                 self.data_reader.optimization_data.get("quantityOfParticles")
@@ -32,7 +36,7 @@ class PSO:
 
         return particles
 
-    def _set_best(self):
+    def __set_best(self):
         best = {
             "p_best": self.particles.copy(),
             "g_best": {0: self.particles.get(0)},
@@ -40,7 +44,7 @@ class PSO:
 
         return best
 
-    def _set_hyperparameters(self) -> dict:
+    def __set_hyperparameters(self) -> dict:
         if self.data_reader.optimization_data.get("constantHyperParameters"):
             hyperparameters = {
                 "c1": lambda t: 2.05,
@@ -62,40 +66,48 @@ class PSO:
 
         return hyperparameters
 
-    def _check_convergence(self) -> bool:
+    def __check_convergence(self) -> bool:
         pass
 
-    def _check_constrainsts(self):
+    def __check_constrainsts(self):
         def penalize(self):
             pass
 
         pass
 
-    def _update_p_best(self):
+    def __update_p_best(self):
         pass
 
-    def _update_g_best(self):
+    def __update_g_best(self):
         pass
 
-    def _update_velocity(self):
+    def __update_velocity(self):
         pass
 
-    def _update_variables(self):
+    def __update_variables(self):
         pass
 
-    def _update_objective_function(self):
+    def __update_objective_function(self):
         pass
 
-    def set_initial_condition(self):
-        pass
+    def set_initial_conditions(self):
+        init_cond_inst = ObjectiveFunction(
+            airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
+            particles=self.particles,
+            flight_conditions=self.data_reader.flight_conditions,
+            propeller_geometry=self.data_reader.propeller_geometric_conditions,
+            uuid=self.uuid,
+            xfoil_instances=self.data_reader.optimization_data.get("xfoilInstances"),
+        )
+        init_cond_inst.set_initial_conditions()
 
     def iterate(self):
-        for t in range(self.data_reader.optimization_data.maximumIterations):
-            self._check_constrainsts()
-            self._update_p_best()
-            self._update_g_best()
-            self._update_velocity()
-            self._update_variables()
-            if self._check_convergence():
+        for t in range(self.data_reader.optimization_data.get("maximumIterations")):
+            self.__check_constrainsts()
+            self.__update_p_best()
+            self.__update_g_best()
+            self.__update_velocity()
+            self.__update_variables()
+            if self.__check_convergence():
                 break
-            self._update_objective_function()
+            self.__update_objective_function()
