@@ -4,14 +4,15 @@ import numpy as np
 from propeller_optmization.utilities.airfoil_creation import AirfoilCreation
 from propeller_optmization.utilities.constants import POINTS_BETWEEN_POINTS_P
 
+
 class GeometryManagement(AirfoilCreation):
     def __init__(self):
-        super().__init__()
-
         self.p_points = None
 
+        super().__init__()
+
     def create_base_airfoil(self, base_airfoil_name: str) -> np.ndarray:
-        self.generate_airfoil(base_airfoil_name)        
+        self.generate_airfoil(base_airfoil_name)
         self.p_points = self.obtain_p_points()
 
         return self.p_points
@@ -47,6 +48,9 @@ class GeometryManagement(AirfoilCreation):
 
             b[n - 1] = (a[n - 1] + points_p[n]) / 2
 
+            a = a.reshape((a.shape[0],))
+            b = b.reshape((b.shape[0],))
+
             return a, b
 
         def line(i, j, a, b):
@@ -63,10 +67,7 @@ class GeometryManagement(AirfoilCreation):
         for j in range(2):
             a, b = bezier_coefficients(self.p_points[j])
             spline = [
-                line(
-                    self.p_points[j, i],
-                    self.p_points[j, i + 1], a[i], b[i]
-                )
+                line(self.p_points[j, i], self.p_points[j, i + 1], a[i], b[i])
                 for i in range(n)
             ]
             bezier_spline = [
@@ -82,14 +83,8 @@ class GeometryManagement(AirfoilCreation):
         a_points = np.array(a_points)
         b_poins = np.array(b_poins)
 
-        airfoil_spline = np.reshape(
-            splines,
-            (splines.shape[0], splines.shape[1])
-        )
-        a_points = np.reshape(
-            a_points,
-            (a_points.shape[0], a_points.shape[1])
-        )
+        airfoil_spline = np.reshape(splines, (splines.shape[0], splines.shape[1]))
+        a_points = np.reshape(a_points, (a_points.shape[0], a_points.shape[1]))
 
         return a_points
 
@@ -113,16 +108,8 @@ class GeometryManagement(AirfoilCreation):
             return intermediate_points
 
         def create_new_b_points(a: np.ndarray, p_points: np.ndarray, n: int):
-            b = np.array(
-                [
-                    2 * p_points[i+1] - a[i+1]
-                    for i in range(0, n-1)
-                ]
-            )
-            b = np.append(
-                b,
-                (a[n-1] + p_points[n]) / 2
-            )
+            b = np.array([2 * p_points[i + 1] - a[i + 1] for i in range(0, n - 1)])
+            b = np.append(b, (a[n - 1] + p_points[n]) / 2)
 
             return b
 
@@ -135,24 +122,18 @@ class GeometryManagement(AirfoilCreation):
             )
 
         def ajust_splines(splines: np.ndarray):
-            upper_surface = np.array(
-                [
-                    line
-                    for line in splines[0]
-                    if line not in splines[0]
-                ]
-            )
-            lower_surface = np.array(
-                [
-                    line
-                    for line in splines[1]
-                    if line not in splines[1]
-                ]
-            )
-            upper_surface = np.append(upper_surface, 1)
-            lower_surface = np.append(lower_surface, 0)
-            
-            return np.array([upper_surface, lower_surface])
+            x_coordinates = list()
+            y_coordinates = list()
+
+            for i in range(len(splines[0])):
+                if splines[0, i] not in x_coordinates:
+                    x_coordinates.append(splines[0, i])
+                    y_coordinates.append(splines[1, i])
+
+            x_coordinates.append(1)
+            y_coordinates.append(0)
+
+            return np.array((x_coordinates, y_coordinates))
 
         def check_intersection(splines: np.ndarray):
             def intersection(x1, x2, x3, x4, y1, y2, y3, y4):
@@ -162,15 +143,15 @@ class GeometryManagement(AirfoilCreation):
                         (x1 * y2 - y1 * x2) * (x3 - x4)
                         - (x1 - x2) * (x3 * y4 - y3 * x4)
                     ) / d
-                    if (
-                        xs >= min(x1, x2)
-                        and xs <= max(x1, x2)
-                        and xs >= min(x3, x4)
-                        and xs <= max(x3, x4)
-                    ):
-                        return xs
 
-            xs = {
+                    if (xs >= min(x1, x2) and xs <= max(x1, x2)) and (
+                        xs >= min(x3, x4) and xs <= max(x3, x4)
+                    ):
+                        return True
+
+                return False
+
+            xs = [
                 True
                 for i in range(len(splines[0]) - 1)
                 for j in range(i - 1)
@@ -184,23 +165,20 @@ class GeometryManagement(AirfoilCreation):
                     splines[1, j],
                     splines[1, j + 1],
                 )
-            }
-            
-            return True if xs else False            
+            ]
+
+            return True if len(xs) > 1 else False
 
         n = len(p_points[0]) - 1
 
         splines, b_points, new_p_points = list(), list(), list()
         for j in range(2):
             new_points = create_new_p_points(a_points[j], p_points[j], n)
-            b_points = create_new_b_points(a_points[j], new_points, n)
+            b = create_new_b_points(a_points[j], new_points, n)
 
             spline = [
                 create_new_spline(
-                    new_points[i],
-                    new_points[i + 1],
-                    a_points[j, i],
-                    b_points[i]
+                    new_points[i], new_points[i + 1], a_points[j, i], b[i]
                 )
                 for i in range(0, n)
             ]
@@ -211,11 +189,14 @@ class GeometryManagement(AirfoilCreation):
             ]
 
             splines.append(bezier_spline)
-            b_points.append(b_points)
+            b_points.append(b)
             new_p_points.append(new_points)
 
-        splines, b_points, new_p_points = np.array(splines), np.array(b_points), np.array(new_p_points)
+        splines, b_points, new_p_points = (
+            np.array(splines),
+            np.array(b_points),
+            np.array(new_p_points),
+        )
         splines = ajust_splines(splines)
 
         return splines if not check_intersection(splines) else None
-
