@@ -92,3 +92,4 @@ class PipelineMethods:
             results_dir=self.results_dir,
         )
         optimization_instance.set_initial_conditions()
+        optimization_instance.iterate()
