@@ -21,6 +21,8 @@ class BladeElementTheory:
         self.AoA = propeller_geometric_conditions.get("AoAInMaximumEfficiency")
         self.q_xfoil_intances = kwargs.get("xfoil_instances", 1)
 
+        self.results = dict()
+
     def calculate_propeller_results(self) -> dict:
         self.__calculate_tangencial_velocity()
         self.__calculate_advance_rate()
@@ -43,6 +45,8 @@ class BladeElementTheory:
             * np.array(self.propeller_geometric_conditions.get("radius"))
         )
 
+        self.results["tangencialVelocity"] = self.tangencial_velocity
+
     def __calculate_advance_rate(self):
         self.advance_rate = (
             60
@@ -53,14 +57,20 @@ class BladeElementTheory:
             / self.propeller_geometric_conditions.get("bladeDiameter")
         )
 
+        self.results["advanceRate"] = self.advance_rate
+
     def __calculate_phi(self):
         self.phi = np.arctan(
             self.flight_conditions.get("speed") / self.tangencial_velocity
         )
         self.phi[-1] = 0.0
 
+        self.results["phi"] = self.phi
+
     def __calculate_resultant_velocity(self):
         self.resultant_velocity = self.tangencial_velocity / np.cos(self.phi)
+
+        self.results["resultantVelocity"] = self.resultant_velocity
 
     def __calculate_reynolds_and_mach(self):
         self.reynolds = (
@@ -72,6 +82,9 @@ class BladeElementTheory:
         self.mach = self.resultant_velocity / np.sqrt(
             1.4 * 287 * self.flight_conditions.get("temperature")
         )
+
+        self.results["reynolds"] = self.reynolds
+        self.results["mach"] = self.mach
 
     def __calculate_Cl_and_Cd(self):
         def split_instances_per_time() -> dict:
@@ -167,6 +180,9 @@ class BladeElementTheory:
         ]
         self.dq.append(0)
 
+        self.results["dt"] = self.dt
+        self.results["dq"] = self.dq
+
     def __calculate_efficiency(self):
         def integrate(y: list, x: list):
             i = 0
@@ -195,6 +211,13 @@ class BladeElementTheory:
         self.efficiency = (
             self.advance_rate * t_coeffic / p_coeffic if p_coeffic != 0 else None
         )
+
+        self.results["traction"] = traction
+        self.results["torque"] = torque
+        self.results["tCoefficient"] = t_coeffic
+        self.results["qCoefficient"] = q_coeffic
+        self.results["pCoefficient"] = p_coeffic
+        self.results["efficiency"] = self.efficiency
 
 
 def execute_xfoil(
