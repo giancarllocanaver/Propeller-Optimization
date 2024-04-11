@@ -58,6 +58,7 @@ def main(arguments_parsed: argparse.Namespace) -> None:
     pipeline.read_data()
     pipeline.create_xfoil_instances()
     pipeline.optimize()
+    pipeline.obtain_results()
 
 
 if __name__ == "__main__":
