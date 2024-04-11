@@ -228,6 +228,9 @@ def execute_xfoil(
     reynolds: float,
     mach: float,
 ) -> tuple:
+    if spline is None:
+        return section, 0, 1
+    
     xfoil_instance = XfoilManagement(reynolds, mach)
     xfoil_instance.execute_xfoil(
         splines_file=spline,
