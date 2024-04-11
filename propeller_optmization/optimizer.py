@@ -1,5 +1,7 @@
+import os
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from .data_reader import DataReader
 from .data_structures import Particle
@@ -11,6 +13,8 @@ class PSO:
         self.data_reader = data_reader
         self.uuid = uuid
         self.results_dir = results_dir
+        self.results_per_time = dict()
+        self.fo_per_time = dict()
 
         self.particles = self.__set_particles()
         self.best = self.__set_best()
@@ -150,8 +154,11 @@ class PSO:
         best_obj = max(part_obj.keys())
         best_part = part_obj.get(best_obj)
 
-        self.best["g_best"] = {best_part: self.particles.get(best_part)}
-        self.best_objective["g_best_obj"] = {best_part: self.particles.get(best_part)}
+        if best_obj >= list(self.best["g_best"].values())[0].objective_function:
+            self.best["g_best"] = {best_part: self.particles.get(best_part)}
+            self.best_objective["g_best_obj"] = {
+                best_part: self.particles.get(best_part)
+            }
 
     def __update_velocity(self, t: int):
         for id_part, p_best_part in self.best.get("p_best").items():
@@ -186,7 +193,17 @@ class PSO:
             self.particles[id_particle] = particle._replace(variables=new_position)
 
     def __update_objective_function(self):
-        pass
+        obj_func_instance = ObjectiveFunction(
+            airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
+            particles=self.particles,
+            flight_conditions=self.data_reader.flight_conditions,
+            propeller_geometry=self.data_reader.propeller_geometric_conditions,
+            uuid=self.uuid,
+            xfoil_instances=self.data_reader.optimization_data.get("xfoilInstances"),
+        )
+        obj_func_instance.set_new_conditions()
+
+        self.particles = obj_func_instance.particles
 
     def set_initial_conditions(self):
         init_cond_inst = ObjectiveFunction(
@@ -207,9 +224,12 @@ class PSO:
         self.__update_velocity(1)
         self.__update_variables()
 
+        self.fo_per_time[1] = list(self.best["g_best"].values())[0].objective_function
+        self.results_per_time[1] = self.particles.copy()
+
     def iterate(self):
-        for t in range(
-            2, self.data_reader.optimization_data.get("maximumIterations") + 1
+        for t in tqdm(
+            range(2, self.data_reader.optimization_data.get("maximumIterations") + 1)
         ):
             self.__update_objective_function()
             self.__check_constrainsts()
@@ -219,3 +239,10 @@ class PSO:
                 break
             self.__update_velocity(t)
             self.__update_variables()
+
+            os.system("cls")
+
+            self.fo_per_time[t] = list(self.best["g_best"].values())[
+                0
+            ].objective_function
+            self.results_per_time[t] = self.particles.copy()
