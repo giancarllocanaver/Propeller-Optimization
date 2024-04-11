@@ -68,6 +68,9 @@ class AirfoilCreation:
 
     @staticmethod
     def create_airfoil_in_xfoil_from_splines(spline: np.ndarray) -> str:
+        if spline is None:
+            return None
+        
         spline = spline.reshape((spline.shape[0], spline.shape[1]))
         x_points = spline[0]
         y_points = spline[1]
