@@ -1,6 +1,6 @@
 import os
 
-from .exceptions import *
+from .utilities.exceptions import *
 from .utilities.constants import *
 
 class DataValidation:

@@ -1,7 +1,7 @@
 import json
 import argparse
 
-from .exceptions import *
+from .utilities.exceptions import *
 from .data_validation import DataValidation
 
 
