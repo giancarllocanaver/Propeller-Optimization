@@ -7,6 +7,7 @@ import shutil
 from .data_reader import DataReader
 from .utilities.custom_logger import CustomLogger
 from .optimizer import PSO
+from .output_process import OutputProcess
 
 
 class PipelineMethods:
@@ -29,14 +30,8 @@ class PipelineMethods:
             if file == ".gitkeep":
                 continue
 
-            os.remove(
-                os.path.join(
-                    "processing",
-                    "execution_steps",
-                    file
-                )
-            )
-    
+            os.remove(os.path.join("processing", "execution_steps", file))
+
     def __create_folders(self) -> None:
         """
         Method responsible for creating the
@@ -93,3 +88,13 @@ class PipelineMethods:
         )
         optimization_instance.set_initial_conditions()
         optimization_instance.iterate()
+
+        self.opt_inst = optimization_instance
+
+    def obtain_results(self):
+        """
+        Method responsible for making the plots of
+        the results.
+        """
+        output_instance = OutputProcess(self.uuid, self.opt_inst, self.results_dir)
+        output_instance.process_outputs()
