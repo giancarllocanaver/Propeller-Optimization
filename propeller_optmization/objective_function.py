@@ -37,6 +37,10 @@ class ObjectiveFunction:
         self.__set_initial_variables()
         self.__calculate_objective_function()
 
+    def set_new_conditions(self):
+        self.__update_variables()
+        self.__calculate_objective_function()
+
     def __create_bezier_initial_points(self):
         self.p_points = self.geometry_management.create_base_airfoil(self.airfoil_name)
         self.a_points = self.geometry_management.generate_bezier_points()
@@ -89,6 +93,29 @@ class ObjectiveFunction:
                 {particle: create_initial_variables(self.particles.get(particle))}
             )
 
+    def __update_variables(self):
+        def change_splines(particle: Particle):
+            prop_splines = list()
+
+            for section in range(7):
+                a_points = particle.points_a.copy()
+                a_points[1][3] = a_points[1][3] + particle.variables[section]
+
+                geometry_manag_instance = GeometryManagement()
+                splines = geometry_manag_instance.update_airfoil(
+                    a_points=a_points, p_points=particle.points_p
+                )
+
+                prop_splines.append(splines)
+
+            return particle._replace(splines=prop_splines)
+
+        particle_ids = self.particles.keys()
+        for particle_id in particle_ids:
+            self.particles.update(
+                {particle_id: change_splines(self.particles.get(particle_id))}
+            )
+
     def __calculate_objective_function(self):
         def create_airfoil_files(particles: Dict[int, Particle]):
             airfoil_file_names = {
@@ -102,7 +129,7 @@ class ObjectiveFunction:
             }
 
             return airfoil_file_names
-        
+
         def execute_the_blade_element_theory(particle_id: int, airfoil_names: dict):
             blade_instance = BladeElementTheory(
                 uuid=self.uuid,
@@ -114,8 +141,7 @@ class ObjectiveFunction:
             results = blade_instance.calculate_propeller_results()
 
             self.particles[particle_id] = self.particles[particle_id]._replace(
-                objective_function=results.get("efficiency"),
-                results=results
+                objective_function=results.get("efficiency"), results=results
             )
 
         airfoil_names = create_airfoil_files(self.particles)
