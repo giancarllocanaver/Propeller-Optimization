@@ -42,7 +42,7 @@ class OutputProcess:
             ),
             exist_ok=True,
         )
-        
+
         vars_time = [
             (
                 time,
@@ -80,7 +80,34 @@ class OutputProcess:
             )
 
     def __create_airfoils_graph(self):
-        pass
+        best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
+        particle = self.opt_inst.particles.get(best_particle)
+
+        fig, axs = plt.subplots(2, 4)
+
+        for section in range(7):
+            row = 0 if section < 4 else 1
+            column = section if section < 4 else (section - 4)
+
+            axs[row, column].plot(
+                particle.splines[section][0], particle.splines[section][1]
+            )
+            axs[row, column].set_title(f"Section {section}")
+
+        axs[1, 3].plot(particle.splines[6][0], particle.splines[6][1])
+        axs[1, 3].set_title(f"Section 7")
+
+        for ax in axs.flat:
+            ax.set(xlabel="x", ylabel="y")
+            ax.label_outer()
+            ax.set_xlim((-0.05, 1))
+            ax.set_ylim((-0.5, 0.5))
+            ax.grid()
+
+        fig.savefig(
+            os.path.join(self.results_dir, f"airfoils.jpeg"),
+            dpi=300,
+        )
 
     def __create_ct_and_cq_graphs_per_j(self):
         pass
