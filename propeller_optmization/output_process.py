@@ -32,7 +32,39 @@ class OutputProcess:
         self.__create_ct_and_cq_graphs_per_j()
 
     def __create_excel_output_file(self):
-        pass
+        vars_time = [
+            (
+                time,
+                id_part,
+                particle.results.get("traction"),
+                particle.results.get("torque"),
+                particle.results.get("tCoefficient"),
+                particle.results.get("qCoefficient"),
+                particle.results.get("pCoefficient"),
+                particle.results.get("efficiency"),
+            )
+            for time in self.opt_inst.results_per_time
+            for id_part, particle in self.opt_inst.results_per_time.get(time).items()
+        ]
+
+        df_result = pd.DataFrame(
+            vars_time,
+            columns=[
+                "iteration",
+                "idParticle",
+                "Traction",
+                "Torque",
+                "Ct",
+                "Cq",
+                "Cp",
+                "efficiency",
+            ],
+        )
+
+        with pd.ExcelWriter(
+            os.path.join(self.results_dir, "dataResults.xlsx"), engine="xlsxwriter"
+        ) as writer:
+            df_result.to_excel(writer, sheet_name="particlesResults", index=False)
 
     def __create_FO_per_time_graph(self):
         plt.plot(
