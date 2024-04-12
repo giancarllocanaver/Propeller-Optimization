@@ -96,5 +96,7 @@ class PipelineMethods:
         Method responsible for making the plots of
         the results.
         """
-        output_instance = OutputProcess(self.uuid, self.opt_inst, self.results_dir)
+        output_instance = OutputProcess(
+            self.uuid, self.opt_inst, self.results_dir, self.data_reader
+        )
         output_instance.process_outputs()
