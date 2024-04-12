@@ -1,16 +1,28 @@
 import os
 import plotly.express as px
 import pandas as pd
+
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 from .optimizer import PSO
+from .data_reader import DataReader
+from .blade_element_theory import BladeElementTheory
+from .utilities.airfoil_creation import AirfoilCreation
 
 
 class OutputProcess:
-    def __init__(self, uuid: str, optimization_instance: PSO, results_dir: str) -> None:
+    def __init__(
+        self,
+        uuid: str,
+        optimization_instance: PSO,
+        results_dir: str,
+        data_reader: DataReader,
+    ) -> None:
         self.uuid = uuid
         self.opt_inst = optimization_instance
         self.results_dir = results_dir
+        self.data_reader = data_reader
 
     def process_outputs(self):
         self.__create_excel_output_file()
@@ -110,4 +122,60 @@ class OutputProcess:
         )
 
     def __create_ct_and_cq_graphs_per_j(self):
-        pass
+        def create_airfoil_files():
+            id_best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
+            splines = self.opt_inst.particles.get(id_best_particle).splines
+
+            return {
+                section: AirfoilCreation.create_airfoil_in_xfoil_from_splines(
+                    splines[section]
+                )
+                for section in range(len(splines))
+            }
+
+        def execute_blade_element_theory(airfoil_files: dict, flight_conditions: dict):
+            blade_instance = BladeElementTheory(
+                uuid=self.uuid,
+                airfoils=airfoil_files,
+                flight_conditions=flight_conditions,
+                propeller_geometric_conditions=self.data_reader.propeller_geometric_conditions,
+                xfoil_instances=self.data_reader.optimization_data.get(
+                    "xfoilInstances"
+                ),
+            )
+            blade_instance.calculate_propeller_results()
+
+            return blade_instance.results
+
+        airfoil_files = create_airfoil_files()
+        velocities = [vel for vel in range(1, 100, 5)]
+        flight_cond = self.data_reader.flight_conditions.copy()
+
+        total_results = {
+            "advanceRate": list(),
+            "efficiency": list(),
+            "tractionCoefficient": list(),
+            "toqueCoefficient": list(),
+        }
+
+        for velocity in tqdm(velocities):
+            flight_cond["speed"] = velocity
+            result = execute_blade_element_theory(airfoil_files, flight_cond)
+
+            total_results["advanceRate"].append(result.get("advanceRate"))
+            total_results["efficiency"].append(result.get("efficiency"))
+            total_results["tractionCoefficient"].append(result.get("tCoefficient"))
+            total_results["toqueCoefficient"].append(result.get("qCoefficient"))
+
+        for type_result in ["efficiency", "tractionCoefficient", "toqueCoefficient"]:
+            fig, axs = plt.subplots(1, 1)
+            axs.plot(
+                total_results.get("advanceRate"), total_results.get(type_result), "--o"
+            )
+            axs.set(xlabel=r"$J$", ylabel=type_result)
+            axs.grid()
+
+            fig.savefig(
+                os.path.join(self.results_dir, f"{type_result}-J.jpeg"),
+                dpi=300,
+            )
