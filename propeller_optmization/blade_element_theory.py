@@ -212,6 +212,9 @@ class BladeElementTheory:
             self.advance_rate * t_coeffic / p_coeffic if p_coeffic != 0 else None
         )
 
+        if self.efficiency is None:
+            self.efficiency = np.random.uniform(low=0, high=0.1)
+
         self.results["traction"] = traction
         self.results["torque"] = torque
         self.results["tCoefficient"] = t_coeffic
@@ -230,7 +233,7 @@ def execute_xfoil(
 ) -> tuple:
     if spline is None:
         return section, 0, 1
-    
+
     xfoil_instance = XfoilManagement(reynolds, mach)
     xfoil_instance.execute_xfoil(
         splines_file=spline,
