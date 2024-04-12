@@ -67,16 +67,22 @@ class AirfoilCreation:
         time.sleep(0.5)
 
     @staticmethod
-    def create_airfoil_in_xfoil_from_splines(spline: np.ndarray) -> str:
+    def create_airfoil_in_xfoil_from_splines(
+        spline: np.ndarray, results_filename: str = None
+    ) -> str:
         if spline is None:
             return None
-        
+
         spline = spline.reshape((spline.shape[0], spline.shape[1]))
         x_points = spline[0]
         y_points = spline[1]
 
         uuid_airfoil = str(uuid4())[:10].replace("-", "")
-        filename_dir = f"processing/execution_steps/airfoil_{uuid_airfoil}.dat"
+
+        if results_filename is None:
+            filename_dir = f"processing/execution_steps/airfoil_{uuid_airfoil}.dat"
+        else:
+            filename_dir = results_filename
 
         with open(filename_dir, "w") as writer:
             for point in range(len(x_points)):

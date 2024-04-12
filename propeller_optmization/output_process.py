@@ -30,6 +30,7 @@ class OutputProcess:
         self.__create_variables_per_time_graph()
         self.__create_airfoils_graph()
         self.__create_ct_and_cq_graphs_per_j()
+        self.__create_airfoil_files()
 
     def __create_excel_output_file(self):
         vars_time = [
@@ -210,4 +211,17 @@ class OutputProcess:
             fig.savefig(
                 os.path.join(self.results_dir, f"{type_result}-J.jpeg"),
                 dpi=300,
+            )
+
+    def __create_airfoil_files(self):
+        id_best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
+        splines = self.opt_inst.particles.get(id_best_particle).splines
+
+        dir_path = os.path.join(self.results_dir, "airfoilFiles")
+        os.makedirs(dir_path, exist_ok=True)
+
+        for i, spline in enumerate(splines):
+            filename_with_dir = os.path.join(dir_path, f"airfoilSection{i}.dat")
+            AirfoilCreation.create_airfoil_in_xfoil_from_splines(
+                spline, filename_with_dir
             )
