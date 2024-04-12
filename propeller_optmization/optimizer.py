@@ -82,7 +82,22 @@ class PSO:
         return hyperparameters
 
     def __check_convergence(self) -> bool:
-        pass
+        best_variables = list(self.best.get("g_best").values())[0].variables
+
+        converg_counter = 0
+        for i, var in enumerate(best_variables):
+            distances = np.array(
+                [part.variables[i] - var for part in self.particles.values()]
+            )
+            mean_distances = np.mean(np.abs(distances))
+
+            if mean_distances <= self.data_reader.optimization_data.get("tolerance"):
+                converg_counter += 1
+
+        if converg_counter == len(best_variables):
+            return True
+
+        return False
 
     def __check_constrainsts(self):
         def penalize(fo: float) -> float:
