@@ -250,14 +250,15 @@ class PSO:
             self.__check_constrainsts()
             self.__update_p_best()
             self.__update_g_best()
+
+            self.fo_per_time[t] = list(self.best["g_best"].values())[
+                0
+            ].objective_function
+            self.results_per_time[t] = self.particles.copy()
+
             if self.__check_convergence():
                 break
             self.__update_velocity(t)
             self.__update_variables()
 
             os.system("cls")
-
-            self.fo_per_time[t] = list(self.best["g_best"].values())[
-                0
-            ].objective_function
-            self.results_per_time[t] = self.particles.copy()
