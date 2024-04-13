@@ -64,7 +64,7 @@ class PipelineMethods:
     def create_xfoil_instances(self) -> None:
         """
         Method responsible for creating new
-        instances of xfoil.
+        xfoil instances.
         """
         self.logger.start("Create xfoil instances")
 
@@ -86,8 +86,8 @@ class PipelineMethods:
 
     def optimize(self):
         """
-        Method responsible to start the optimization
-        of the propeller.
+        Method responsible for starting the
+        execution of the optimization.
         """
         self.logger.start("Optimization")
 

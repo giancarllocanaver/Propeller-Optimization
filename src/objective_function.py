@@ -32,30 +32,28 @@ class ObjectiveFunction:
         self.geometry_management = GeometryManagement()
         self.p_points = None
 
-    def set_initial_conditions(self):
+    def set_initial_conditions(self) -> None:
         """
-        Method responsible for calling the
-        methods which instantiate new properties
-        and calculate the obj function.
+        Method responsible for calling the functions which
+        will instantiate new properties to each particle
+        and calculate the objective function value.
         """
         self.__create_bezier_initial_points()
         self.__set_initial_variables()
         self.__calculate_objective_function()
 
-    def set_new_conditions(self):
+    def set_new_conditions(self) -> None:
         """
-        Method responsible for setting
-        new variables and calculate the
-        objective function.
+        Method responsible for setting a new condition to
+        update the objective function value.
         """
-        self.__update_variables()
+        self.__update_geometry()
         self.__calculate_objective_function()
 
-    def __create_bezier_initial_points(self):
+    def __create_bezier_initial_points(self) -> None:
         """
-        Method responsible for creating the bezier
-        points based on the airfoil passed in the
-        input.
+        Method responsible for creating the bezier points
+        based on the airfoil passed in the input.
         """
         self.p_points = self.geometry_management.create_base_airfoil(
             self.airfoil_name, self.airfoil_shape
@@ -72,19 +70,36 @@ class ObjectiveFunction:
                 }
             )
 
-    def __set_initial_variables(self):
+    def __set_initial_variables(self) -> None:
         """
-        Method responsible for setting
-        initial variables, used by the
-        optimizer.
+        Method responsible for setting the initial variables,
+        related to a number value added to one bezier point.
         """
 
-        def choose_random_parameter(section: int):
+        def choose_random_variable(section: int) -> float:
+            """
+            Method responsible for choosing a ramdom parameter,
+            according to the section blade, which is used as the
+            initial variable for the optimization.
+
+            :param section: section of the blade
+            ...
+            :return: a random number used as the initial variable
+                for the optimization
+            """
             lb, ub = LIMITS_FOR_RANDOM_PROPELLER_SECTION_CHOOSE.get(section)
 
             return np.random.uniform(low=lb, high=ub)
 
-        def create_initial_variables(particle: Particle):
+        def create_initial_geometry(particle: Particle) -> Particle:
+            """
+            Method responsible for creating the initial blade
+            geometry of each particle, considering the control
+            variable choosed by an initial random process.
+
+            :param particle: the particle which will be created
+                the geometry.
+            """
             propeller_splines = list()
             parameters = list()
 
@@ -92,7 +107,7 @@ class ObjectiveFunction:
                 a = self.a_points.copy()
 
                 while True:
-                    parameter = choose_random_parameter(propeller_section)
+                    parameter = choose_random_variable(propeller_section)
                     a[1][3] = self.a_points[1][3] + parameter
 
                     geometry_management = GeometryManagement()
@@ -113,17 +128,25 @@ class ObjectiveFunction:
         particles_ids = self.particles.keys()
         for particle in particles_ids:
             self.particles.update(
-                {particle: create_initial_variables(self.particles.get(particle))}
+                {particle: create_initial_geometry(self.particles.get(particle))}
             )
 
-    def __update_variables(self):
+    def __update_geometry(self) -> None:
         """
-        Method responsible for creating
-        the new airfoils based on the
-        new variables of the optimizer.
+        Method responsible for updating the geometry
+        of each Particle, based on new variable
+        values.
         """
 
-        def change_splines(particle: Particle):
+        def change_splines(particle: Particle) -> Particle:
+            """
+            Method responsible for changing the
+            spline of the geometry of each
+            Particle.
+
+            :param particle: the particle which
+                it splines will be updated.
+            """
             prop_splines = list()
 
             for section in range(7):
@@ -145,13 +168,23 @@ class ObjectiveFunction:
                 {particle_id: change_splines(self.particles.get(particle_id))}
             )
 
-    def __calculate_objective_function(self):
+    def __calculate_objective_function(self) -> None:
         """
-        Methdod responsible for calculating the
-        objective function of each particle.
+        Methdod responsible for calculating the objective
+        function of each particle.
         """
 
-        def create_airfoil_files(particles: Dict[int, Particle]):
+        def create_airfoil_files(particles: Dict[int, Particle]) -> dict:
+            """
+            Method responsible for creating the airfoil files
+            which will be used by xfoil to calculate the obje-
+            ctive funcion.
+
+            :param particles: dict of particles
+            ...
+            :return:: airfoil files per particle per section
+                blade.
+            """
             airfoil_file_names = {
                 id_particle: {
                     section: AirfoilCreation.create_airfoil_in_xfoil_from_splines(
@@ -164,7 +197,18 @@ class ObjectiveFunction:
 
             return airfoil_file_names
 
-        def execute_the_blade_element_theory(particle_id: int, airfoil_names: dict):
+        def execute_the_blade_element_theory(
+            particle_id: int, airfoil_names: dict
+        ) -> None:
+            """
+            Method responsible for executing the blade element
+            theory for obtaining the objective function value
+            of each particle.
+
+            :param particle_id: particle id
+            :param airfoil_names: airfoil files of each
+                particle of each section
+            """
             blade_instance = BladeElementTheory(
                 uuid=self.uuid,
                 airfoils=airfoil_names,

@@ -11,8 +11,10 @@ class CustomLogger(logging.Logger):
 
     def start(self, info: str) -> None:
         """
-        Method responsible to write a beggining information
+        Method responsible for writing a beggining information
         in the log and print the message along the execution.
+
+        :param info: message to be streamed
         """
         _time = time()
         _info = info.lower()
@@ -29,15 +31,19 @@ class CustomLogger(logging.Logger):
 
     def info_msg(self, info: str) -> None:
         """
-        Method responsible to write an information message
+        Method responsible for writing an information message
         in the log and print the message along the execution.
+
+        :param info: information message to be written
         """
         self.info(info.lower())
 
     def end(self, info: str) -> None:
         """
-        Method responsible to write an end information message
-        in the log and print It along the execution.
+        Method responsible for writing an end information message
+        in the log and print it along the execution.
+
+        :param info: information message to be written
         """
         _info = info.lower()
         _total_time = time() - self.timed_infos.get(_info)

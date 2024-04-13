@@ -16,7 +16,8 @@ class AirfoilCreation:
     def generate_airfoil_naca(self, airfoil_name: str) -> None:
         """
         Method responsible for executing the creation of
-        new airfoils and save the coordinates into a file.
+        new NACA foils and saving the coordinates into a
+        txt file.
 
         :param airfoil_name: airfoil name
         """
@@ -31,7 +32,12 @@ class AirfoilCreation:
         self.__create_airfoil()
 
     def obtain_p_points_by_file(self) -> np.ndarray:
+        """
+        Method responsible for obtaining the P points
+        created by xfoil into a certain txt file.
 
+        :return: P points generated
+        """
         points = np.loadtxt(self.airfoil_dir, skiprows=1)
         points_p = np.array([points[:, 0], points[:, 1]])
 
@@ -58,7 +64,11 @@ class AirfoilCreation:
 
         return points_p
 
-    def __create_airfoil(self):
+    def __create_airfoil(self) -> None:
+        """
+        Method responsible for creating new NACA foils
+        and saving the P points into a txt file.
+        """
         airfoil_generation_dir_file = (
             "processing/execution_steps/generation_airfoil_file.txt"
         )
@@ -95,6 +105,18 @@ class AirfoilCreation:
     def create_airfoil_in_xfoil_from_splines(
         spline: np.ndarray, results_filename: str = None
     ) -> str:
+        """
+        Method responsible for writing the airfoil
+        coordinates in a txt file, which will be u-
+        sed by xfoil to calculate the objective fun-
+        ction.
+
+        :param spline: spline of the foil
+        :param results_filename: the filename of the
+            airfoil
+        ...
+        :return: the complete patch name of the airfoil
+        """
         if spline is None:
             return None
 

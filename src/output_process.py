@@ -24,7 +24,11 @@ class OutputProcess:
         self.results_dir = results_dir
         self.data_reader = data_reader
 
-    def process_outputs(self):
+    def process_outputs(self) -> None:
+        """
+        Method responsible for calling functions
+        which will create the output files.
+        """
         self.__create_excel_output_file()
         self.__create_FO_per_time_graph()
         self.__create_variables_per_time_graph()
@@ -32,7 +36,11 @@ class OutputProcess:
         self.__create_ct_and_cq_graphs_per_j()
         self.__create_airfoil_files()
 
-    def __create_excel_output_file(self):
+    def __create_excel_output_file(self) -> None:
+        """
+        Method responsible for creating the excel
+        output file for each particle per time.
+        """
         vars_time = [
             (
                 time,
@@ -67,7 +75,11 @@ class OutputProcess:
         ) as writer:
             df_result.to_excel(writer, sheet_name="particlesResults", index=False)
 
-    def __create_FO_per_time_graph(self):
+    def __create_FO_per_time_graph(self) -> None:
+        """
+        Method responsible for creating the graph
+        of FO evolution per iteration.
+        """
         plt.plot(
             list(self.opt_inst.fo_per_time.keys()),
             list(self.opt_inst.fo_per_time.values()),
@@ -78,7 +90,11 @@ class OutputProcess:
         plt.grid()
         plt.savefig(os.path.join(self.results_dir, f"foIterTime.jpeg"), dpi=300)
 
-    def __create_variables_per_time_graph(self):
+    def __create_variables_per_time_graph(self) -> None:
+        """
+        Method responsible for creating the evolution
+        of the variables per iteration.
+        """
         path_vars_time = "varsPerTime"
         os.makedirs(
             os.path.join(
@@ -124,7 +140,11 @@ class OutputProcess:
                 )
             )
 
-    def __create_airfoils_graph(self):
+    def __create_airfoils_graph(self) -> None:
+        """
+        Method responsible for creating the airfoil
+        plots for each section along the blade.
+        """
         best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
         particle = self.opt_inst.particles.get(best_particle)
 
@@ -154,7 +174,12 @@ class OutputProcess:
             dpi=300,
         )
 
-    def __create_ct_and_cq_graphs_per_j(self):
+    def __create_ct_and_cq_graphs_per_j(self) -> None:
+        """
+        Method responsible for creating the Ct and Cq
+        coefficients per advance ratio value.
+        """
+
         def create_airfoil_files():
             id_best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
             splines = self.opt_inst.particles.get(id_best_particle).splines
@@ -213,7 +238,11 @@ class OutputProcess:
                 dpi=300,
             )
 
-    def __create_airfoil_files(self):
+    def __create_airfoil_files(self) -> None:
+        """
+        Method responsible for creating the airfoil
+        coordinates files of the best particle.
+        """
         id_best_particle = list(self.opt_inst.best.get("g_best").keys())[0]
         splines = self.opt_inst.particles.get(id_best_particle).splines
 

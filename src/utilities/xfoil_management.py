@@ -26,7 +26,19 @@ class XfoilManagement:
         AoA_step: float,
         iter: int,
         **kwargs,
-    ):
+    ) -> None:
+        """
+        Method responsible for executing other methods
+        for creating the xfoil commands which should be
+        used in xfoil program and executing them.
+
+        :param splines_file: path of the file with the
+            splines coordinates
+        :param l_AoA: lowest number of angle of attack
+        :param u_AoA: highest number of angle of attack
+        :param AoA_step: angle of attack step
+        :param iter: max iterations for converence
+        """
         self.splines_file = splines_file
         self.l_AoA = l_AoA
         self.u_AoA = u_AoA
@@ -47,6 +59,13 @@ class XfoilManagement:
         self.__execute_xfoil_file()
 
     def __create_xfoil_file_commands(self) -> str:
+        """
+        Method for creating the xfoil file commands to
+        use in xfoil.
+
+        :return: filename of the txt which will be used
+            in the xfoil.
+        """
         file_uuid = str(uuid4())[:10].replace("-", "")
 
         input_filename = f"xfoil_input_{file_uuid}.txt"
@@ -107,8 +126,19 @@ class XfoilManagement:
 
         return input_filename, output_filename
 
-    def __execute_xfoil_file(self):
-        def kill_process(proc_pid: int):
+    def __execute_xfoil_file(self) -> None:
+        """
+        Method responsible for executing the xfoil file
+        in an instance of xfoil.
+        """
+
+        def kill_process(proc_pid: int) -> None:
+            """
+            Method responsible for killing the xfoil process
+            if the process did not converged.
+
+            :param proc_pid: pid number of the process
+            """
             try:
                 process = psutil.Process(proc_pid)
                 for proc in process.children(recursive=True):
@@ -137,7 +167,14 @@ class XfoilManagement:
         except Exception as e:
             print(e)
 
-    def obtain_cl_cd(self):
+    def obtain_cl_cd(self) -> tuple:
+        """
+        Method responsible for obtaining a cl
+        and cd value of the airfoil executed
+        in xfoil.
+
+        :return: cl and cd values.
+        """
         output_dir = os.path.join(
             os.getcwd(),
             "processing",

@@ -92,6 +92,8 @@ class DataValidation:
         """
         Method responsible for checking if the airfoil data shape
         agrees.
+
+        :param data: P points of the airfoil passed in the input.
         """
         if data is None:
             return

@@ -23,10 +23,10 @@ class PSO:
 
     def __set_particles(self) -> dict:
         """
-        Method responsible for setting
-        new particles to the optimizer
+        Method responsible for instantiating
+        new empty particles to the optimizer.
 
-        :return: particles dict
+        :return: dict of Particle type
         """
         particles = {
             particle: Particle(
@@ -45,13 +45,14 @@ class PSO:
 
         return particles
 
-    def __set_best(self):
+    def __set_best(self) -> dict:
         """
-        Method responsible for setting
-        the best particles instance.
-        
-        :return:: best particles in
-            a dict
+        Method responsible for setting an empty
+        instance of the best Particle (g_best)
+        and the best of each particle per ite-
+        ration (p_best).
+
+        :return:: best particles instance.
         """
         best = {
             "p_best": self.particles.copy(),
@@ -60,12 +61,13 @@ class PSO:
 
         return best
 
-    def __set_best_objective(self):
+    def __set_best_objective(self) -> dict:
         """
-        Method responsible for setting
-        the best objective of particles.
+        Method responsible for setting the best
+        objective value of all particles and the
+        best per particle.
 
-        :return: best objective dict
+        :return: best objective values
         """
         best_obj = {
             "p_best_obj": {particle: 0.0 for particle in self.particles},
@@ -77,7 +79,7 @@ class PSO:
     def __set_hyperparameters(self) -> dict:
         """
         Method responsible for setting the hyperparameters
-        for the optimizer.
+        for using in the optimizer.
 
         :return: hyperparameters dict
         """
@@ -108,11 +110,11 @@ class PSO:
 
     def __check_convergence(self) -> bool:
         """
-        Method responsible for checking if
-        the optimization is converged.
+        Method responsible for checking if the optimization
+        is converged by a certain tolerance.
 
-        :return: True if the optimization
-            is converged
+        :return: True if the optimization is converged, and
+            False if not.
         """
         best_variables = list(self.best.get("g_best").values())[0].variables
 
@@ -131,20 +133,20 @@ class PSO:
 
         return False
 
-    def __check_constrainsts(self):
+    def __check_constrainsts(self) -> None:
         """
-        Method responsible for checking
-        if the constraints are valid, if
-        not, a penalty is applied in the
-        FO of the corresponding particle.
+        Method responsible for checking if the constraints
+        are valid for certain conditions, if not, a penal-
+        ty value is applied in the FO value of the corres-
+        ponding particle.
         """
+
         def penalize(fo: float) -> float:
             """
-            Method responsible for penalizing
-            the objective function if the
-            constraints are not fullfiled.
+            Method responsible for penalizing the objective
+            function if the constraints are not fullfiled.
 
-            :param fo: objective function
+            :param fo: objective function value
             ...
             :return: new FO, penalized.
             """
@@ -159,28 +161,26 @@ class PSO:
 
         def check_fo_condition(fo: float) -> bool:
             """
-            Method responsible for checking
-            if the objective function is
-            valid.
+            Method responsible for checking if the objective
+            function value is valid.
 
-            :param fo: objective function
-                value
+            :param fo: objective function value
             ...
-            :return: True if the value is
-                value
+            :return: True if the value is value, else False
             """
             return True if (fo < 1) & (fo >= 0) else False
 
         def check_thickness_condition(x: np.ndarray) -> bool:
             """
-            Method responsible for checking
-            if the thickness values based
-            on variables are valid.
+            Method responsible for checking if the thickness
+            values of the airfoil are valid. In a nutshell,
+            airfoils closely to the root of the blade must
+            have larger thickness than those farly.
 
-            :param x: variables to optmize
+            :param x: variables of the optimization problem
             ...
-            :return: True if the check is
-                ok
+            :return: True if the condition is valid, else
+                False.
             """
             condition = {False for id_ in range(len(x)) if x[0] > x[id_]}
 
@@ -194,11 +194,11 @@ class PSO:
                 new_fo = penalize(particle.objective_function)
                 self.particles[id_part] = particle._replace(objective_function=new_fo)
 
-    def __update_p_best(self):
+    def __update_p_best(self) -> None:
         """
-        Method responsible for updating
-        the best particles in the best
-        attribute.
+        Method responsible for updating the best particle
+        of each particle in the best attribute of parti-
+        cles (p_best).
         """
         for id_p, particle in self.particles.items():
             if particle.objective_function >= self.best_objective.get("p_best_obj").get(
@@ -207,11 +207,10 @@ class PSO:
                 self.best["p_best"][id_p] = particle
                 self.best_objective["p_best_obj"][id_p] = particle.objective_function
 
-    def __update_g_best(self):
+    def __update_g_best(self) -> None:
         """
-        Method responsible for updating
-        the best particle in the best
-        attribute.
+        Method responsible for updating the best particle
+        of all particles in global the best attribute.
         """
         part_obj = {p.objective_function: p_idx for p_idx, p in self.particles.items()}
         best_obj = max(part_obj.keys())
@@ -223,10 +222,10 @@ class PSO:
                 best_part: self.particles.get(best_part)
             }
 
-    def __update_velocity(self, t: int):
+    def __update_velocity(self, t: int) -> None:
         """
-        Method responsible for updating the
-        velocity terms.
+        Method responsible for updating the velocity
+        terms of each particle.
 
         :param t: the step iteration
         """
@@ -255,20 +254,20 @@ class PSO:
                 velocity=new_velocity
             )
 
-    def __update_variables(self):
+    def __update_variables(self) -> None:
         """
-        Method responsible for updating
-        the particle variables.
+        Method responsible for updating the variables of the
+        optimization problem.
         """
         for id_particle, particle in self.particles.items():
             new_position = particle.velocity + particle.variables
 
             self.particles[id_particle] = particle._replace(variables=new_position)
 
-    def __update_objective_function(self):
+    def __update_objective_function(self) -> None:
         """
-        Method responsible for updating the
-        objective function of the variables.
+        Method responsible for updating the objective function
+        value of each particle.
         """
         obj_func_instance = ObjectiveFunction(
             airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
@@ -285,9 +284,8 @@ class PSO:
 
     def set_initial_conditions(self):
         """
-        Method responsible for setting
-        the initial conditions to run
-        the optimizer.
+        Method responsible for setting the initial conditions
+        to run the optimizer.
         """
         init_cond_inst = ObjectiveFunction(
             airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
@@ -311,10 +309,10 @@ class PSO:
         self.fo_per_time[1] = list(self.best["g_best"].values())[0].objective_function
         self.results_per_time[1] = self.particles.copy()
 
-    def iterate(self):
+    def iterate(self) -> None:
         """
-        Method responsible for iterating
-        the optimizer.
+        Method responsible for starting the iteration process
+        of the propeller optimization.
         """
         for t in tqdm(
             range(2, self.data_reader.optimization_data.get("maximumIterations") + 1)

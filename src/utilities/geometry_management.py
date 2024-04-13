@@ -11,7 +11,22 @@ class GeometryManagement(AirfoilCreation):
 
         super().__init__()
 
-    def create_base_airfoil(self, base_airfoil_name: str, airfoil_data: dict = None) -> np.ndarray:
+    def create_base_airfoil(
+        self, base_airfoil_name: str, airfoil_data: dict = None
+    ) -> np.ndarray:
+        """
+        Method responsible for calling others which will
+        get the bezier P points of the airfoil, or will
+        generate it.
+
+        :param base_airfoil_name: airfoil name which is
+            used for generating the airfoil in xfoil
+            (NACA foils).
+        :param airfoil_data: P points passed in the input
+        ...
+        :return: bezier P points which will be used for
+            changing the airfoil shape.
+        """
         if not airfoil_data:
             self.generate_airfoil_naca(base_airfoil_name)
             self.p_points = self.obtain_p_points_by_file()
@@ -21,7 +36,24 @@ class GeometryManagement(AirfoilCreation):
         return self.p_points
 
     def generate_bezier_points(self) -> np.ndarray:
-        def bezier_coefficients(points_p):
+        """
+        Method responsible for generating the
+        bezier points, based on P points.
+
+        :return: bezier A points, used for chan-
+            ging the geometry of the foil.
+        """
+
+        def bezier_coefficients(points_p: np.ndarray) -> tuple:
+            """
+            Method responsible for obtaining the
+            bezier A and B points, according to
+            the bezier P points.
+
+            :param points_p: bezier P points.
+            ...
+            :return: A and B points.
+            """
             n = len(points_p) - 1
 
             M = np.zeros((n, n))
@@ -57,6 +89,19 @@ class GeometryManagement(AirfoilCreation):
             return a, b
 
         def line(i, j, a, b):
+            """
+            Method for generating a lambda
+            function for generating the
+            spline of the foil.
+
+            :param i: a value of one of the
+                P points.
+            :param j: next P point value.
+            :parma a: a value of the A points
+            :parma b: a value of the B points
+            ...
+            :return: the lambda function
+            """
             return (
                 lambda t: (1 - t) ** 3 * i
                 + 3 * t * (1 - t) ** 2 * a
@@ -86,13 +131,22 @@ class GeometryManagement(AirfoilCreation):
         a_points = np.array(a_points)
         b_poins = np.array(b_poins)
 
-        airfoil_spline = np.reshape(splines, (splines.shape[0], splines.shape[1]))
         a_points = np.reshape(a_points, (a_points.shape[0], a_points.shape[1]))
 
         return a_points
 
     def update_airfoil(self, a_points: np.ndarray, p_points: np.ndarray):
-        def create_new_p_points(a: np.ndarray, p_points: np.array, n: int):
+        def create_new_p_points(a: np.ndarray, p_points: np.ndarray, n: int):
+            """
+            Method responsible for creating the new P points
+            after any movement in the A points.
+
+            :param a: A points
+            :param p_points: old P points
+            :param n: quantity of points
+            ...
+            :return: new P points.
+            """
             p_1 = (2 * a[0] + a[1] - p_points[0]) / 2
             p_n_minous_1 = (2 * a[-2] + 7 * a[-1] - p_points[-1]) / 8
 
@@ -111,12 +165,34 @@ class GeometryManagement(AirfoilCreation):
             return intermediate_points
 
         def create_new_b_points(a: np.ndarray, p_points: np.ndarray, n: int):
+            """
+            Method responsible for creating new
+            B points based on P and A points.
+
+            :param a: A points
+            :param b: B points
+            :param n: quantity of points
+            ...
+            :return: B points
+            """
             b = np.array([2 * p_points[i + 1] - a[i + 1] for i in range(0, n - 1)])
             b = np.append(b, (a[n - 1] + p_points[n]) / 2)
 
             return b
 
         def create_new_spline(p_i, p_i_plus_1, a, b):
+            """
+            Method responsible for creating new
+            splines, based on bezier points.
+
+            :param p_i: first P point value
+            :param p_i_plus_1: next P point value
+            :param a: A point value
+            :param b: B point value
+            ...
+            :return: lambda function corresponding
+                to the spline of the airfoil.
+            """
             return (
                 lambda t: (1 - t) ** 3 * p_i
                 + 3 * t * (1 - t) ** 2 * a
@@ -124,7 +200,15 @@ class GeometryManagement(AirfoilCreation):
                 + t**3 * p_i_plus_1
             )
 
-        def ajust_splines(splines: np.ndarray):
+        def ajust_splines(splines: np.ndarray) -> np.ndarray:
+            """
+            Method responsible for removing duplicated
+            points along the spline.
+
+            :param splines: spline of the airfoil.
+            ...
+            :return: ajusted spline
+            """
             x_coordinates = list()
             y_coordinates = list()
 
@@ -138,7 +222,17 @@ class GeometryManagement(AirfoilCreation):
 
             return np.array((x_coordinates, y_coordinates))
 
-        def check_intersection(splines: np.ndarray):
+        def check_intersection(splines: np.ndarray) -> bool:
+            """
+            Method responsible for checking if the corresponding
+            spline is auto intersected, if not, returns False,
+            else returns True.
+
+            :param splines: airfoil spline
+            ...
+            :return: returns True if auto intersected, else False
+            """
+
             def intersection(x1, x2, x3, x4, y1, y2, y3, y4):
                 d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
                 if d:

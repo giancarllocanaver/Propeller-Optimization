@@ -24,6 +24,13 @@ class BladeElementTheory:
         self.results = dict()
 
     def calculate_propeller_results(self) -> dict:
+        """
+        Method responsible for calling functions which
+        will calculate the objective function and im-
+        portant results of the propeller.
+
+        :return: results of the propeller
+        """
         self.__calculate_tangencial_velocity()
         self.__calculate_advance_rate()
         self.__calculate_phi()
@@ -36,7 +43,11 @@ class BladeElementTheory:
 
         return self.results
 
-    def __calculate_tangencial_velocity(self):
+    def __calculate_tangencial_velocity(self) -> None:
+        """
+        Method responsible for calculating the tangencial
+        velocity of each part of the blade.
+        """
         self.tangencial_velocity = (
             2.0
             * np.pi
@@ -47,7 +58,11 @@ class BladeElementTheory:
 
         self.results["tangencialVelocity"] = self.tangencial_velocity
 
-    def __calculate_advance_rate(self):
+    def __calculate_advance_rate(self) -> None:
+        """
+        Method responsible for calculating the advance rate
+        of the propeller.
+        """
         self.advance_rate = (
             60
             * self.flight_conditions.get("speed")
@@ -59,7 +74,11 @@ class BladeElementTheory:
 
         self.results["advanceRate"] = self.advance_rate
 
-    def __calculate_phi(self):
+    def __calculate_phi(self) -> None:
+        """
+        Method responsible for calculating the phi values
+        along the blade section.
+        """
         self.phi = np.arctan(
             self.flight_conditions.get("speed") / self.tangencial_velocity
         )
@@ -67,12 +86,21 @@ class BladeElementTheory:
 
         self.results["phi"] = self.phi
 
-    def __calculate_resultant_velocity(self):
+    def __calculate_resultant_velocity(self) -> None:
+        """
+        Method responsible for calculating the resultant
+        velocity along of the blade sections.
+        """
         self.resultant_velocity = self.tangencial_velocity / np.cos(self.phi)
 
         self.results["resultantVelocity"] = self.resultant_velocity
 
-    def __calculate_reynolds_and_mach(self):
+    def __calculate_reynolds_and_mach(self) -> None:
+        """
+        Method responsible for calculating the reynolds
+        number and the mach number along the blade sec-
+        tions.
+        """
         self.reynolds = (
             self.flight_conditions.get("airDensity")
             * self.flight_conditions.get("speed")
@@ -86,8 +114,22 @@ class BladeElementTheory:
         self.results["reynolds"] = self.reynolds
         self.results["mach"] = self.mach
 
-    def __calculate_Cl_and_Cd(self):
+    def __calculate_Cl_and_Cd(self) -> None:
+        """
+        Method responsible for calculating the cl and
+        cd coefficients of each blade section.
+        """
+
         def split_instances_per_time() -> dict:
+            """
+            Method responsible for splitting the airfoils
+            to be executed in xfoil in a corresponding x-
+            foil instance per time of execution (upper li-
+            mit for xfoil instances available).
+
+            :return: airfoils splitted in a corresponding
+                xfoil instance to be executed per time.
+            """
             splines_copy = list(self.airfoils.items())
             t_inst_airf = dict()
             t = 0
@@ -132,13 +174,21 @@ class BladeElementTheory:
 
         self.cl_cd_results = results
 
-    def __calculate_gamma(self):
+    def __calculate_gamma(self) -> None:
+        """
+        Method responsible for calculating the gamma
+        results per section of the blade.
+        """
         self.gamma = [
             np.arctan(sec[2] / sec[1]) if sec[1] != 0 else None
             for sec in self.cl_cd_results
         ]
 
-    def __calculate_dt_and_dq(self):
+    def __calculate_dt_and_dq(self) -> None:
+        """
+        Method responsible for calculating the Ct and
+        Cq coefficients.
+        """
         q = (
             0.5
             * self.flight_conditions.get("airDensity")
@@ -183,7 +233,12 @@ class BladeElementTheory:
         self.results["dt"] = self.dt
         self.results["dq"] = self.dq
 
-    def __calculate_efficiency(self):
+    def __calculate_efficiency(self) -> None:
+        """
+        Method responsible for calculating the propeller
+        efficiency.
+        """
+
         def integrate(y: list, x: list):
             i = 0
             for n in range(1, len(x)):
@@ -231,6 +286,23 @@ def execute_xfoil(
     reynolds: float,
     mach: float,
 ) -> tuple:
+    """
+    Method responsible for executing an instance
+    of xfoil, aiming the airfoil Cl and Cd
+    results.
+
+    :param spline: spline file to be entered in
+        the xfoil.
+    :param xfoil_instance_numb: the specific num-
+        ber of the xfoil instance.
+    :param section: the section number of the
+        blade.
+    :param alpha: angle of attack used.
+    :param reynolds: reynolds number
+    :param mach: mach number
+    ...
+    :return: cl and cd results.
+    """
     if spline is None:
         return section, 0, 1
 

@@ -7,7 +7,7 @@ from src.pipelines import PipelineMethods
 
 def define_parser() -> dict:
     """
-    Method responsible to create the parser arguments
+    Method responsible for creating the parser arguments
     for the main function.
 
     :return: argument parser
@@ -40,6 +40,9 @@ def define_parser() -> dict:
 def main(arguments_parsed: argparse.Namespace) -> None:
     """
     Main funtion of the propeller optimizer.
+
+    :param arguments_parsed: arguments for
+        starting the optimization.
     """
     pipeline = PipelineMethods(arguments_parsed)
     logger = pipeline.logger

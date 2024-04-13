@@ -18,7 +18,8 @@ class DataReader:
 
     def process_data_reader_pipeline(self):
         """
-        Calling DataReader pipeline methods.
+        Method responsible for calling the DataReader
+        pipeline methods.
         """
         self.__pre_reading_validation()
         self.__read_data()
@@ -29,7 +30,7 @@ class DataReader:
     def __pre_reading_validation(self):
         """
         Method responsible for validating the existance
-        and the extennsion of the input file
+        and the extennsion of the input file.
         """
         self.validator.check_file_existance(self.argument_parser.file)
         self.validator.check_file_extension(self.argument_parser.file)
