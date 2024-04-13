@@ -14,6 +14,12 @@ class AirfoilCreation:
         self.airfoil_dir = None
 
     def generate_airfoil(self, airfoil_name: str) -> None:
+        """
+        Method responsible for executing the creation of
+        new airfoils and save the coordinates into a file.
+
+        :param airfoil_name: airfoil name
+        """
         self.airfoil_name = airfoil_name
         self.airfoil_dir = os.path.join(
             os.getcwd(),
@@ -25,6 +31,7 @@ class AirfoilCreation:
         self.__create_airfoil()
 
     def obtain_p_points(self):
+        
         points = np.loadtxt(self.airfoil_dir, skiprows=1)
         points_p = np.array([points[:, 0], points[:, 1]])
 

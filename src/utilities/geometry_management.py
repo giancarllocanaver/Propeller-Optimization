@@ -1,8 +1,8 @@
 from secrets import randbits
 import numpy as np
 
-from propeller_optmization.utilities.airfoil_creation import AirfoilCreation
-from propeller_optmization.utilities.constants import POINTS_BETWEEN_POINTS_P
+from src.utilities.airfoil_creation import AirfoilCreation
+from src.utilities.constants import POINTS_BETWEEN_POINTS_P
 
 
 class GeometryManagement(AirfoilCreation):

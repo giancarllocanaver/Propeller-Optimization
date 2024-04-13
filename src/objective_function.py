@@ -33,15 +33,30 @@ class ObjectiveFunction:
         self.p_points = None
 
     def set_initial_conditions(self):
+        """
+        Method responsible for calling the
+        methods which instantiate new properties
+        and calculate the obj function.
+        """
         self.__create_bezier_initial_points()
         self.__set_initial_variables()
         self.__calculate_objective_function()
 
     def set_new_conditions(self):
+        """
+        Method responsible for setting
+        new variables and calculate the
+        objective function.
+        """
         self.__update_variables()
         self.__calculate_objective_function()
 
     def __create_bezier_initial_points(self):
+        """
+        Method responsible for creating the bezier
+        points based on the airfoil passed in the
+        input.
+        """
         self.p_points = self.geometry_management.create_base_airfoil(self.airfoil_name)
         self.a_points = self.geometry_management.generate_bezier_points()
 
@@ -56,6 +71,11 @@ class ObjectiveFunction:
             )
 
     def __set_initial_variables(self):
+        """
+        Method responsible for setting
+        initial variables, used by the
+        optimizer.
+        """
         def choose_random_parameter(section: int):
             lb, ub = LIMITS_FOR_RANDOM_PROPELLER_SECTION_CHOOSE.get(section)
 
@@ -94,6 +114,11 @@ class ObjectiveFunction:
             )
 
     def __update_variables(self):
+        """
+        Method responsible for creating
+        the new airfoils based on the
+        new variables of the optimizer.
+        """
         def change_splines(particle: Particle):
             prop_splines = list()
 
@@ -117,6 +142,10 @@ class ObjectiveFunction:
             )
 
     def __calculate_objective_function(self):
+        """
+        Methdod responsible for calculating the
+        objective function of each particle.
+        """
         def create_airfoil_files(particles: Dict[int, Particle]):
             airfoil_file_names = {
                 id_particle: {

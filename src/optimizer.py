@@ -22,6 +22,12 @@ class PSO:
         self.hyperparameters = self.__set_hyperparameters()
 
     def __set_particles(self) -> dict:
+        """
+        Method responsible for setting
+        new particles to the optimizer
+
+        :return: particles dict
+        """
         particles = {
             particle: Particle(
                 objective_function=0.0,
@@ -40,6 +46,13 @@ class PSO:
         return particles
 
     def __set_best(self):
+        """
+        Method responsible for setting
+        the best particles instance.
+        
+        :return:: best particles in
+            a dict
+        """
         best = {
             "p_best": self.particles.copy(),
             "g_best": {0: self.particles.get(0)},
@@ -48,6 +61,12 @@ class PSO:
         return best
 
     def __set_best_objective(self):
+        """
+        Method responsible for setting
+        the best objective of particles.
+
+        :return: best objective dict
+        """
         best_obj = {
             "p_best_obj": {particle: 0.0 for particle in self.particles},
             "g_best_obj": {0: 0.0},
@@ -56,6 +75,12 @@ class PSO:
         return best_obj
 
     def __set_hyperparameters(self) -> dict:
+        """
+        Method responsible for setting the hyperparameters
+        for the optimizer.
+
+        :return: hyperparameters dict
+        """
         r = np.random.rand(2)
 
         if self.data_reader.optimization_data.get("constantHyperParameters"):
@@ -82,6 +107,13 @@ class PSO:
         return hyperparameters
 
     def __check_convergence(self) -> bool:
+        """
+        Method responsible for checking if
+        the optimization is converged.
+
+        :return: True if the optimization
+            is converged
+        """
         best_variables = list(self.best.get("g_best").values())[0].variables
 
         converg_counter = 0
@@ -100,6 +132,12 @@ class PSO:
         return False
 
     def __check_constrainsts(self):
+        """
+        Method responsible for checking
+        if the constraints are valid, if
+        not, a penalty is applied in the
+        FO of the corresponding particle.
+        """
         def penalize(fo: float) -> float:
             """
             Method responsible for penalizing
@@ -157,6 +195,11 @@ class PSO:
                 self.particles[id_part] = particle._replace(objective_function=new_fo)
 
     def __update_p_best(self):
+        """
+        Method responsible for updating
+        the best particles in the best
+        attribute.
+        """
         for id_p, particle in self.particles.items():
             if particle.objective_function >= self.best_objective.get("p_best_obj").get(
                 id_p
@@ -165,6 +208,11 @@ class PSO:
                 self.best_objective["p_best_obj"][id_p] = particle.objective_function
 
     def __update_g_best(self):
+        """
+        Method responsible for updating
+        the best particle in the best
+        attribute.
+        """
         part_obj = {p.objective_function: p_idx for p_idx, p in self.particles.items()}
         best_obj = max(part_obj.keys())
         best_part = part_obj.get(best_obj)
@@ -176,6 +224,12 @@ class PSO:
             }
 
     def __update_velocity(self, t: int):
+        """
+        Method responsible for updating the
+        velocity terms.
+
+        :param t: the step iteration
+        """
         for id_part, p_best_part in self.best.get("p_best").items():
             particle_variables = self.particles.get(id_part).variables
             p_best_variables = p_best_part.variables
@@ -202,12 +256,20 @@ class PSO:
             )
 
     def __update_variables(self):
+        """
+        Method responsible for updating
+        the particle variables.
+        """
         for id_particle, particle in self.particles.items():
             new_position = particle.velocity + particle.variables
 
             self.particles[id_particle] = particle._replace(variables=new_position)
 
     def __update_objective_function(self):
+        """
+        Method responsible for updating the
+        objective function of the variables.
+        """
         obj_func_instance = ObjectiveFunction(
             airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
             particles=self.particles,
@@ -221,6 +283,11 @@ class PSO:
         self.particles = obj_func_instance.particles
 
     def set_initial_conditions(self):
+        """
+        Method responsible for setting
+        the initial conditions to run
+        the optimizer.
+        """
         init_cond_inst = ObjectiveFunction(
             airfoil_name=self.data_reader.propeller_geometric_conditions.get("airfoil"),
             particles=self.particles,
@@ -243,6 +310,10 @@ class PSO:
         self.results_per_time[1] = self.particles.copy()
 
     def iterate(self):
+        """
+        Method responsible for iterating
+        the optimizer.
+        """
         for t in tqdm(
             range(2, self.data_reader.optimization_data.get("maximumIterations") + 1)
         ):
