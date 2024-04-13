@@ -11,9 +11,12 @@ class GeometryManagement(AirfoilCreation):
 
         super().__init__()
 
-    def create_base_airfoil(self, base_airfoil_name: str) -> np.ndarray:
-        self.generate_airfoil(base_airfoil_name)
-        self.p_points = self.obtain_p_points()
+    def create_base_airfoil(self, base_airfoil_name: str, airfoil_data: dict = None) -> np.ndarray:
+        if not airfoil_data:
+            self.generate_airfoil_naca(base_airfoil_name)
+            self.p_points = self.obtain_p_points_by_file()
+        else:
+            self.p_points = self.suit_p_points(airfoil_data)
 
         return self.p_points
 

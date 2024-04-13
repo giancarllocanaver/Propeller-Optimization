@@ -24,6 +24,7 @@ class DataReader:
         self.__read_data()
         self.__post_reading_validation()
         self.__instantiate_variables()
+        self.__airfoil_shape_validation()
 
     def __pre_reading_validation(self):
         """
@@ -60,3 +61,11 @@ class DataReader:
             "propellerGeometricConditions"
         )
         self.airfoil_geometry = self.input_data.get("airfoilGeometry", None)
+
+    def __airfoil_shape_validation(self):
+        """
+        Method responsible for validating the
+        airfoil shape, if passed in the input
+        variables.
+        """
+        self.validator.check_airfoil_shape(self.airfoil_geometry)

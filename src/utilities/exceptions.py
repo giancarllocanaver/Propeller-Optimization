@@ -9,3 +9,6 @@ class MissingKeysError(Exception):
 
 class ErrorDtypeKeys(Exception):
     pass
+
+class ErrorAirfoilShape(Exception):
+    pass

@@ -13,7 +13,7 @@ class AirfoilCreation:
         self.airfoil_name = None
         self.airfoil_dir = None
 
-    def generate_airfoil(self, airfoil_name: str) -> None:
+    def generate_airfoil_naca(self, airfoil_name: str) -> None:
         """
         Method responsible for executing the creation of
         new airfoils and save the coordinates into a file.
@@ -30,10 +30,28 @@ class AirfoilCreation:
 
         self.__create_airfoil()
 
-    def obtain_p_points(self):
-        
+    def obtain_p_points_by_file(self) -> np.ndarray:
+
         points = np.loadtxt(self.airfoil_dir, skiprows=1)
         points_p = np.array([points[:, 0], points[:, 1]])
+
+        points_p[1][0] = 0
+        points_p[1][-1] = 0
+
+        return points_p
+
+    def suit_p_points(self, airfoil_data: dict) -> np.ndarray:
+        """
+        Method responsible for adapting the airfoil bezier P
+        points passed in input to the corresponding format
+        used in the optimizer.
+
+        :param airfoil_data: corresponding bezier P points of
+            the airfoil
+        ...
+        :return: addapted airfoil P points to numpy array
+        """
+        points_p = np.array([airfoil_data.get("xPoints"), airfoil_data.get("yPoints")])
 
         points_p[1][0] = 0
         points_p[1][-1] = 0

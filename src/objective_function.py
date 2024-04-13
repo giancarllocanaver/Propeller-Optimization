@@ -57,7 +57,9 @@ class ObjectiveFunction:
         points based on the airfoil passed in the
         input.
         """
-        self.p_points = self.geometry_management.create_base_airfoil(self.airfoil_name)
+        self.p_points = self.geometry_management.create_base_airfoil(
+            self.airfoil_name, self.airfoil_shape
+        )
         self.a_points = self.geometry_management.generate_bezier_points()
 
         for particle_id, particle in self.particles.items():
@@ -76,6 +78,7 @@ class ObjectiveFunction:
         initial variables, used by the
         optimizer.
         """
+
         def choose_random_parameter(section: int):
             lb, ub = LIMITS_FOR_RANDOM_PROPELLER_SECTION_CHOOSE.get(section)
 
@@ -119,6 +122,7 @@ class ObjectiveFunction:
         the new airfoils based on the
         new variables of the optimizer.
         """
+
         def change_splines(particle: Particle):
             prop_splines = list()
 
@@ -146,6 +150,7 @@ class ObjectiveFunction:
         Methdod responsible for calculating the
         objective function of each particle.
         """
+
         def create_airfoil_files(particles: Dict[int, Particle]):
             airfoil_file_names = {
                 id_particle: {

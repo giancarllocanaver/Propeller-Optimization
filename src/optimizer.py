@@ -277,6 +277,7 @@ class PSO:
             propeller_geometry=self.data_reader.propeller_geometric_conditions,
             uuid=self.uuid,
             xfoil_instances=self.data_reader.optimization_data.get("xfoilInstances"),
+            airfoil_shape=self.data_reader.airfoil_geometry,
         )
         obj_func_instance.set_new_conditions()
 
@@ -295,6 +296,7 @@ class PSO:
             propeller_geometry=self.data_reader.propeller_geometric_conditions,
             uuid=self.uuid,
             xfoil_instances=self.data_reader.optimization_data.get("xfoilInstances"),
+            airfoil_shape=self.data_reader.airfoil_geometry,
         )
         init_cond_inst.set_initial_conditions()
 
