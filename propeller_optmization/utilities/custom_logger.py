@@ -24,7 +24,7 @@ class CustomLogger(logging.Logger):
 
         self.timed_infos[_info] = _time
 
-        complete_message = f"Beggining {_info}"
+        complete_message = f"Starting {_info}"
         self.info(complete_message)
 
     def info_msg(self, info: str) -> None:
@@ -42,7 +42,7 @@ class CustomLogger(logging.Logger):
         _info = info.lower()
         _total_time = time() - self.timed_infos.get(_info)
 
-        complete_message = f">>> Executed {_info} in {_total_time} s"
+        complete_message = f">>> Executed {_info} in {_total_time} s\n\n"
         self.info(complete_message)
 
         del self.timed_infos[_info]
