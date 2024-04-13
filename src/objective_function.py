@@ -3,7 +3,7 @@ from typing import Dict
 import numpy as np
 
 from .utilities.geometry_management import GeometryManagement
-from .data_structures import Particle
+from .data_modules.data_structures import Particle
 from .utilities.constants import (
     LIMITS_FOR_RANDOM_PROPELLER_SECTION_CHOOSE,
 )

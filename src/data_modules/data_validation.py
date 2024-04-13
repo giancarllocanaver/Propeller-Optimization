@@ -1,7 +1,7 @@
 import os
 
-from .utilities.exceptions import *
-from .utilities.constants import *
+from ..utilities.exceptions import *
+from ..utilities.constants import *
 
 class DataValidation:
     def __init__(self) -> None:

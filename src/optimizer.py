@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .data_reader import DataReader
-from .data_structures import Particle
+from .data_modules.data_reader import DataReader
+from .data_modules.data_structures import Particle
 from .objective_function import ObjectiveFunction
 
 

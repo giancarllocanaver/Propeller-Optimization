@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 
 from .optimizer import PSO
-from .data_reader import DataReader
+from .data_modules.data_reader import DataReader
 from .blade_element_theory import BladeElementTheory
 from .utilities.airfoil_creation import AirfoilCreation
 

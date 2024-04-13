@@ -4,7 +4,7 @@ import os
 import logging
 import shutil
 
-from .data_reader import DataReader
+from .data_modules.data_reader import DataReader
 from .utilities.custom_logger import CustomLogger
 from .optimizer import PSO
 from .output_process import OutputProcess
