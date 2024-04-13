@@ -55,10 +55,17 @@ def main(arguments_parsed: argparse.Namespace) -> None:
     Main funtion of the propeller optimizer.
     """
     pipeline = PipelineMethods(arguments_parsed)
-    pipeline.read_data()
-    pipeline.create_xfoil_instances()
-    pipeline.optimize()
-    pipeline.obtain_results()
+    logger = pipeline.logger
+
+    try:
+        pipeline.read_data()
+        pipeline.create_xfoil_instances()
+        pipeline.optimize()
+        pipeline.obtain_results()
+    except Exception as e:
+        logger.exception(e, stack_info=True)
+
+        raise e
 
 
 if __name__ == "__main__":

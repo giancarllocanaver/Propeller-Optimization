@@ -27,7 +27,7 @@ class CustomLogger(logging.Logger):
         complete_message = f"Beggining {_info}"
         self.info(complete_message)
 
-    def info(self, info: str) -> None:
+    def info_msg(self, info: str) -> None:
         """
         Method responsible to write an information message
         in the log and print the message along the execution.

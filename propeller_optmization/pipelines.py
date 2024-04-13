@@ -55,13 +55,19 @@ class PipelineMethods:
         Method responsible for reading the
         input file.
         """
+        self.logger.start("Read data")
+
         self.data_reader.process_data_reader_pipeline()
+
+        self.logger.end("Read data")
 
     def create_xfoil_instances(self) -> None:
         """
         Method responsible for creating new
         instances of xfoil.
         """
+        self.logger.start("Create xfoil instances")
+
         dir_base = os.path.join(
             os.getcwd(),
             "processing",
@@ -76,11 +82,15 @@ class PipelineMethods:
         for i in range(quantity_of_instances):
             shutil.copy(xfoil_base, os.path.join(dir_base, f"xfoil_{i}.exe"))
 
+        self.logger.end("Create xfoil instances")
+
     def optimize(self):
         """
         Method responsible to start the optimization
         of the propeller.
         """
+        self.logger.start("Optimization")
+
         optimization_instance = PSO(
             data_reader=self.data_reader,
             uuid=self.uuid,
@@ -91,12 +101,18 @@ class PipelineMethods:
 
         self.opt_inst = optimization_instance
 
+        self.logger.end("Optimization")
+
     def obtain_results(self):
         """
         Method responsible for making the plots of
         the results.
         """
+        self.logger.start("Making results")
+
         output_instance = OutputProcess(
             self.uuid, self.opt_inst, self.results_dir, self.data_reader
         )
         output_instance.process_outputs()
+
+        self.logger.end("Making results")
