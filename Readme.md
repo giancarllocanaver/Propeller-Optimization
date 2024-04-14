@@ -52,7 +52,7 @@ $$F.O = max (J \frac{C_T}{C_q})$$
 
 Futhermore, the optimization variables, $C_T$ and $C_q$, depends to the infinity airfoils shape along the blade. As it is almost impossible to consider the contribution of all airfoil sections, thus, for calculating the optimization variables along the iteration process, was utilized The Blade Element Theory, which discretizes the blade in some airfoil sections, and contributes in lift and drag for the blade.
 
-Changing these airfoils shape results in different propellers, or different possibilities of solutions. So, for modifying the shapes, the conception of a Bezier Curve was used; in a nutshell, it takes the spline of the airfoil and obtain some points (A, B and P points), which can be easily changed for creating a new geometry. Thus, a movement value in a specific point of A was utilized as the main variables in the optimiztion variables, which changes the aerodynamic caracteristics of the airfoil, and for consequence, changes $C_T$ and $C_q$ coefficients.
+Changing these airfoils shape results in different propellers, or different possibilities of solutions. So, for modifying the shapes, the conception of a Bezier Curve was used; in a nutshell, it takes the spline of the airfoil and obtain some points (A, B and P points), which can be easily changed for creating a new geometry. Thus, a movement value in a specific point of A was utilized as the main variables in the optimization variables, which changes the aerodynamic caracteristics of the airfoil, and for consequence, changes $C_T$ and $C_q$ coefficients.
 
 Better understanding of the Bezier Curves and The Blade Element Theory can be found in the next links:
 
@@ -61,6 +61,61 @@ Better understanding of the Bezier Curves and The Blade Element Theory can be fo
 - [``The Blade Element Theory``](https://www.aerodynamics4students.com/propulsion/blade-element-propeller-theory.php)
 
 ### :hammer: Architecture and tools
+
+```
+main.py
+src/
+|-- data_modules/
+    |-- data_reader.py
+    |-- data_structures.py
+    |-- data_validation.py
+|-- utilities/
+    |-- airfoil_creation.py
+    |-- constants.py
+    |-- custom_logger.py
+    |-- exceptions.py
+    |-- geometry_management.py
+    |-- xfoil_management.py
+|-- blade_element_theory.py
+|-- objective_function.py
+|-- optimizer.py
+|-- output_process.py
+|-- pipelines.py
+processing/
+|-- execution_steps/
+|-- inputs/
+    |-- default-input.json
+|-- outputs/
+|-- xfoil_instances/
+    |-- xfoil.exe
+INSTALL/
+|-- requirements1.bat
+|-- requirements2.bat
+```
+
+| File/Folder | Description |
+| --- | --- |
+| main.py | Main file used for executing the propeller optimization. |
+| data_reader.py | Module responsible for reading the input file, placed in processing/inputs directory. |
+| data_structures.py | Data structures used in the project. |
+| data_validation.py | Module responsible for validating the input data correcty. |
+| airfoil_creation.py | Module responsible for creating new NACA airfoils and reading airfoils P points placed in the input file. |
+| constants.py | The main constants used along the application. |
+| custom_logger.py | Module intended to create a new log object, for creating the processing log. |
+| exceptions.py | Specific exception classes which were used in the application. |
+| geometry_management.py| Implementation of the bezier process for modifying the airfoil spline. |
+| xfoil_management.py | Module responsible for executing the xfoil along the iteration process. |
+| blade_element_theory.py | Implementation of the Blade Element Theory for obtaining the objective function value. |
+| objective_function.py | Module responsible for managing all the methods for calculating properlly the objective function. |
+| optimizer.py | Implementation of the PSO algorithm. |
+| output_process.py | Module responsible for generating all the outputs of the optimization. |
+| pipelines.py | Module responsible for executing  the main pipeline, which will optimize the propeller efficiency. |
+| processing/ | Directory for storaging all the files needed for optimization. |
+| inputs/ | Directory where the input files are stored. |
+| default-input.json | Default input in json extension. |
+| outputs/ | Directory where the outputs are stored, by the input filename. |
+| xfoil_instances/ | Folder where the main instance of xfoil is executed. |
+| INSTALL/ | Directory where the installation files are stored. |
 
 ### :dvd: Installation
 
