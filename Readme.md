@@ -16,6 +16,8 @@ For optimizing the propulsion efficiency, this application needs an input descri
 
 - [Usage](#rocket-usage)
 
+- [References](#microscope-references)
+
 ### :blue_book: Theorical background
 
 #### **1. Optimization problem**
@@ -44,8 +46,24 @@ Better understanding of the algorithm can be found in the Kennedy and Eberhart o
 
 #### **3. Optimization variables and objective function**
 
+The objective function of this tool is to maximize the propulsion efficiency. According to El-Sayed, 2017, the propulsion efficiency can be obtained in terms of the traction ($C_T$) and torque ($C_q$) coefficients, and the advance rate ($J$) of the propeller, thus, it can be written as:
+
+$$F.O = max (J \frac{C_T}{C_q})$$
+
+Futhermore, the optimization variables, $C_T$ and $C_q$, depends to the infinity airfoils shape along the blade. As it is almost impossible to consider the contribution of all airfoil sections, thus, for calculating the optimization variables along the iteration process, was utilized The Blade Element Theory, which discretizes the blade in some airfoil sections, and contributes in lift and drag for the blade.
+
+Changing these airfoils shape results in different propellers, or different possibilities of solutions. So, for modifying the shapes, the conception of a Bezier Curve was used; in a nutshell, it takes the spline of the airfoil and obtain some points (A, B and P points), which can be easily changed for creating a new geometry. Thus, a movement value in a specific point of A was utilized as the main variables in the optimiztion variables, which changes the aerodynamic caracteristics of the airfoil, and for consequence, changes $C_T$ and $C_q$ coefficients.
+
+Better understanding of the Bezier Curves and The Blade Element Theory can be found in the next links:
+
+- [``Bézier Curve``](https://omaraflak.medium.com/b%C3%A9zier-curve-bfffdadea212)
+
+- [``The Blade Element Theory``](https://www.aerodynamics4students.com/propulsion/blade-element-propeller-theory.php)
+
 ### :hammer: Architecture and tools
 
 ### :dvd: Installation
 
 ### :rocket: Usage
+
+### :microscope: References
