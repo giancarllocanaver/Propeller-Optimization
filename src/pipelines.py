@@ -14,7 +14,10 @@ class PipelineMethods:
     def __init__(self, parsed_arguments: argparse.Namespace) -> None:
         self.parsed_arguments = parsed_arguments
         self.uuid = str(uuid.uuid4())
-        self.results_dir = os.path.join(parsed_arguments.output, self.uuid)
+        self.results_dir = os.path.join(
+            parsed_arguments.output,
+            os.path.basename(parsed_arguments.file).split(".")[0],
+        )
         self.data_reader = DataReader(self.parsed_arguments)
 
         self.__clean_old_data()
