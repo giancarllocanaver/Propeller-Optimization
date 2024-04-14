@@ -134,6 +134,112 @@ pip install -r packages.txt
 
 ### :rocket: Usage
 
+All the input information for executing the tool should be passed into the input file, in the json format, which it must be in the 'processing/inputs' directory. After, for running the application, the 'main.py' file with the correct arguments must be executed.
 
+The 'main.py' file has two arguments, the first is required and the second no:
+```
+python main.py -f [--file] <input filename> -o [--output] <directory of the output>
+```
+
+When startting the tool, it will run all the iteration steps until convergence is achieved. All the output files will be stored in the 'processing/outputs' directory with the properlly filename.
+
+The input file has a schema that should be followed:
+```
+{
+    "optimization": {
+        "quantityOfParticles": 5,
+        "maximumIterations": 10,
+        "tolerance": 0.0001,
+        "constantHyperParameters": false,
+        "xfoilInstances": 10
+    },
+    "flightConditions": {
+        "speed": 20.0,
+        "viscosity": 1.789e-5,
+        "temperature": 288.2,
+        "airDensity": 1.225,
+        "engineSpin": 1000
+    },
+    "propellerGeometricConditions": {
+        "airfoil": "clarckY",
+        "bladeDiameter": 2.4384,
+        "numberOfBlades": 2,
+        "AoAInMaximumEfficiency": 5.0,
+        "radius": [
+            0.254,
+            0.3048,
+            0.4572,
+            0.6096,
+            0.762,
+            0.9144,
+            1.0668,
+            1.2192
+        ],
+        "chord": [
+            0.122428,
+            0.139192,
+            0.174244,
+            0.185166,
+            0.179324,
+            0.16129,
+            0.128524,
+            0
+        ]
+    },
+    "airfoilGeometry": {
+        "xPoints": [
+            1.000000,
+            0.331319,
+            0.000270,
+            0.329398,
+            1.000000
+        ],
+        "yPoints": [
+            0.000000,
+            0.079169,
+            0.001311,
+           -0.021837,
+            0.000000
+        ]
+    }
+}
+```
+
+| Key | Description |
+| --- | --- |
+| quantityOfParticles | Represents the total number of particles in the optimization. |
+| maximumIterations | Represents the maximum number of iteration steps in the optimization. |
+| tolerance | Represents the minimum tolererance value for consedering a converged solution, and stop the iterative process. |
+| constantHyperParameters | If 'true', indicates that the hyperparameters will always be constant along the iterative process, else will change them along the process. |
+| xfoilInstances | Represents the maximum number of xfoil instances that will be used during the optimization process. Maximum number is 10. |
+| flightConditions | Represents the flight condition which the propeller will be optimized. |
+| speed | Aircraft speed (m/s). |
+| viscodity | Air dynamic viscosity (Ns/m2). |
+| temperature | Temperature of the air (K). |
+| airDensity | Density of the air (kg/m3). |
+| engineSpin | Engine spin (rpm) |
+| propellerGeometricConditions | Represents the geometric conditions which should be followed during the optimization. |
+| airfoil | Name of the airfoil. If naca foil, must follow like 'naca 0020'. |
+| bladeDiameter | Diameter of the propeller (m) |
+| numberOfBlades | Number os blades in the propeller |
+| AoAInMaximumEfficiency | Angle of attack condition of the blade which will be executed the optimization. |
+| radius | Distances from the center of the propeller, where the airfoil sections are located. Must only have 8 sections. |
+| chord | Size of the section where the airfoils are located (m). Must only have 8 sections. |
+| airfoilGeometry | Normalized bezier P points of an airfoil. If specified, will not consider the airfoil name, in case of naca foils. |
+
+When the optimization process ends, the following outputs will be generated:
+
+- Airfoils coordinates of the best solution, in txt files
+- Illustration of the airfoils along the blade section
+- Variables evolution along the iterative process
+- Excel results per particle along the iterative process
+- Efficiency x advance rate of the best particle
+- Evolution of the objective function
+- Torque x advance rate of the best particle
+- Tracion x advance rate of the best particle
 
 ### :microscope: References
+
+- `KENNEDY, J.; EBERHART, R. Particle swarm optimization. Proceedings of ICNN’95 - International Conference on Neural Networks, 1995`
+
+- `CANAVER, G. S. Otimização de pás de hélice utilizando o algoritmo de otimização por enxame de partículas (PSO) e a teoria dos elementos de pá. Faculdade de Engenharia de São João da Boa Vista (UNESP), 2023.`
