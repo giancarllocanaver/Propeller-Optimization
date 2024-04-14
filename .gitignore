@@ -2,3 +2,8 @@ __pycache__/
 coordenadas_aerofolios/
 resultados/
 base_aerofolios/
+fila_de_cenarios/
+.vscode/
+processing/outputs
+processing/execution_steps
+processing/xfoil_instances
