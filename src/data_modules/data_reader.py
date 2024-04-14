@@ -73,6 +73,11 @@ class DataReader:
         self.validator.check_airfoil_shape(self.airfoil_geometry)
 
     def __xfoil_instances_validation(self):
+        """
+        Method responsible for validating the
+        maximum number of xfoil instances for
+        optimization.
+        """
         self.validator.check_maximum_xfoil_instances(
             self.optimization_data.get("xfoilInstances")
         )

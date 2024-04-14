@@ -108,6 +108,14 @@ class DataValidation:
             raise ErrorAirfoilShape("The lenght of the airfoil shape is not 5!")
 
     def check_maximum_xfoil_instances(self, xfoil_instances: int):
+        """
+        Method responsible for validating the
+        maximum number of xfoil instances for
+        optimization.
+
+        :param xfoil_instances: numer of xfoil
+            instances intended to use.
+        """
         if xfoil_instances > 10:
             raise ErrorMaximumXfoilInstances(
                 "The maximum number of airfoil instances is 10"
