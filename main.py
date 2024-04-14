@@ -57,6 +57,7 @@ def main(arguments_parsed: argparse.Namespace) -> None:
 
         raise e
 
+    print("-- Optimization Ended Successfully --")
 
 if __name__ == "__main__":
     arguments_parsed = define_parser()
