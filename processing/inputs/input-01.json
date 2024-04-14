@@ -1,10 +1,10 @@
 {
     "optimization": {
-        "quantityOfParticles": 20,
-        "maximumIterations": 15,
+        "quantityOfParticles": 10,
+        "maximumIterations": 10,
         "tolerance": 0.0001,
         "constantHyperParameters": false,
-        "xfoilInstances": 3
+        "xfoilInstances": 10
     },
     "flightConditions": {
         "speed": 20.0,
@@ -14,7 +14,7 @@
         "engineSpin": 1000
     },
     "propellerGeometricConditions": {
-        "airfoil": "naca 0020",
+        "airfoil": "clarckY",
         "bladeDiameter": 2.4384,
         "numberOfBlades": 2,
         "AoAInMaximumEfficiency": 5.0,
@@ -39,5 +39,20 @@
             0
         ]
     },
-    "airfoilGeometry": {}
+    "airfoilGeometry": {
+        "xPoints": [
+            1.000000,
+            0.331319,
+            0.000270,
+            0.329398,
+            1.000000
+        ],
+        "yPoints": [
+            0.000000,
+            0.079169,
+            0.001311,
+           -0.021837,
+            0.000000
+        ]
+    }
 }
