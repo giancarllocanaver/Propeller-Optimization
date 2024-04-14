@@ -119,6 +119,19 @@ INSTALL/
 
 ### :dvd: Installation
 
+For installing the dependencies and executing the tool, it is necessary first to have installed the miniconda3 software or have an individual virtual environment for installing the library's dependencies.
+
+#### 1. Installing with miniconda3
+
+If using miniconda3 and Windows, two '.bat' files can be executed for creating the virtual environment and installing the dependencies. It is just to run the first one, and then, the second one.
+
+#### 2. Installing packages with pip
+
+If using a virtual pre-configured environment, it is possible to use the 'packages.txt' file for installation, with the command:
+```
+pip install -r packages.txt
+```
+
 ### :rocket: Usage
 
 ### :microscope: References
