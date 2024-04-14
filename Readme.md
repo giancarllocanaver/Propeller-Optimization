@@ -240,6 +240,8 @@ When the optimization process ends, the following outputs will be generated in t
 
 ### :microscope: References
 
+- `El-Sayed, A. F. Aircraft Propulsion and Gas Turbine Engines. Boca Raton, FL - EUA: CRC Press, 2017.`
+
 - `KENNEDY, J.; EBERHART, R. Particle swarm optimization. Proceedings of ICNN’95 - International Conference on Neural Networks, 1995`
 
 - `CANAVER, G. S. Otimização de pás de hélice utilizando o algoritmo de otimização por enxame de partículas (PSO) e a teoria dos elementos de pá. Faculdade de Engenharia de São João da Boa Vista (UNESP), 2023.`
