@@ -214,7 +214,7 @@ The input file has a schema that should be followed:
 | xfoilInstances | Represents the maximum number of xfoil instances that will be used during the optimization process. Maximum number is 10. |
 | flightConditions | Represents the flight condition which the propeller will be optimized. |
 | speed | Aircraft speed (m/s). |
-| viscodity | Air dynamic viscosity (Ns/m2). |
+| viscosity | Air dynamic viscosity (Ns/m2). |
 | temperature | Temperature of the air (K). |
 | airDensity | Density of the air (kg/m3). |
 | engineSpin | Engine spin (rpm) |
@@ -227,7 +227,7 @@ The input file has a schema that should be followed:
 | chord | Size of the section where the airfoils are located (m). Must only have 8 sections. |
 | airfoilGeometry | Normalized bezier P points of an airfoil. If specified, will not consider the airfoil name, in case of naca foils. |
 
-When the optimization process ends, the following outputs will be generated:
+When the optimization process ends, the following outputs will be generated in the output folder, with the input filename:
 
 - Airfoils coordinates of the best solution, in txt files
 - Illustration of the airfoils along the blade section
