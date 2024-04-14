@@ -12,3 +12,6 @@ class ErrorDtypeKeys(Exception):
 
 class ErrorAirfoilShape(Exception):
     pass
+
+class ErrorMaximumXfoilInstances(Exception):
+    pass

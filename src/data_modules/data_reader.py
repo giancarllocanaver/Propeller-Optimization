@@ -26,6 +26,7 @@ class DataReader:
         self.__post_reading_validation()
         self.__instantiate_variables()
         self.__airfoil_shape_validation()
+        self.__xfoil_instances_validation()
 
     def __pre_reading_validation(self):
         """
@@ -70,3 +71,8 @@ class DataReader:
         variables.
         """
         self.validator.check_airfoil_shape(self.airfoil_geometry)
+
+    def __xfoil_instances_validation(self):
+        self.validator.check_maximum_xfoil_instances(
+            self.optimization_data.get("xfoilInstances")
+        )

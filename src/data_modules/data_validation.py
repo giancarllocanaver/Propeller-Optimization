@@ -106,3 +106,9 @@ class DataValidation:
 
         if (len(data.get("xPoints")) != 5) or (len(data.get("yPoints")) != 5):
             raise ErrorAirfoilShape("The lenght of the airfoil shape is not 5!")
+
+    def check_maximum_xfoil_instances(self, xfoil_instances: int):
+        if xfoil_instances > 10:
+            raise ErrorMaximumXfoilInstances(
+                "The maximum number of airfoil instances is 10"
+            )
